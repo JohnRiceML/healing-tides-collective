@@ -200,8 +200,8 @@ export default function EditorialDesign() {
       <section className="relative border-b border-charcoal">
         <div className="relative h-[60vh] min-h-[420px] w-full overflow-hidden">
           <Image
-            src={photos.movement.src}
-            alt={photos.movement.alt}
+            src={photos.practice.src}
+            alt={photos.practice.alt}
             fill
             className="object-cover"
             sizes="100vw"
@@ -284,8 +284,8 @@ export default function EditorialDesign() {
             <figure className="md:col-span-5">
               <div className="relative aspect-[4/5] overflow-hidden border border-charcoal">
                 <Image
-                  src={photos.practitionerHands.src}
-                  alt={photos.practitionerHands.alt}
+                  src={photos.acupuncture.src}
+                  alt={photos.acupuncture.alt}
                   fill
                   className="object-cover"
                   sizes="(min-width: 768px) 40vw, 100vw"

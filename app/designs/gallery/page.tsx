@@ -23,10 +23,10 @@ const faqs = [
 ];
 
 const exhibits: { key: PhotoKey; caption: string; aspect: string }[] = [
-  { key: "treatmentTable", caption: "Plate 02 / The room before the session", aspect: "aspect-[4/5]" },
-  { key: "fiddleLeaf", caption: "Plate 03 / The plant that holds the room", aspect: "aspect-[4/5]" },
-  { key: "yogaStudio", caption: "Plate 04 / Mid-cue, mid-practice", aspect: "aspect-[4/5]" },
-  { key: "courtyard", caption: "Plate 05 / The courtyard at calm light", aspect: "aspect-[4/5]" },
+  { key: "threshold", caption: "Plate 02 / The threshold of practice", aspect: "aspect-[4/5]" },
+  { key: "desk", caption: "Plate 03 / The desk where the work begins", aspect: "aspect-[4/5]" },
+  { key: "windowView", caption: "Plate 04 / A quiet hour, mid-afternoon", aspect: "aspect-[4/5]" },
+  { key: "landing", caption: "Plate 05 / The landing at the end of the day", aspect: "aspect-[4/5]" },
 ];
 
 function Plate({
@@ -127,7 +127,7 @@ export default function GalleryDesign() {
       {/* Hero plate — full width */}
       <section className="px-6 pb-24 md:px-10 md:pb-32">
         <div className="mx-auto max-w-[1500px]">
-          <Plate photoKey="threshold" caption="Plate 01 / The threshold of practice" priority />
+          <Plate photoKey="studio" caption="Plate 01 / The studio, before the day begins" priority />
         </div>
       </section>
 
@@ -137,7 +137,7 @@ export default function GalleryDesign() {
           <p className="meta">01&nbsp;&nbsp;/&nbsp;&nbsp;The problem</p>
           <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-12">
             <div className="md:col-span-7">
-              <Plate photoKey="acupuncture" caption="Plate 02 / Care, mid-session" />
+              <Plate photoKey="acupuncture" caption="Plate 06 / Care, mid-session" />
             </div>
             <div className="md:col-span-5 md:pl-6">
               <h2
@@ -258,7 +258,7 @@ export default function GalleryDesign() {
       {/* Pull quote on dark plate */}
       <section className="px-6 py-24 md:px-10 md:py-40">
         <div className="mx-auto max-w-[1500px]">
-          <Plate photoKey="movement" caption="Exhibit A / Real practice, mid-cue" aspect="aspect-[16/9]" />
+          <Plate photoKey="practice" caption="Exhibit A / Real practice, mid-cue" aspect="aspect-[16/9]" />
           <p
             className="font-display mx-auto mt-16 max-w-4xl text-center leading-tight tracking-[-0.035em]"
             style={{ fontSize: "clamp(28px, 3.2vw, 52px)" }}
@@ -292,7 +292,7 @@ export default function GalleryDesign() {
               </a>
             </div>
             <div className="md:col-span-7">
-              <Plate photoKey="practitionerHands" caption="Plate 06 / The studio, after the introduction" />
+              <Plate photoKey="attic" caption="Plate 07 / The studio, after the introduction" />
             </div>
           </div>
         </div>

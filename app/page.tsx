@@ -19,7 +19,7 @@ const directions = [
       "Numbered departments, drop-cap essay, magazine index. The argument is the product.",
     swatches: ["#f7f5f2", "#1f3a5f", "#2f2f2f", "#d6ede8"],
     anchor: "Magazine restraint",
-    photoKey: "movement" as const,
+    photoKey: "practice" as const,
   },
   {
     slug: "warm-letter",
@@ -28,7 +28,7 @@ const directions = [
       "Reads like the opening of a letter. Single Fraunces, paper grain, signature lines, real photography.",
     swatches: ["#f7f5f2", "#efeae1", "#1f3a5f", "#a8bfa3"],
     anchor: "Attic workspace",
-    photoKey: "handsTea" as const,
+    photoKey: "teaPour" as const,
   },
   {
     slug: "gallery",
@@ -37,7 +37,7 @@ const directions = [
       "Monumental display, exhibition-style sections, real photography as exhibits, asymmetric grids.",
     swatches: ["#f7f5f2", "#2f2f2f", "#5f8f8b", "#d6ede8"],
     anchor: "prAna confidence",
-    photoKey: "yogaStudio" as const,
+    photoKey: "studio" as const,
   },
   {
     slug: "minimalist",
@@ -46,7 +46,7 @@ const directions = [
       "Single Fraunces serif everywhere. Hairline rules, text-link CTAs, one restrained photograph. Quiet luxury.",
     swatches: ["#f7f5f2", "#2f2f2f", "#1f3a5f", "#a8bfa3"],
     anchor: "Spa courtyard",
-    photoKey: "courtyard" as const,
+    photoKey: "landing" as const,
   },
 ];
 

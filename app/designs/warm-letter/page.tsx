@@ -121,8 +121,8 @@ export default function WarmLetterDesign() {
             <figure className="md:col-span-5">
               <div className="relative aspect-[4/5] w-full overflow-hidden shadow-[0_30px_60px_-25px_rgba(47,47,47,0.35)]">
                 <Image
-                  src={photos.handsTea.src}
-                  alt={photos.handsTea.alt}
+                  src={photos.teaPour.src}
+                  alt={photos.teaPour.alt}
                   fill
                   priority
                   className="object-cover"
@@ -168,8 +168,8 @@ export default function WarmLetterDesign() {
       <section className="relative">
         <div className="relative h-[50vh] min-h-[360px] w-full overflow-hidden">
           <Image
-            src={photos.studioPlants.src}
-            alt={photos.studioPlants.alt}
+            src={photos.desk.src}
+            alt={photos.desk.alt}
             fill
             className="object-cover"
             sizes="100vw"
@@ -254,8 +254,8 @@ export default function WarmLetterDesign() {
               <div className="w-full">
                 <div className="relative aspect-[4/5] w-full overflow-hidden shadow-[0_30px_60px_-25px_rgba(47,47,47,0.35)]">
                   <Image
-                    src={photos.woodRoom.src}
-                    alt={photos.woodRoom.alt}
+                    src={photos.attic.src}
+                    alt={photos.attic.alt}
                     fill
                     className="object-cover"
                     sizes="(min-width: 768px) 40vw, 100vw"

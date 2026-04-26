@@ -15,7 +15,7 @@ const valueTiles = [
     eyebrow: "By a person",
     title: "Matches written by humans, not algorithms.",
     body: "Three to five practitioners chosen by name. Each pick comes with a sentence on why they fit you.",
-    photoKey: "handsBook" as const,
+    photoKey: "teaPour" as const,
     accent: "ocean",
   },
   {
@@ -250,8 +250,8 @@ export default function ModernDesign() {
               </div>
               <div className="relative min-h-[260px] overflow-hidden rounded-b-[calc(2rem-0.375rem)] md:rounded-bl-none md:rounded-r-[calc(2rem-0.375rem)]">
                 <Image
-                  src={photos.handsBook.src}
-                  alt={photos.handsBook.alt}
+                  src={photos.teaPour.src}
+                  alt={photos.teaPour.alt}
                   fill
                   className="object-cover"
                   sizes="(min-width: 768px) 35vw, 100vw"
@@ -351,8 +351,8 @@ export default function ModernDesign() {
             <div className="grid grid-cols-1 gap-0 md:grid-cols-12">
               <div className="relative min-h-[320px] overflow-hidden rounded-t-[calc(2rem-0.375rem)] md:col-span-5 md:rounded-l-[calc(2rem-0.375rem)] md:rounded-tr-none">
                 <Image
-                  src={photos.practitionerHands.src}
-                  alt={photos.practitionerHands.alt}
+                  src={photos.acupuncture.src}
+                  alt={photos.acupuncture.alt}
                   fill
                   className="object-cover"
                   sizes="(min-width: 768px) 40vw, 100vw"
