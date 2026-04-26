@@ -8,6 +8,7 @@ A modern wellness care-matching platform. Replaces overwhelming directories with
 - No code yet. Planning, design spec, and infra setup first.
 - Phase 1 deliverable: landing page live on Vercel by 2026-05-24
 - **Domain:** `healingtides.co` (owned by founder)
+- **GitHub:** https://github.com/JohnRiceML/healing-tides-collective (public, default branch `main`)
 
 ## Where to find things
 - `README.md` — directory map and current status

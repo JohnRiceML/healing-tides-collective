@@ -20,11 +20,12 @@ Every account, integration, and config required to stand up Phase 1. Check off a
 
 ## 2. GitHub
 
-- [ ] Create repo `healing-tides-collective` (private)
-- [ ] Add `.gitignore` for Next.js
-- [ ] Add this folder as initial commit (planning + docs)
-- [ ] Add founder as collaborator (read access at minimum)
-- [ ] Default branch: `main`
+- [x] **Repo created: https://github.com/JohnRiceML/healing-tides-collective** (public, 2026-04-26)
+- [x] `.gitignore` for Next.js included
+- [x] Initial commit pushed (planning + docs + assets)
+- [x] Default branch: `main`
+- [ ] Add founder as collaborator (read access at minimum) — share GitHub username with John
+- [ ] Decide whether to keep public or flip to private after launch (currently public per founder request)
 - [ ] Branch protection on `main` (require PR — optional for solo, helpful if others join)
 
 ---
