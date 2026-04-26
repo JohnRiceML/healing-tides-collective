@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
+import { photos } from "@/app/_lib/images";
 
 const personas = [
   {
     label: "Reader / 01",
     name: "The Overwhelmed Optimizer",
-    line: "You have read the studies. You have the spreadsheet. You still do not know who to call.",
+    line: "You have read the studies. You own the spreadsheet. You still do not know who to call.",
   },
   {
     label: "Reader / 02",
@@ -16,6 +18,14 @@ const personas = [
     name: "The Curious Seeker",
     line: "You are open. You are uncertain. You want a guide, not a gauntlet.",
   },
+];
+
+const modalities = [
+  "Therapy",
+  "Acupuncture",
+  "Reiki",
+  "Movement-based care",
+  "Trauma-informed support",
 ];
 
 const steps = [
@@ -35,7 +45,7 @@ const steps = [
     no: "03",
     title: "Begin with the one that breathes right.",
     detail:
-      "You introduce yourself by reply or by booking. We are out of the loop unless you want us back in it. Your relationship is yours.",
+      "You introduce yourself by reply or by booking. Your relationship is yours from the first message onward.",
   },
 ];
 
@@ -77,7 +87,9 @@ const faqs = [
 function SectionNumber({ n, label, dark = false }: { n: string; label: string; dark?: boolean }) {
   return (
     <div className={`flex items-baseline gap-6 ${dark ? "text-sand" : "text-charcoal"}`}>
-      <span className="font-display text-[14vw] leading-[0.86] tracking-[-0.04em]">{n}</span>
+      <span className="font-display text-[14vw] leading-[0.86] tracking-[-0.04em] md:text-[10vw]">
+        {n}
+      </span>
       <span className="meta">/ {label}</span>
     </div>
   );
@@ -101,45 +113,52 @@ export default function EditorialDesign() {
         </div>
       </header>
 
-      {/* Cover hero */}
+      {/* Cover hero — editorial cover with portrait photo */}
       <section className="border-b border-charcoal">
-        <div className="mx-auto grid max-w-[1500px] grid-cols-12 gap-6 px-6 py-16 md:py-28">
-          <div className="col-span-12 md:col-span-8">
+        <div className="mx-auto grid max-w-[1500px] grid-cols-12 gap-0 px-6 py-12 md:py-20">
+          <div className="col-span-12 md:col-span-7">
             <p className="meta text-ink-muted">Plate I / The front door to wellness</p>
-            <h1 className="font-display mt-8 text-[14vw] leading-[0.86] tracking-[-0.04em]">
+            <h1 className="font-display mt-8 text-[15vw] leading-[0.86] tracking-[-0.04em] md:text-[10.5vw]">
               Less searching.
               <br />
               More
               <span className="text-ocean"> healing.</span>
             </h1>
-          </div>
-          <div className="col-span-12 flex flex-col justify-end md:col-span-4">
-            <svg viewBox="0 0 200 240" className="mb-8 w-full max-w-[260px]" aria-hidden>
-              <rect x="0" y="0" width="200" height="240" fill="#f7f5f2" stroke="#2f2f2f" />
-              <circle cx="100" cy="100" r="60" fill="none" stroke="#1f3a5f" strokeWidth="1" />
-              <path d="M40 160 Q100 120 160 160 T280 160" stroke="#1f3a5f" strokeWidth="1" fill="none" />
-              <path d="M40 180 Q100 140 160 180 T280 180" stroke="#1f3a5f" strokeWidth="1" fill="none" />
-              <path d="M40 200 Q100 160 160 200 T280 200" stroke="#1f3a5f" strokeWidth="1" fill="none" />
-            </svg>
-            <p className="text-base leading-relaxed text-ink-soft">
-              A guided care-matching service for therapy, acupuncture, reiki, movement, and trauma-informed care.
-              Replaces the directory wall with a shortlist written by a person.
+            <p className="mt-10 max-w-[34rem] text-base leading-relaxed text-ink-soft md:text-lg">
+              A guided care-matching service that replaces overwhelming directories with a shortlist written
+              by a person. Therapy, acupuncture, reiki, movement-based care, and trauma-informed support,
+              held side by side.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-10 flex flex-wrap gap-3">
               <Link
                 href="#begin"
                 className="meta inline-flex items-center gap-2 bg-ocean px-6 py-4 text-sand transition-colors hover:bg-charcoal"
               >
-                Begin Here
+                Get matched →
               </Link>
               <Link
-                href="#how"
+                href="#practitioners"
                 className="meta inline-flex items-center gap-2 border border-charcoal px-6 py-4 transition-colors hover:bg-charcoal hover:text-sand"
               >
-                How It Works
+                For practitioners
               </Link>
             </div>
           </div>
+          <figure className="col-span-12 mt-12 md:col-span-5 md:mt-0 md:pl-10">
+            <div className="relative aspect-[4/5] overflow-hidden border border-charcoal">
+              <Image
+                src={photos.threshold.src}
+                alt={photos.threshold.alt}
+                fill
+                priority
+                className="object-cover"
+                sizes="(min-width: 768px) 40vw, 100vw"
+              />
+            </div>
+            <figcaption className="meta mt-3 text-ink-muted">
+              Plate I / The threshold of practice
+            </figcaption>
+          </figure>
         </div>
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-x-8 gap-y-2 border-t border-rule px-6 py-4">
           <p className="meta text-ink-muted">Volume I / Care, matched</p>
@@ -169,16 +188,39 @@ export default function EditorialDesign() {
               wellness. They give up on choosing.
             </p>
             <p>
-              Healing Tides Collective is a different gesture. We replace the wall with a shortlist. We replace
-              the rating with a paragraph. We replace the algorithm with a person who reads what you wrote and
-              picks three to five practitioners by name. The relationship that follows is yours. We are out of
-              the loop the moment you reply.
+              We replace the wall with a shortlist. We replace the rating with a paragraph. We replace the
+              algorithm with a person who reads what you wrote and picks three to five practitioners by name.
+              The relationship that follows is yours. We are out of the loop the moment you reply.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 02 Personas */}
+      {/* 02 Modalities band — full-bleed photo */}
+      <section className="relative border-b border-charcoal">
+        <div className="relative h-[60vh] min-h-[420px] w-full overflow-hidden">
+          <Image
+            src={photos.movement.src}
+            alt={photos.movement.alt}
+            fill
+            className="object-cover"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-charcoal/30" />
+          <div className="absolute inset-0 flex flex-col justify-end px-6 py-10 text-sand md:px-10 md:py-14">
+            <p className="meta opacity-80">Plate II / Care, held side by side</p>
+            <ul className="mt-6 flex flex-wrap gap-x-10 gap-y-3 font-display text-2xl leading-tight md:text-4xl">
+              {modalities.map((m, i) => (
+                <li key={m} className={i % 2 === 1 ? "italic text-seafoam" : ""}>
+                  {m}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* 03 Personas */}
       <section className="border-b border-charcoal">
         <div className="mx-auto max-w-[1500px] px-6 py-20 md:py-32">
           <SectionNumber n="02" label="Who this is for" />
@@ -197,18 +239,7 @@ export default function EditorialDesign() {
         </div>
       </section>
 
-      {/* Pull quote */}
-      <section className="border-b border-charcoal bg-sand-deep">
-        <div className="mx-auto max-w-4xl px-6 py-24 md:py-32">
-          <blockquote className="font-display text-center text-[40px] leading-[0.95] tracking-[-0.035em] md:text-[68px]">
-            <span className="text-ocean">&ldquo;</span>The right practitioner is not the most decorated one.
-            It is the one who feels right after the first reply.<span className="text-ocean">&rdquo;</span>
-          </blockquote>
-          <p className="meta mt-8 text-center text-ink-muted">From the founding letter</p>
-        </div>
-      </section>
-
-      {/* 03 How — magazine index of steps */}
+      {/* 04 How — magazine index of steps */}
       <section id="how" className="border-b border-charcoal">
         <div className="mx-auto max-w-[1500px] px-6 py-20 md:py-32">
           <SectionNumber n="03" label="How it works" />
@@ -234,10 +265,74 @@ export default function EditorialDesign() {
         </div>
       </section>
 
-      {/* 04 Yes/no two-up */}
+      {/* Pull quote */}
+      <section className="border-b border-charcoal bg-sand-deep">
+        <div className="mx-auto max-w-4xl px-6 py-24 md:py-32">
+          <blockquote className="font-display text-center text-[40px] leading-[0.95] tracking-[-0.035em] md:text-[68px]">
+            <span className="text-ocean">&ldquo;</span>The right practitioner is not the most decorated one.
+            It is the one who feels right after the first reply.<span className="text-ocean">&rdquo;</span>
+          </blockquote>
+          <p className="meta mt-8 text-center text-ink-muted">From the founding letter</p>
+        </div>
+      </section>
+
+      {/* 05 For practitioners — dual-sided value */}
       <section id="practitioners" className="border-b border-charcoal">
         <div className="mx-auto max-w-[1500px] px-6 py-20 md:py-32">
-          <SectionNumber n="04" label="The shortlist, briefly" />
+          <SectionNumber n="04" label="For practitioners" />
+          <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-12">
+            <figure className="md:col-span-5">
+              <div className="relative aspect-[4/5] overflow-hidden border border-charcoal">
+                <Image
+                  src={photos.practitionerHands.src}
+                  alt={photos.practitionerHands.alt}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 768px) 40vw, 100vw"
+                />
+              </div>
+              <figcaption className="meta mt-3 text-ink-muted">
+                Plate III / Practitioner at work
+              </figcaption>
+            </figure>
+            <div className="md:col-span-7">
+              <h2 className="font-display text-4xl leading-[0.95] tracking-[-0.035em] md:text-6xl">
+                Fewer leads.
+                <span className="text-ocean"> Better fits.</span>
+              </h2>
+              <p className="mt-8 max-w-xl text-[17px] leading-[1.7] text-ink-soft">
+                We streamline your referral pipeline. Each introduction arrives with context: what the seeker
+                is working on, what they have tried, why we picked you. You decide whether to take the
+                consultation. We never charge per lead. We never sell your information.
+              </p>
+              <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+                {[
+                  "Aligned clients, not lead lists",
+                  "Direct, meaningful introductions",
+                  "Reduced administrative friction",
+                  "A real person on the other end of email",
+                ].map((b) => (
+                  <li key={b} className="flex items-baseline gap-3 text-[15px] text-charcoal">
+                    <span className="meta text-ocean">/</span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="mailto:practitioners@healingtides.co"
+                className="meta mt-10 inline-flex items-center gap-2 border border-charcoal px-6 py-4 transition-colors hover:bg-charcoal hover:text-sand"
+              >
+                Apply to join the collective →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 06 Yes/no two-up */}
+      <section className="border-b border-charcoal">
+        <div className="mx-auto max-w-[1500px] px-6 py-20 md:py-32">
+          <SectionNumber n="05" label="The shortlist, briefly" />
           <div className="mt-16 grid grid-cols-1 gap-[1px] bg-charcoal md:grid-cols-2">
             <div className="bg-sand p-10">
               <p className="meta text-ocean">Yes / This Collective</p>
@@ -259,10 +354,10 @@ export default function EditorialDesign() {
         </div>
       </section>
 
-      {/* 05 FAQ */}
+      {/* 07 FAQ */}
       <section id="faq" className="border-b border-charcoal">
         <div className="mx-auto max-w-[1500px] px-6 py-20 md:py-32">
-          <SectionNumber n="05" label="Questions, answered" />
+          <SectionNumber n="06" label="Questions, answered" />
           <div className="mt-16 border-t border-charcoal">
             {faqs.map((f, i) => (
               <div key={f.q} className="grid grid-cols-12 gap-6 border-b border-rule px-2 py-10">
@@ -279,10 +374,10 @@ export default function EditorialDesign() {
         </div>
       </section>
 
-      {/* 06 Inverted CTA */}
+      {/* 08 Inverted CTA */}
       <section id="begin" className="bg-charcoal text-sand">
         <div className="mx-auto max-w-[1500px] px-6 py-20 md:py-32">
-          <SectionNumber n="06" label="Begin here" dark />
+          <SectionNumber n="07" label="Begin here" dark />
           <h2 className="font-display mt-12 max-w-4xl text-[44px] leading-[0.92] tracking-[-0.035em] md:text-[88px]">
             Tell us where you are.
             <span className="text-seafoam"> We will read it.</span>
@@ -293,11 +388,10 @@ export default function EditorialDesign() {
                 href="mailto:hello@healingtides.co?subject=Begin"
                 className="meta inline-flex items-center gap-2 bg-seafoam px-6 py-4 text-charcoal transition-colors hover:bg-sand"
               >
-                hello@healingtides.co
+                hello@healingtides.co →
               </a>
               <p className="mt-6 max-w-md text-[15px] leading-[1.7] text-sand/80">
-                Or fill the short form on first reply. Two paragraphs is plenty. We answer within five business
-                days, by name.
+                Two paragraphs is plenty. We answer within five business days, by name.
               </p>
             </div>
             <div>

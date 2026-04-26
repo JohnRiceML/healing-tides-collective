@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { photos } from "@/app/_lib/images";
 
 const personas = [
   { who: "If you have read everything", line: "We will help you stop reading and start choosing." },
@@ -61,7 +63,7 @@ export default function MinimalistDesign() {
         <p className="text-xs uppercase tracking-[0.22em] text-ink-soft">I. The premise</p>
         <h1
           className="mt-10 font-light leading-[1.05]"
-          style={{ fontSize: "clamp(42px, 6vw, 72px)" }}
+          style={{ fontSize: "clamp(42px, 6vw, 76px)" }}
         >
           A quiet front door
           <br />
@@ -72,17 +74,36 @@ export default function MinimalistDesign() {
         </p>
         <p className="mt-10 max-w-xl text-[16px] leading-[1.85] text-ink-soft">
           Three to five practitioners. Each chosen by a person, not by a search index. Each named with a
-          sentence on why they fit you, specifically. Therapy, acupuncture, reiki, movement, trauma-informed
-          care. Clinical and holistic, side by side, without a hierarchy.
+          sentence on why they fit you, specifically. Therapy, acupuncture, reiki, movement-based care,
+          trauma-informed support. Clinical and holistic, side by side, without a hierarchy.
         </p>
         <p className="mt-20">
           <a
             href="#begin"
             className="inline-block border-b border-charcoal pb-1 text-sm uppercase tracking-[0.22em] transition-opacity hover:opacity-60"
           >
-            Begin Here
+            Begin here
           </a>
         </p>
+      </section>
+
+      {/* One restrained photograph */}
+      <section className="mx-auto max-w-5xl px-6 pb-32 md:px-12">
+        <figure>
+          <div className="relative aspect-[16/10] w-full overflow-hidden">
+            <Image
+              src={photos.threshold.src}
+              alt={photos.threshold.alt}
+              fill
+              className="object-cover"
+              style={{ filter: "grayscale(20%)" }}
+              sizes="(min-width: 768px) 80vw, 100vw"
+            />
+          </div>
+          <figcaption className="mt-4 text-xs uppercase tracking-[0.22em] text-ink-muted">
+            Plate I. The threshold.
+          </figcaption>
+        </figure>
       </section>
 
       <Hairline />
@@ -162,8 +183,9 @@ export default function MinimalistDesign() {
           Fewer leads. <em className="text-ocean">Better fits.</em>
         </h2>
         <p className="mt-12 max-w-2xl text-[17px] leading-[1.85] text-ink-soft">
-          The seeker has already told us what they need, what they have tried, where you came in. You decide
-          whether to take the introduction. We never charge per lead. We never sell your information.
+          We streamline the referral pipeline. The seeker has already told us what they need, what they have
+          tried, where you came in. You decide whether to take the introduction. We never charge per lead. We
+          never sell your information.
         </p>
         <p className="mt-14">
           <a

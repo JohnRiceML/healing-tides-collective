@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { photos, type PhotoKey } from "@/app/_lib/images";
 
 const personas = [
   { tag: "Reader 01", name: "The Overwhelmed Optimizer", line: "Reads the studies. Owns the spreadsheet. Cannot choose." },
@@ -20,31 +22,35 @@ const faqs = [
   { q: "What about my privacy?", a: "Your story belongs to you. We do not share it with anyone you have not chosen." },
 ];
 
-function Plate({ caption, variant = "a" }: { caption: string; variant?: "a" | "b" }) {
+const exhibits: { key: PhotoKey; caption: string; aspect: string }[] = [
+  { key: "treatmentTable", caption: "Plate 02 / The room before the session", aspect: "aspect-[4/5]" },
+  { key: "fiddleLeaf", caption: "Plate 03 / The plant that holds the room", aspect: "aspect-[4/5]" },
+  { key: "yogaStudio", caption: "Plate 04 / Mid-cue, mid-practice", aspect: "aspect-[4/5]" },
+  { key: "courtyard", caption: "Plate 05 / The courtyard at calm light", aspect: "aspect-[4/5]" },
+];
+
+function Plate({
+  photoKey,
+  caption,
+  aspect = "aspect-[16/10]",
+  priority = false,
+}: {
+  photoKey: PhotoKey;
+  caption: string;
+  aspect?: string;
+  priority?: boolean;
+}) {
+  const p = photos[photoKey];
   return (
     <figure>
-      <div
-        className="relative aspect-[16/10] w-full overflow-hidden bg-charcoal"
-        aria-hidden
-      >
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              variant === "a"
-                ? "linear-gradient(135deg, #1c1c1c 0%, #0a0a0a 100%)"
-                : "linear-gradient(135deg, #1f3a5f 0%, #0a1726 100%)",
-          }}
-        />
-        <div className="absolute left-[8%] top-[18%] h-[55%] w-[36%] bg-sand/80" />
-        <div className="absolute right-[10%] top-[28%] h-[44%] w-[28%] border border-sand/70" />
-        <div className="absolute bottom-[12%] left-[44%] h-[28%] w-[18%] bg-sage/30" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 30% 40%, rgba(214, 237, 232, 0.18), transparent 55%)",
-          }}
+      <div className={`relative ${aspect} w-full overflow-hidden bg-charcoal`}>
+        <Image
+          src={p.src}
+          alt={p.alt}
+          fill
+          priority={priority}
+          className="object-cover"
+          sizes="(min-width: 768px) 60vw, 100vw"
         />
       </div>
       <figcaption className="meta mt-4 text-ink-muted">{caption}</figcaption>
@@ -56,7 +62,7 @@ export default function GalleryDesign() {
   return (
     <main className="min-h-screen bg-sand text-charcoal" style={{ letterSpacing: "-0.01em" }}>
       {/* Sticky nav */}
-      <header className="sticky top-0 z-40 bg-sand/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 bg-sand/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
           <Link href="#" className="meta link-underline">
             Healing Tides Collective
@@ -80,13 +86,13 @@ export default function GalleryDesign() {
       </header>
 
       {/* Hero */}
-      <section className="px-6 pb-20 pt-16 md:px-10 md:pb-24 md:pt-28">
+      <section className="px-6 pb-20 pt-12 md:px-10 md:pb-24 md:pt-20">
         <div className="mx-auto max-w-[1500px]">
           <p className="meta text-ink-muted">
             Care&nbsp;&nbsp;/&nbsp;&nbsp;Matched&nbsp;&nbsp;/&nbsp;&nbsp;By a person
           </p>
           <h1
-            className="font-display mt-12 leading-[0.86] tracking-[-0.045em]"
+            className="font-display mt-10 leading-[0.86] tracking-[-0.045em]"
             style={{ fontSize: "clamp(64px, 14vw, 220px)" }}
           >
             Less searching.
@@ -95,26 +101,33 @@ export default function GalleryDesign() {
             <br />
             healing.
           </h1>
-          <div className="mt-16 grid grid-cols-1 gap-10 md:grid-cols-12">
+          <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-12">
             <p className="col-span-12 max-w-2xl text-[16px] leading-[1.7] text-ink-soft md:col-span-7">
-              A guided care-matching service for therapy, acupuncture, reiki, movement, and trauma-informed
-              care. We replace the directory wall with a shortlist written by a person.
+              A guided care-matching service for therapy, acupuncture, reiki, movement-based care, and
+              trauma-informed support. We replace the directory wall with a shortlist written by a person.
             </p>
             <p className="meta col-span-12 self-end text-ink-muted md:col-span-5 md:text-right">
-              Currently Viewing / Index 00 of 05
+              Currently Viewing / Index 00 of 06
             </p>
           </div>
           <div className="mt-12 flex flex-wrap items-center gap-10">
             <a href="#begin" className="meta link-underline">
-              Begin Here
+              Get matched
             </a>
             <a href="#how" className="meta link-underline">
-              See How It Works
+              See how it works
             </a>
             <a href="#practitioners" className="meta link-underline">
-              For Practitioners
+              For practitioners
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Hero plate — full width */}
+      <section className="px-6 pb-24 md:px-10 md:pb-32">
+        <div className="mx-auto max-w-[1500px]">
+          <Plate photoKey="threshold" caption="Plate 01 / The threshold of practice" priority />
         </div>
       </section>
 
@@ -124,7 +137,7 @@ export default function GalleryDesign() {
           <p className="meta">01&nbsp;&nbsp;/&nbsp;&nbsp;The problem</p>
           <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-12">
             <div className="md:col-span-7">
-              <Plate caption="Plate 01 / Wellness as a maze" />
+              <Plate photoKey="acupuncture" caption="Plate 02 / Care, mid-session" />
             </div>
             <div className="md:col-span-5 md:pl-6">
               <h2
@@ -175,6 +188,29 @@ export default function GalleryDesign() {
         </div>
       </section>
 
+      {/* Exhibition gallery — horizontal scroll */}
+      <section className="py-24 md:py-32">
+        <div className="px-6 md:px-10">
+          <div className="mx-auto max-w-[1500px]">
+            <p className="meta">02b&nbsp;&nbsp;/&nbsp;&nbsp;Exhibits, on rotation</p>
+          </div>
+        </div>
+        <div
+          className="mt-12 flex gap-6 overflow-x-auto px-6 pb-6 md:gap-10 md:px-10"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {exhibits.map((e) => (
+            <div
+              key={e.key}
+              className="shrink-0"
+              style={{ width: "min(60vw, 520px)", scrollSnapAlign: "start" }}
+            >
+              <Plate photoKey={e.key} caption={e.caption} aspect={e.aspect} />
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* 03 How — inverted grid */}
       <section id="how" className="px-6 py-24 md:px-10 md:py-40">
         <div className="mx-auto max-w-[1500px]">
@@ -222,7 +258,7 @@ export default function GalleryDesign() {
       {/* Pull quote on dark plate */}
       <section className="px-6 py-24 md:px-10 md:py-40">
         <div className="mx-auto max-w-[1500px]">
-          <Plate caption="Exhibit A / The thesis, written plain" variant="b" />
+          <Plate photoKey="movement" caption="Exhibit A / Real practice, mid-cue" aspect="aspect-[16/9]" />
           <p
             className="font-display mx-auto mt-16 max-w-4xl text-center leading-tight tracking-[-0.035em]"
             style={{ fontSize: "clamp(28px, 3.2vw, 52px)" }}
@@ -248,15 +284,15 @@ export default function GalleryDesign() {
                 Better fits.
               </h2>
               <p className="mt-8 text-[15px] leading-[1.7] text-ink-soft">
-                The seeker has already told us what they need. You decide whether to take the introduction. We
-                never charge per lead. We never sell your information.
+                We streamline the referral pipeline. The seeker has already told us what they need. You decide
+                whether to take the introduction. We never charge per lead. We never sell your information.
               </p>
               <a href="mailto:practitioners@healingtides.co" className="meta link-underline mt-10 inline-block">
                 Apply to join the collective
               </a>
             </div>
             <div className="md:col-span-7">
-              <Plate caption="Plate 02 / The studio, after the introduction" />
+              <Plate photoKey="practitionerHands" caption="Plate 06 / The studio, after the introduction" />
             </div>
           </div>
         </div>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { photos } from "@/app/_lib/images";
 
 const personas = [
   {
@@ -48,7 +50,7 @@ const faqs = [
   },
   {
     q: "Will you sell my information?",
-    a: "No. Your idea, your story, and your contact details belong to you until you decide to share them with a practitioner.",
+    a: "No. Your story and your contact details belong to you until you decide to share them with a practitioner.",
   },
 ];
 
@@ -73,7 +75,11 @@ export default function WarmLetterDesign() {
           <p className="font-display text-base italic">Healing Tides Collective</p>
           <nav className="flex gap-6">
             {["Mission", "How", "FAQ", "Begin"].map((l) => (
-              <a key={l} className="font-display text-sm italic text-ink-soft hover:text-ocean" href={`#${l.toLowerCase()}`}>
+              <a
+                key={l}
+                className="font-display text-sm italic text-ink-soft hover:text-ocean"
+                href={`#${l.toLowerCase()}`}
+              >
                 {l}
               </a>
             ))}
@@ -83,33 +89,50 @@ export default function WarmLetterDesign() {
 
       {/* Hero — letter opening */}
       <section className="relative">
-        <div className="mx-auto max-w-[68rem] px-6 py-24 md:py-32">
+        <div className="mx-auto max-w-[68rem] px-6 py-20 md:py-28">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
             <div className="md:col-span-7">
               <p className="meta text-ink-muted">A letter to the seeker</p>
-              <h1 className="font-display mt-8 text-[clamp(2.4rem,5vw,4.4rem)] leading-[1.05]">
+              <h1 className="font-display mt-8 text-[clamp(2.6rem,5.5vw,4.8rem)] leading-[1.05]">
                 Less searching.
                 <br />
                 <span className="italic text-ocean">More healing.</span>
               </h1>
-              <p className="mt-8 max-w-[42ch] text-[1.075rem] leading-[1.65] text-ink-soft">
+              <p className="mt-8 max-w-[44ch] text-[1.075rem] leading-[1.65] text-ink-soft">
                 We started Healing Tides Collective because choosing a practitioner had become its own
                 full-time job. We thought it should be easier, gentler, and more honest. So we built a small
                 service that does it for you, one careful match at a time.
               </p>
-              <p className="font-display mt-10 text-base italic text-ink-muted">Write when you are ready.</p>
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <a
+                  href="mailto:hello@healingtides.co?subject=Begin"
+                  className="font-display bg-ocean px-7 py-3 text-lg italic text-sand shadow-[0_18px_40px_-20px_rgba(31,58,95,0.55)] transition hover:bg-charcoal"
+                >
+                  Get matched
+                </a>
+                <a href="#how" className="font-display text-base italic text-ink-soft hover:text-ocean">
+                  or read how it works →
+                </a>
+              </div>
+              <p className="font-display mt-12 text-base italic text-ink-muted">
+                Write when you are ready.
+              </p>
             </div>
-            <div className="flex items-end md:col-span-5">
-              <figure className="w-full">
-                <div
-                  className="warm-tile aspect-[5/6] w-full shadow-[0_30px_60px_-25px_rgba(47,47,47,0.35)]"
-                  aria-hidden
+            <figure className="md:col-span-5">
+              <div className="relative aspect-[4/5] w-full overflow-hidden shadow-[0_30px_60px_-25px_rgba(47,47,47,0.35)]">
+                <Image
+                  src={photos.handsTea.src}
+                  alt={photos.handsTea.alt}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(min-width: 768px) 40vw, 100vw"
                 />
-                <figcaption className="font-display mt-4 text-sm italic text-ink-muted">
-                  Plate I / The studio, before the day begins.
-                </figcaption>
-              </figure>
-            </div>
+              </div>
+              <figcaption className="font-display mt-4 text-sm italic text-ink-muted">
+                Plate I / The studio, before the day begins.
+              </figcaption>
+            </figure>
           </div>
         </div>
       </section>
@@ -137,6 +160,29 @@ export default function WarmLetterDesign() {
               The right practitioner is not the most decorated one. It is the one who feels right after the
               first reply.
             </blockquote>
+          </div>
+        </div>
+      </section>
+
+      {/* Modalities band */}
+      <section className="relative">
+        <div className="relative h-[50vh] min-h-[360px] w-full overflow-hidden">
+          <Image
+            src={photos.studioPlants.src}
+            alt={photos.studioPlants.alt}
+            fill
+            className="object-cover"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-charcoal/35" />
+          <div className="absolute inset-0 flex items-end px-6 py-12 text-sand md:px-10">
+            <div className="mx-auto max-w-[68rem]">
+              <p className="font-display text-sm italic">Plate II / Care, side by side</p>
+              <p className="font-display mt-4 max-w-3xl text-[clamp(1.6rem,3.2vw,2.6rem)] italic leading-tight">
+                Therapy. Acupuncture. Reiki. Movement. Trauma-informed support. Held together, without a
+                hierarchy.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -176,7 +222,7 @@ export default function WarmLetterDesign() {
         </div>
       </section>
 
-      {/* Practitioners */}
+      {/* Practitioners — dual-sided value */}
       <section className="relative py-28">
         <RuleFlourish>For practitioners</RuleFlourish>
         <div className="mx-auto mt-16 max-w-[68rem] px-6">
@@ -188,10 +234,15 @@ export default function WarmLetterDesign() {
                 <span className="italic text-ocean">They tend to be better fits.</span>
               </h2>
               <p className="mt-6 text-[1.075rem] leading-[1.65] text-ink-soft">
-                Our matches arrive with context. The seeker has already told us what they need, what they have
-                tried, and where you came in. You decide whether to take the introduction. We never charge per
-                lead, and we never sell your information.
+                We streamline the referral pipeline. Every introduction arrives with context: what the seeker
+                has tried, what feels close to right, why we picked you. You decide whether to take the
+                consultation. We never charge per lead, and we never sell your information.
               </p>
+              <ul className="mt-8 space-y-3 text-[1rem] italic leading-[1.65] text-ink-soft">
+                <li>— Direct, meaningful connections</li>
+                <li>— Reduced administrative friction</li>
+                <li>— Aligned clients, not lead lists</li>
+              </ul>
               <a
                 href="mailto:practitioners@healingtides.co?subject=Practitioner%20introduction"
                 className="font-display mt-10 inline-block border border-charcoal px-8 py-3 text-lg italic transition hover:bg-charcoal hover:text-sand"
@@ -199,14 +250,22 @@ export default function WarmLetterDesign() {
                 Write to us as a practitioner →
               </a>
             </div>
-            <div className="flex items-center md:col-span-5">
-              <figure className="w-full">
-                <div className="warm-tile aspect-[4/5] w-full shadow-[0_30px_60px_-25px_rgba(47,47,47,0.35)]" aria-hidden />
+            <figure className="flex items-center md:col-span-5">
+              <div className="w-full">
+                <div className="relative aspect-[4/5] w-full overflow-hidden shadow-[0_30px_60px_-25px_rgba(47,47,47,0.35)]">
+                  <Image
+                    src={photos.woodRoom.src}
+                    alt={photos.woodRoom.alt}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 768px) 40vw, 100vw"
+                  />
+                </div>
                 <figcaption className="font-display mt-4 text-sm italic text-ink-muted">
-                  Plate II / A treatment room, mid afternoon.
+                  Plate III / A treatment room, mid afternoon.
                 </figcaption>
-              </figure>
-            </div>
+              </div>
+            </figure>
           </div>
         </div>
       </section>
@@ -242,7 +301,7 @@ export default function WarmLetterDesign() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <a
               href="mailto:hello@healingtides.co?subject=Begin"
-              className="font-display bg-ocean px-8 py-3 text-lg italic text-sand transition hover:bg-charcoal"
+              className="font-display bg-ocean px-8 py-3 text-lg italic text-sand shadow-[0_18px_40px_-20px_rgba(31,58,95,0.55)] transition hover:bg-charcoal"
             >
               Send us a letter
             </a>
@@ -260,9 +319,7 @@ export default function WarmLetterDesign() {
       <footer className="relative border-t border-rule">
         <RuleFlourish>P.S.</RuleFlourish>
         <div className="mx-auto mt-12 flex max-w-[68rem] items-center justify-between px-6 pb-10">
-          <p className="font-display text-sm italic text-ink-muted">
-            We&rsquo;ll see you in the inbox.
-          </p>
+          <p className="font-display text-sm italic text-ink-muted">We&rsquo;ll see you in the inbox.</p>
           <p className="meta text-ink-muted">© Healing Tides Collective / 2026</p>
         </div>
       </footer>
