@@ -4,6 +4,33 @@ import { photos } from "@/app/_lib/images";
 
 const directions = [
   {
+    slug: "immersive-scroll",
+    name: "Immersive · Scroll",
+    pitch:
+      "Six full-viewport chapters over one continuous photographic canvas. Photos crossfade as you scroll. Modalities pin and slide horizontally. Apple-product-page energy.",
+    swatches: ["#f7f5f2", "#1f3a5f", "#2f2f2f", "#d6ede8"],
+    anchor: "Scroll-driven",
+    photoKey: "studio" as const,
+  },
+  {
+    slug: "immersive-tides",
+    name: "Immersive · Tides",
+    pitch:
+      "The brand name as the mechanic. SVG waves morph between sections, page background shifts from sand to ocean as you scroll, hero photo dissolves into surf.",
+    swatches: ["#f7f5f2", "#d6ede8", "#5f8f8b", "#1f3a5f"],
+    anchor: "Tide-as-grammar",
+    photoKey: "sunsetGather" as const,
+  },
+  {
+    slug: "immersive-cinema",
+    name: "Immersive · Cinema",
+    pitch:
+      "Sticky full-viewport photographs as held film shots. Chapter title cards. Letterbox bars. Lifts framing for one quiet intermission. Slow film, not scroll.",
+    swatches: ["#2f2f2f", "#f7f5f2", "#1f3a5f", "#5f8f8b"],
+    anchor: "Cinematic chapters",
+    photoKey: "practice" as const,
+  },
+  {
     slug: "lifetime-style",
     name: "Lifetime",
     pitch:
@@ -85,7 +112,7 @@ export default function Page() {
           Healing Tides Collective / Design directions
         </p>
         <h1 className="font-display mt-6 max-w-3xl text-4xl leading-tight md:text-6xl md:leading-[1.05]">
-          Eight landing page directions.
+          Eleven landing page directions.
           <span className="italic text-ocean"> Pick the one that breathes right.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft md:text-lg">
