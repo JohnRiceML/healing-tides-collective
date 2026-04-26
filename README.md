@@ -8,9 +8,26 @@ A modern, guided platform for finding the right care across clinical and holisti
 
 ---
 
-## What this repo holds (right now)
+## Run locally
 
-This is the **planning + structure** phase. No code yet. The repo will become a Next.js app once the landing page work begins.
+```bash
+npm install
+npm run dev
+```
+
+Visit `http://localhost:3000` for the design index → 5 distinct landing-page directions:
+
+- `/designs/editorial-quiet` — magazine restraint, type-led
+- `/designs/cinematic-confident` — bold display over photography
+- `/designs/spacious-studio` — single column, studio energy
+- `/designs/indoor-garden` — sage + seafoam, organic shapes
+- `/designs/quiet-luxury` — symmetric, refined, one color note
+
+---
+
+## What this repo holds
+
+Phase 0 — design exploration. Next.js 16 + React 19 + Tailwind v4 scaffold with 5 landing-page variants, plus the planning docs that drove them.
 
 ```
 healing-tides-collective/
