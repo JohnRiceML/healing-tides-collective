@@ -64,6 +64,39 @@ export const photos = {
     src: u("1764082497081-a023b72c9239"),
     alt: "A person seated by a window, surrounded by plants",
   },
+
+  // --- Reference-clone hero photos (added 2026-04-26 for Lifetime / Kairos / Sacred Woman directions) ---
+
+  /** Rows of palm trees against pale teal sky from a low angle. Lifetime Coral Gables hero. */
+  palmRow: {
+    src: u("1525577288853-c6f0a020a162"),
+    alt: "Palm trees against a pale sky, late afternoon",
+  },
+  /** Rust-colored modernist desert architecture with circular openings and cacti. Kairos pop-of-color reference. */
+  desertArch: {
+    src: u("1639176656270-63c31442a611"),
+    alt: "A modernist desert structure with circular openings",
+  },
+  /** Pool with single palm and mountain backdrop, classic balustrade. Kairos hero composition. */
+  poolMountain: {
+    src: u("1768307198062-67020de156a2"),
+    alt: "Infinity pool with a palm tree and mountain backdrop",
+  },
+  /** Two palms in front of dry mountains at golden hour. Cinematic landscape backup. */
+  palmsMountain: {
+    src: u("1639932601837-3c8ed43283c7"),
+    alt: "Two palm trees against a dry mountain range",
+  },
+  /** Silhouettes against orange sunset reflection on water — Sacred Woman atmospheric hero. */
+  sunsetGather: {
+    src: u("1703967971374-f41c14978f64"),
+    alt: "Silhouettes gathered against a golden sunset on water",
+  },
+  /** Silhouettes against a deep red sunset on a quiet beach. Atmospheric, intimate. */
+  sunsetWalk: {
+    src: u("1749566787597-edb499566182"),
+    alt: "Two figures walking against a deep red sunset",
+  },
 } as const;
 
 export type PhotoKey = keyof typeof photos;

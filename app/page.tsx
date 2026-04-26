@@ -4,6 +4,33 @@ import { photos } from "@/app/_lib/images";
 
 const directions = [
   {
+    slug: "lifetime-style",
+    name: "Lifetime",
+    pitch:
+      "Cinematic full-bleed hero photo. Wide-tracked sans wordmark, big serif headline overlaid, single muted CTA. Confident resort-brand restraint.",
+    swatches: ["#f7f5f2", "#2f2f2f", "#1f3a5f", "#5f8f8b"],
+    anchor: "Lifetime Coral Gables",
+    photoKey: "palmRow" as const,
+  },
+  {
+    slug: "kairos-style",
+    name: "Kairos",
+    pitch:
+      "Massive serif wordmark on cream. Landscape pool hero with caption overlay. Two-column editorial sections, single pop of color via desert architecture.",
+    swatches: ["#f7f5f2", "#efeae1", "#2f2f2f", "#1f3a5f"],
+    anchor: "Kairos Collective",
+    photoKey: "poolMountain" as const,
+  },
+  {
+    slug: "sacred-woman-style",
+    name: "Sacred Woman",
+    pitch:
+      "Full-bleed atmospheric sunset. Headline overlaid, glassmorphic join card floats in the lower third. Tidal bookend composition.",
+    swatches: ["#2f2f2f", "#f7f5f2", "#1f3a5f", "#d6ede8"],
+    anchor: "Sacred Woman Collective",
+    photoKey: "sunsetGather" as const,
+  },
+  {
     slug: "modern",
     name: "Modern",
     pitch:
@@ -58,7 +85,7 @@ export default function Page() {
           Healing Tides Collective / Design directions
         </p>
         <h1 className="font-display mt-6 max-w-3xl text-4xl leading-tight md:text-6xl md:leading-[1.05]">
-          Five landing page directions.
+          Eight landing page directions.
           <span className="italic text-ocean"> Pick the one that breathes right.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft md:text-lg">
