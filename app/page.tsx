@@ -31,6 +31,15 @@ const directions = [
     photoKey: "practice" as const,
   },
   {
+    slug: "prana-style",
+    name: "prAna Poster",
+    pitch:
+      "Cinematic practitioner photo, oversized bold serif overlaid like an event poster, carousel chevrons. Each section is its own poster moment.",
+    swatches: ["#f7f5f2", "#2f2f2f", "#5f8f8b", "#1f3a5f"],
+    anchor: "prAna Wellness Week",
+    photoKey: "practice" as const,
+  },
+  {
     slug: "lifetime-style",
     name: "Lifetime",
     pitch:
@@ -112,7 +121,7 @@ export default function Page() {
           Healing Tides Collective / Design directions
         </p>
         <h1 className="font-display mt-6 max-w-3xl text-4xl leading-tight md:text-6xl md:leading-[1.05]">
-          Eleven landing page directions.
+          Twelve landing page directions.
           <span className="italic text-ocean"> Pick the one that breathes right.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft md:text-lg">

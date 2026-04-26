@@ -298,19 +298,17 @@ export default function ImmersiveTidesDesign() {
               className="absolute inset-0 flex flex-col justify-end px-6 pb-32 md:pb-40"
               style={{ y: heroForegroundY }}
             >
-              <div className="mx-auto w-full max-w-[72rem]">
+              <div className="mx-auto w-full max-w-[72rem] [text-shadow:0_2px_24px_rgba(0,0,0,0.45)]">
                 <motion.p
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.4, ease: TIDE_EASE, delay: 0.2 }}
-                  className="meta text-sand/80"
+                  className="meta text-sand"
                 >
                   Healing Tides Collective / 2026
                 </motion.p>
                 <motion.h1
-                  initial={{ opacity: 0, y: 64 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.6, ease: TIDE_EASE, delay: 0.35 }}
                   className="font-display mt-6 max-w-4xl text-[clamp(3rem,8vw,7rem)] leading-[0.92] tracking-[-0.03em] text-sand"
                 >
                   Find your fit.
@@ -318,19 +316,17 @@ export default function ImmersiveTidesDesign() {
                   <span className="italic text-seafoam">Like a tide returning.</span>
                 </motion.h1>
                 <motion.p
-                  initial={{ opacity: 0, y: 32 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.4, ease: TIDE_EASE, delay: 0.55 }}
-                  className="mt-8 max-w-[36rem] text-base leading-[1.7] text-sand/85 md:text-lg"
+                  className="mt-8 max-w-[36rem] text-base leading-[1.7] text-sand md:text-lg"
                 >
                   A guided care-matching service that replaces overwhelming directories
                   with a shortlist written by a person. Therapy, acupuncture, reiki,
                   movement, and trauma-informed support, held side by side.
                 </motion.p>
                 <motion.div
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 1.4, ease: TIDE_EASE, delay: 0.75 }}
                   className="mt-10 flex flex-wrap items-center gap-5"
                 >
                   <Link

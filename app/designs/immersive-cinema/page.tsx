@@ -51,6 +51,7 @@ function FilmCard({
   progress,
   cardStart = 0.05,
   cardHold = 0.55,
+  isFirst = false,
 }: {
   numeral: string;
   title: string;
@@ -58,6 +59,8 @@ function FilmCard({
   progress: MotionValue<number>;
   cardStart?: number;
   cardHold?: number;
+  /** First chapter is on screen at page load — start visible instead of fading in from invisible. */
+  isFirst?: boolean;
 }) {
   const fadeInEnd = cardStart + 0.08;
   const fadeOutStart = cardStart + cardHold;
@@ -65,21 +68,25 @@ function FilmCard({
 
   const opacity = useTransform(
     progress,
-    [cardStart, fadeInEnd, fadeOutStart, fadeOutEnd],
-    [0, 1, 1, 0],
+    isFirst
+      ? [0, fadeOutStart, fadeOutEnd]
+      : [cardStart, fadeInEnd, fadeOutStart, fadeOutEnd],
+    isFirst ? [1, 1, 0] : [0, 1, 1, 0],
   );
   const y = useTransform(
     progress,
-    [cardStart, fadeInEnd, fadeOutStart, fadeOutEnd],
-    [16, 0, 0, -16],
+    isFirst
+      ? [0, fadeOutStart, fadeOutEnd]
+      : [cardStart, fadeInEnd, fadeOutStart, fadeOutEnd],
+    isFirst ? [0, 0, -16] : [16, 0, 0, -16],
   );
 
   return (
     <motion.div
       style={{ opacity, y }}
-      className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center px-6 text-center text-sand"
+      className="pointer-events-none fixed inset-x-0 top-0 z-20 flex h-screen flex-col items-center justify-center px-6 text-center text-sand [text-shadow:0_2px_28px_rgba(0,0,0,0.6)]"
     >
-      <p className="font-display italic text-sand/80 text-base md:text-lg tracking-[0.04em]">
+      <p className="font-display italic text-sand text-base md:text-lg tracking-[0.04em] opacity-80">
         Chapter {numeral}
       </p>
       <h2
@@ -89,7 +96,7 @@ function FilmCard({
         {title}
       </h2>
       <p
-        className="font-display mt-8 max-w-2xl italic text-sand/85 leading-tight"
+        className="font-display mt-8 max-w-2xl italic text-sand leading-tight opacity-90"
         style={{ fontSize: "clamp(18px, 2vw, 28px)" }}
       >
         {statement}
@@ -150,7 +157,7 @@ function ChapterOne() {
   const scrim = useTransform(
     scrollYProgress,
     [0, 0.55, 0.7, 1],
-    [0.5, 0.5, 0.7, 0.78],
+    [0.78, 0.7, 0.72, 0.8],
   );
   const contentOpacity = useTransform(scrollYProgress, [0.62, 0.78], [0, 1]);
   const contentY = useTransform(scrollYProgress, [0.62, 0.82], [40, 0]);
@@ -173,6 +180,7 @@ function ChapterOne() {
         title="The Arrival"
         statement="She arrives at the tide. The looking is over."
         progress={scrollYProgress}
+        isFirst
       />
       <motion.div
         style={{ opacity: contentOpacity, y: contentY }}
