@@ -31,6 +31,15 @@ const directions = [
     photoKey: "practice" as const,
   },
   {
+    slug: "lifetime-video",
+    name: "Lifetime · Video Split",
+    pitch:
+      "Vertical 50/50 split with two crossfading photo wells per section, reading as ambient looping video. Lifetime's signature split-screen pattern in the wellness palette.",
+    swatches: ["#f7f5f2", "#2f2f2f", "#1f3a5f", "#5f8f8b"],
+    anchor: "Lifetime split-screen",
+    photoKey: "studio" as const,
+  },
+  {
     slug: "prana-style",
     name: "prAna Poster",
     pitch:
@@ -121,7 +130,7 @@ export default function Page() {
           Healing Tides Collective / Design directions
         </p>
         <h1 className="font-display mt-6 max-w-3xl text-4xl leading-tight md:text-6xl md:leading-[1.05]">
-          Twelve landing page directions.
+          Thirteen landing page directions.
           <span className="italic text-ocean"> Pick the one that breathes right.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft md:text-lg">
