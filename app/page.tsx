@@ -13,24 +13,6 @@ const directions = [
     photoKey: "studio" as const,
   },
   {
-    slug: "immersive-tides",
-    name: "Immersive · Tides",
-    pitch:
-      "The brand name as the mechanic. SVG waves morph between sections, page background shifts from sand to ocean as you scroll, hero photo dissolves into surf.",
-    swatches: ["#f7f5f2", "#d6ede8", "#5f8f8b", "#1f3a5f"],
-    anchor: "Tide-as-grammar",
-    photoKey: "sunsetGather" as const,
-  },
-  {
-    slug: "immersive-cinema",
-    name: "Immersive · Cinema",
-    pitch:
-      "Sticky full-viewport photographs as held film shots. Chapter title cards. Letterbox bars. Lifts framing for one quiet intermission. Slow film, not scroll.",
-    swatches: ["#2f2f2f", "#f7f5f2", "#1f3a5f", "#5f8f8b"],
-    anchor: "Cinematic chapters",
-    photoKey: "practice" as const,
-  },
-  {
     slug: "lifetime-video",
     name: "Lifetime · Video Split",
     pitch:
@@ -49,15 +31,6 @@ const directions = [
     photoKey: "practice" as const,
   },
   {
-    slug: "lifetime-style",
-    name: "Lifetime",
-    pitch:
-      "Cinematic full-bleed hero photo. Wide-tracked sans wordmark, big serif headline overlaid, single muted CTA. Confident resort-brand restraint.",
-    swatches: ["#f7f5f2", "#2f2f2f", "#1f3a5f", "#5f8f8b"],
-    anchor: "Lifetime Coral Gables",
-    photoKey: "palmRow" as const,
-  },
-  {
     slug: "kairos-style",
     name: "Kairos",
     pitch:
@@ -65,24 +38,6 @@ const directions = [
     swatches: ["#f7f5f2", "#efeae1", "#2f2f2f", "#1f3a5f"],
     anchor: "Kairos Collective",
     photoKey: "poolMountain" as const,
-  },
-  {
-    slug: "sacred-woman-style",
-    name: "Sacred Woman",
-    pitch:
-      "Full-bleed atmospheric sunset. Headline overlaid, glassmorphic join card floats in the lower third. Tidal bookend composition.",
-    swatches: ["#2f2f2f", "#f7f5f2", "#1f3a5f", "#d6ede8"],
-    anchor: "Sacred Woman Collective",
-    photoKey: "sunsetGather" as const,
-  },
-  {
-    slug: "modern",
-    name: "Modern",
-    pitch:
-      "Floating pill nav, full-bleed hero photo, bento grid for value props, double-bezel cards. Linear-tier polish in a wellness palette.",
-    swatches: ["#f7f5f2", "#1f3a5f", "#a8bfa3", "#d6ede8"],
-    anchor: "2026 wellness brand",
-    photoKey: "threshold" as const,
   },
   {
     slug: "editorial",
@@ -102,24 +57,6 @@ const directions = [
     anchor: "Attic workspace",
     photoKey: "teaPour" as const,
   },
-  {
-    slug: "gallery",
-    name: "Gallery",
-    pitch:
-      "Monumental display, exhibition-style sections, real photography as exhibits, asymmetric grids.",
-    swatches: ["#f7f5f2", "#2f2f2f", "#5f8f8b", "#d6ede8"],
-    anchor: "prAna confidence",
-    photoKey: "studio" as const,
-  },
-  {
-    slug: "minimalist",
-    name: "Minimalist",
-    pitch:
-      "Single Fraunces serif everywhere. Hairline rules, text-link CTAs, one restrained photograph. Quiet luxury.",
-    swatches: ["#f7f5f2", "#2f2f2f", "#1f3a5f", "#a8bfa3"],
-    anchor: "Spa courtyard",
-    photoKey: "landing" as const,
-  },
 ];
 
 export default function Page() {
@@ -130,13 +67,13 @@ export default function Page() {
           Healing Tides Collective / Design directions
         </p>
         <h1 className="font-display mt-6 max-w-3xl text-4xl leading-tight md:text-6xl md:leading-[1.05]">
-          Thirteen landing page directions.
+          Six landing page directions.
           <span className="italic text-ocean"> Pick the one that breathes right.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft md:text-lg">
           A modern care-matching platform that replaces overwhelming directories with a guided, matching-based
           experience across clinical and holistic wellness. Each direction below is a complete landing page
-          serving the same dual-sided story for seekers and practitioners. Same brand, five different visual
+          serving the same dual-sided story for seekers and practitioners. Same brand, six different visual
           systems.
         </p>
       </header>
