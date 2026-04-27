@@ -94,11 +94,14 @@ function PinnedHeadline({
   children,
   body,
   align = "left",
+  isFirst = false,
 }: {
   eyebrow: string;
   children: React.ReactNode;
   body?: React.ReactNode;
   align?: "left" | "right" | "center";
+  /** First chapter is on screen at page load — render visible from first paint, no fade-in. */
+  isFirst?: boolean;
 }) {
   const justify =
     align === "right" ? "items-end text-right" : align === "center" ? "items-center text-center" : "items-start text-left";
@@ -106,7 +109,7 @@ function PinnedHeadline({
   return (
     <motion.div
       className={`flex flex-col ${justify} ${maxW}`}
-      initial={{ opacity: 0, y: 24 }}
+      initial={isFirst ? false : { opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: false, amount: 0.5 }}
       transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -194,24 +197,20 @@ function ChapterIndexRow({
     const distance = Math.abs(v - i);
     return distance < 0.5 ? 1 : 0.55;
   });
-  const labelOpacity = useTransform(active, (v) => (Math.abs(v - i) < 0.5 ? 1 : 0));
   return (
-    <li className="flex items-center gap-3">
+    <li className="flex items-center" aria-label={`${chapter.index} / ${chapter.label}`}>
       <motion.span
-        className="block h-[10px] w-[10px] rounded-full bg-sand"
+        className="block h-[8px] w-[8px] rounded-full bg-sand"
         style={{ opacity: dotOpacity, scale: dotScale }}
       />
-      <motion.span className="meta text-sand" style={{ opacity: labelOpacity }}>
-        {chapter.index} / {chapter.label}
-      </motion.span>
     </li>
   );
 }
 
 function ChapterIndex({ active }: { active: MotionValue<number> }) {
   return (
-    <div className="pointer-events-none fixed left-6 top-1/2 z-30 hidden -translate-y-1/2 md:block">
-      <ul className="flex flex-col gap-4">
+    <div className="pointer-events-none fixed left-5 top-1/2 z-30 hidden -translate-y-1/2 md:block">
+      <ul className="flex flex-col gap-5">
         {chapters.map((c, i) => (
           <ChapterIndexRow key={c.label} chapter={c} i={i} active={active} />
         ))}
@@ -333,6 +332,7 @@ export default function ImmersiveScrollDesign() {
                   </>
                 }
                 align={chapters[0].align}
+                isFirst
               >
                 Less searching.
                 <br />
