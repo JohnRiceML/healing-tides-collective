@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="bg-sand text-charcoal antialiased">{children}</body>
+      <GoogleAnalytics gaId="G-EJZ1TBDT3W" />
     </html>
   );
 }
