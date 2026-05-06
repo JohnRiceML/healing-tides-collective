@@ -271,11 +271,12 @@ function PersistentBeginCTA({ active }: { active: MotionValue<number> }) {
     <motion.a
       href="#begin"
       aria-label="Jump to Begin section"
-      className="meta fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-sand/95 px-5 py-3 text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:bg-seafoam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:bottom-8 sm:right-8"
+      className="group meta fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-sand/95 px-5 py-3 text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:bg-seafoam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:bottom-8 sm:right-8"
       style={{ opacity, visibility, pointerEvents }}
       transition={{ opacity: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
     >
-      Begin <span aria-hidden>→</span>
+      Begin
+      <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-full bg-charcoal/10 text-[11px] transition-transform group-hover:translate-x-0.5">→</span>
     </motion.a>
   );
 }
@@ -347,6 +348,7 @@ export default function ImmersiveScrollDesign() {
       <PersistentBeginCTA active={active} />
 
       <main
+        id="main-content"
         ref={containerRef}
         className="relative bg-charcoal text-sand"
       >
@@ -452,7 +454,7 @@ export default function ImmersiveScrollDesign() {
                   {modalityCards.map((m, i) => (
                     <li
                       key={m.name}
-                      className="w-[78vw] shrink-0 snap-center rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md"
+                      className="w-[78vw] shrink-0 snap-center rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)]"
                     >
                       <span className="meta text-seafoam">
                         {String(i + 1).padStart(2, "0")} / Modality
@@ -519,7 +521,7 @@ export default function ImmersiveScrollDesign() {
                       delay: 0.15 * i,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className="rounded-3xl border border-sand/15 bg-charcoal/40 p-8 backdrop-blur-md md:p-10"
+                    className="rounded-3xl border border-sand/15 bg-charcoal/40 p-8 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)] md:p-10"
                   >
                     <span className="font-display text-5xl leading-none text-seafoam md:text-6xl">
                       {s.n}
@@ -565,7 +567,7 @@ export default function ImmersiveScrollDesign() {
                 ].map((s) => (
                   <div
                     key={s.l}
-                    className="rounded-2xl border border-sand/15 bg-charcoal/40 p-5 backdrop-blur-md"
+                    className="rounded-2xl border border-sand/15 bg-charcoal/40 p-5 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)]"
                   >
                     <p className="font-display text-3xl text-seafoam md:text-4xl">{s.n}</p>
                     <p className="mt-3 text-xs leading-snug text-sand/75">{s.l}</p>
@@ -675,7 +677,7 @@ export default function ImmersiveScrollDesign() {
                 {/* Secondary — practitioner */}
                 <a
                   href="mailto:hello@healingtides.co?subject=Practitioner%20inquiry"
-                  className="group flex flex-col rounded-3xl border border-sand/35 bg-charcoal/40 p-7 text-left text-sand backdrop-blur-md transition-colors hover:border-sand/70 hover:bg-charcoal/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
+                  className="group flex flex-col rounded-3xl border border-sand/35 bg-charcoal/40 p-7 text-left text-sand backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)] transition-colors hover:border-sand/70 hover:bg-charcoal/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-sand/70">For practitioners</span>
                   <span className="font-display mt-4 text-2xl leading-tight md:text-[28px]">
