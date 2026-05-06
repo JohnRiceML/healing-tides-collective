@@ -129,31 +129,23 @@ function PinnedHeadline({
 
 function ChapterPhoto({
   photoKey,
-  i,
-  total,
   progress,
   priority = false,
 }: {
   photoKey: PhotoKey;
-  i: number;
-  total: number;
+  // Per-section scroll progress: 0 = section just entering bottom of viewport,
+  // 0.5 = section centered in viewport, 1 = section just exiting top.
+  // Math holds for any section height (100vh, 180vh, etc.).
   progress: MotionValue<number>;
   priority?: boolean;
 }) {
   const photo = photos[photoKey];
-  const opacity = useTransform(progress, (v) => {
-    const center = i / (total - 1);
-    const window = 1 / (total - 1);
-    const distance = Math.abs(v - center);
-    if (distance >= window) return 0;
-    const t = 1 - distance / window;
-    return Math.pow(t, 1.4);
-  });
-  const scale = useTransform(progress, (v) => {
-    const center = i / (total - 1);
-    const distance = Math.abs(v - center);
-    return 1.05 - Math.min(0.05, distance * 0.5);
-  });
+  // Peak opacity while section straddles viewport center. The plateau between
+  // 0.42 and 0.58 keeps the photo at full strength through the natural reading
+  // window. Symmetric ramps make adjacent chapters crossfade evenly.
+  const opacity = useTransform(progress, [0, 0.32, 0.42, 0.58, 0.68, 1], [0, 0.85, 1, 1, 0.85, 0]);
+  // Subtle parallax: photo grows from 1.04 to 1.10 as the section travels through.
+  const scale = useTransform(progress, [0, 1], [1.04, 1.1]);
   return (
     <motion.div
       className="absolute inset-0 will-change-[opacity,transform]"
@@ -290,7 +282,12 @@ function PersistentBeginCTA({ active }: { active: MotionValue<number> }) {
 
 export default function ImmersiveScrollDesign() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const modalitiesRef = useRef<HTMLDivElement | null>(null);
+  const missionRef = useRef<HTMLElement | null>(null);
+  const modalitiesRef = useRef<HTMLElement | null>(null);
+  const howRef = useRef<HTMLElement | null>(null);
+  const practitionersRef = useRef<HTMLElement | null>(null);
+  const faqRef = useRef<HTMLElement | null>(null);
+  const beginRef = useRef<HTMLElement | null>(null);
 
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
   const smoothProgress = useSpring(scrollYProgress, {
@@ -302,11 +299,44 @@ export default function ImmersiveScrollDesign() {
   const total = chapters.length;
   const active = useTransform(smoothProgress, (v) => v * (total - 1));
 
+  // Per-section scroll progress drives each ChapterPhoto crossfade so that the
+  // visible chapter's photo peaks when its section is centered in the viewport,
+  // regardless of section height (Modalities is 180vh, others ~100vh).
+  const { scrollYProgress: missionProgress } = useScroll({
+    target: missionRef,
+    offset: ["start end", "end start"],
+  });
   const { scrollYProgress: modProgress } = useScroll({
     target: modalitiesRef,
     offset: ["start end", "end start"],
   });
-  // Desktop scroll-driven horizontal pan. On mobile we swap to native snap scroll.
+  const { scrollYProgress: howProgress } = useScroll({
+    target: howRef,
+    offset: ["start end", "end start"],
+  });
+  const { scrollYProgress: practitionersProgress } = useScroll({
+    target: practitionersRef,
+    offset: ["start end", "end start"],
+  });
+  const { scrollYProgress: faqProgress } = useScroll({
+    target: faqRef,
+    offset: ["start end", "end start"],
+  });
+  const { scrollYProgress: beginProgress } = useScroll({
+    target: beginRef,
+    offset: ["start end", "end start"],
+  });
+  const sectionProgresses = [
+    missionProgress,
+    modProgress,
+    howProgress,
+    practitionersProgress,
+    faqProgress,
+    beginProgress,
+  ];
+
+  // Desktop scroll-driven horizontal pan inside the Modalities section uses the
+  // same per-section progress signal as the photo crossfade.
   const modX = useTransform(modProgress, [0.0, 1.0], ["6%", "-58%"]);
 
   return (
@@ -326,9 +356,7 @@ export default function ImmersiveScrollDesign() {
             <ChapterPhoto
               key={c.photoKey}
               photoKey={c.photoKey}
-              i={i}
-              total={total}
-              progress={smoothProgress}
+              progress={sectionProgresses[i]}
               priority={i === 0}
             />
           ))}
@@ -347,6 +375,7 @@ export default function ImmersiveScrollDesign() {
         <div className="relative z-10 -mt-[100dvh]">
           {/* Chapter 01 — Mission */}
           <section
+            ref={missionRef}
             id="mission"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
           >
@@ -461,6 +490,7 @@ export default function ImmersiveScrollDesign() {
 
           {/* Chapter 03 — How it works */}
           <section
+            ref={howRef}
             id="how"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
           >
@@ -506,6 +536,7 @@ export default function ImmersiveScrollDesign() {
 
           {/* Chapter 04 — Practitioners */}
           <section
+            ref={practitionersRef}
             id="practitioners"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
           >
@@ -557,6 +588,7 @@ export default function ImmersiveScrollDesign() {
 
           {/* Chapter 05 — FAQ */}
           <section
+            ref={faqRef}
             id="faq"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
           >
@@ -598,6 +630,7 @@ export default function ImmersiveScrollDesign() {
 
           {/* Chapter 06 — Begin (dual CTAs: client + practitioner) */}
           <section
+            ref={beginRef}
             id="begin"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
           >
