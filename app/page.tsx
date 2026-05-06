@@ -11,6 +11,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { photos, type PhotoKey } from "@/app/_lib/images";
+import VideoWell from "@/app/_components/VideoWell";
 
 type Chapter = {
   index: string;
@@ -254,9 +255,44 @@ function ProgressBar({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
+/**
+ * PersistentBeginCTA — a floating pill that anchors to #begin.
+ * Visible only while the user is moving through chapters 01-05.
+ * Hidden on the hero/chapter-00 (so the page opens clean) and on
+ * the Begin chapter itself (it's already the destination).
+ *
+ * Reduced-motion users get a hard show/hide via display toggle.
+ */
+function PersistentBeginCTA({ active }: { active: MotionValue<number> }) {
+  // Visible window: 0.5 ≤ active ≤ 5.5 (chapters 01..05 inclusive).
+  // We bind pointer-events to opacity sign so the hidden CTA cannot steal taps.
+  // Using opacity (animatable) + visibility (snap on/off) gives a calm fade
+  // without ever rendering display:none mid-flight (which would break Tab focus
+  // trap timing for keyboard users).
+  const opacity = useTransform(active, (v) => (v < 0.5 || v > 5.5 ? 0 : 1));
+  const visibility = useTransform<number, "hidden" | "visible">(active, (v) =>
+    v < 0.5 || v > 5.5 ? "hidden" : "visible",
+  );
+  const pointerEvents = useTransform<number, "none" | "auto">(active, (v) =>
+    v < 0.5 || v > 5.5 ? "none" : "auto",
+  );
+  return (
+    <motion.a
+      href="#begin"
+      aria-label="Jump to Begin section"
+      className="meta fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-sand/95 px-5 py-3 text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md transition-colors hover:bg-seafoam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:bottom-8 sm:right-8"
+      style={{ opacity, visibility, pointerEvents }}
+      transition={{ opacity: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
+    >
+      Begin <span aria-hidden>→</span>
+    </motion.a>
+  );
+}
+
 export default function ImmersiveScrollDesign() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const modalitiesRef = useRef<HTMLDivElement | null>(null);
+  const getMatchedRef = useRef<HTMLDivElement | null>(null);
 
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
   const smoothProgress = useSpring(scrollYProgress, {
@@ -272,20 +308,22 @@ export default function ImmersiveScrollDesign() {
     target: modalitiesRef,
     offset: ["start end", "end start"],
   });
+  // Desktop scroll-driven horizontal pan. On mobile we swap to native snap scroll.
   const modX = useTransform(modProgress, [0.0, 1.0], ["6%", "-58%"]);
+
+  // Get Matched: drive a subtle parallax/zoom on the steps content as user scrolls through.
+  const { scrollYProgress: matchedProgress } = useScroll({
+    target: getMatchedRef,
+    offset: ["start end", "end start"],
+  });
+  const matchedOverlayOpacity = useTransform(matchedProgress, [0, 0.2, 0.8, 1], [0.55, 0.7, 0.7, 0.55]);
 
   return (
     <MotionConfig reducedMotion="user">
       <ProgressBar progress={smoothProgress} />
       <ChapterIndex active={active} />
       <ChapterBadge active={active} />
-
-      <a
-        href="#begin"
-        className="meta fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-sand/95 px-5 py-3 text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] transition-colors hover:bg-seafoam"
-      >
-        Begin <span aria-hidden>→</span>
-      </a>
+      <PersistentBeginCTA active={active} />
 
       <main
         ref={containerRef}
@@ -368,12 +406,49 @@ export default function ImmersiveScrollDesign() {
             </div>
           </section>
 
-          {/* Chapter 02 — Modalities (horizontal slide) */}
+          {/* Find Your Fit — STATIC BREAK (not a chapter, opaque bg covers sticky photo well) */}
+          {/* Layout: 50/50 desktop (text left, VideoWell right). Stack mobile (well on top). */}
+          <section
+            id="find-your-fit"
+            aria-label="Find your fit"
+            className="relative bg-sand text-charcoal"
+          >
+            <div className="grid min-h-[80vh] grid-cols-1 md:grid-cols-2">
+              {/* Mobile: VideoWell first (top). Desktop: text left, well right via order. */}
+              <div className="order-1 h-[60vh] md:order-2 md:h-auto">
+                <VideoWell
+                  keys={["practice", "acupuncture", "windowView", "teaPour"]}
+                  interval={5800}
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                />
+              </div>
+              <div className="order-2 flex items-center justify-center px-6 py-16 md:order-1 md:px-12 md:py-24">
+                <div className="max-w-md">
+                  <p className="meta text-charcoal/60">A short break</p>
+                  <h2
+                    className="font-display mt-8 leading-[0.95] tracking-[-0.025em] text-charcoal"
+                    style={{ fontSize: "clamp(34px, 5vw, 64px)" }}
+                  >
+                    Find your fit.
+                  </h2>
+                  <p className="mt-8 text-[16px] leading-[1.7] text-charcoal/75 md:text-lg">
+                    Matching is not a search box. A person reads what you sent, considers
+                    the modalities, the practitioner&rsquo;s availability and temperament,
+                    and writes back with a shortlist. Three to five names. Each with a
+                    reason.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Chapter 02 — Modalities (horizontal slide on desktop, native snap carousel on mobile) */}
           <section
             ref={modalitiesRef}
-            className="relative min-h-[180vh] px-6 md:px-16"
+            className="relative md:min-h-[180vh] px-0 md:px-16"
           >
-            <div className="sticky top-0 flex h-[100dvh] flex-col justify-center">
+            {/* Desktop: sticky scroll-driven pan. Mobile: native snap-x carousel that doesn't fight page scroll. */}
+            <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
               <div className="mx-auto w-full max-w-[1400px]">
                 <PinnedHeadline
                   eyebrow={`${chapters[1].index} / ${chapters[1].label}`}
@@ -384,28 +459,47 @@ export default function ImmersiveScrollDesign() {
                   <br />
                   <span className="italic text-seafoam">side by side.</span>
                 </PinnedHeadline>
+              </div>
 
-                <div className="mt-14 overflow-hidden">
-                  <motion.ul
-                    style={{ x: modX }}
-                    className="flex w-max gap-6 will-change-transform"
-                  >
-                    {modalityCards.map((m, i) => (
-                      <li
-                        key={m.name}
-                        className="w-[78vw] max-w-[380px] shrink-0 rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md md:w-[34vw]"
-                      >
-                        <span className="meta text-seafoam">
-                          {String(i + 1).padStart(2, "0")} / Modality
-                        </span>
-                        <h3 className="font-display mt-6 text-3xl leading-tight text-sand">
-                          {m.name}
-                        </h3>
-                        <p className="mt-4 text-[15px] leading-[1.7] text-sand/80">{m.line}</p>
-                      </li>
-                    ))}
-                  </motion.ul>
-                </div>
+              {/* Mobile: snap-x snap-mandatory horizontal scroll. Desktop: scroll-driven motion pan. */}
+              <div className="mt-14 md:overflow-hidden">
+                {/* Mobile carousel */}
+                <ul className="flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {modalityCards.map((m, i) => (
+                    <li
+                      key={m.name}
+                      className="w-[78vw] shrink-0 snap-center rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md"
+                    >
+                      <span className="meta text-seafoam">
+                        {String(i + 1).padStart(2, "0")} / Modality
+                      </span>
+                      <h3 className="font-display mt-6 text-3xl leading-tight text-sand">
+                        {m.name}
+                      </h3>
+                      <p className="mt-4 text-[15px] leading-[1.7] text-sand/80">{m.line}</p>
+                    </li>
+                  ))}
+                </ul>
+                {/* Desktop scroll-driven pan */}
+                <motion.ul
+                  style={{ x: modX }}
+                  className="hidden md:flex w-max gap-6 will-change-transform"
+                >
+                  {modalityCards.map((m, i) => (
+                    <li
+                      key={m.name}
+                      className="w-[78vw] max-w-[380px] shrink-0 rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md md:w-[34vw]"
+                    >
+                      <span className="meta text-seafoam">
+                        {String(i + 1).padStart(2, "0")} / Modality
+                      </span>
+                      <h3 className="font-display mt-6 text-3xl leading-tight text-sand">
+                        {m.name}
+                      </h3>
+                      <p className="mt-4 text-[15px] leading-[1.7] text-sand/80">{m.line}</p>
+                    </li>
+                  ))}
+                </motion.ul>
               </div>
             </div>
           </section>
@@ -452,6 +546,74 @@ export default function ImmersiveScrollDesign() {
                   </motion.li>
                 ))}
               </ol>
+            </div>
+          </section>
+
+          {/* Get Matched — STATIC BREAK with scrolling photos behind the steps. Augments How section. */}
+          {/* VideoWell sits as a fixed-position background within this section's local stacking. */}
+          <section
+            ref={getMatchedRef}
+            id="get-matched"
+            aria-label="Get matched"
+            className="relative overflow-hidden bg-charcoal text-sand"
+          >
+            {/* Background photo well (sticky inside section so it scrolls with the section but stays visible) */}
+            <div className="pointer-events-none sticky top-0 h-[100dvh] w-full">
+              <VideoWell
+                keys={["studio", "landing", "desk", "attic"]}
+                interval={6500}
+                sizes="100vw"
+              />
+              <motion.div
+                className="absolute inset-0 bg-charcoal"
+                style={{ opacity: matchedOverlayOpacity }}
+                aria-hidden
+              />
+            </div>
+
+            {/* Foreground content pulls up over the sticky well */}
+            <div className="relative z-10 -mt-[100dvh] px-6 py-24 md:px-16 md:py-32">
+              <div className="mx-auto w-full max-w-[1400px]">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false, amount: 0.4 }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                  className="max-w-2xl"
+                >
+                  <span className="meta text-seafoam/90">Get matched</span>
+                  <h2 className="font-display mt-6 text-[clamp(38px,6vw,80px)] leading-[0.95] tracking-[-0.03em] text-sand">
+                    What it looks like
+                    <br />
+                    <span className="italic text-seafoam">from your side.</span>
+                  </h2>
+                </motion.div>
+
+                <ol className="mt-16 grid grid-cols-1 gap-5 md:mt-24 md:grid-cols-3">
+                  {steps.map((s, i) => (
+                    <motion.li
+                      key={s.n}
+                      initial={{ opacity: 0, y: 32 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false, amount: 0.4 }}
+                      transition={{
+                        duration: 0.8,
+                        delay: 0.15 * i,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="rounded-3xl border border-sand/20 bg-charcoal/55 p-8 backdrop-blur-lg md:p-10"
+                    >
+                      <span className="font-display text-5xl leading-none text-seafoam md:text-6xl">
+                        {s.n}
+                      </span>
+                      <h3 className="font-display mt-8 text-2xl leading-tight text-sand md:text-[28px]">
+                        {s.title}
+                      </h3>
+                      <p className="mt-4 text-[15px] leading-[1.7] text-sand/85">{s.body}</p>
+                    </motion.li>
+                  ))}
+                </ol>
+              </div>
             </div>
           </section>
 
@@ -547,7 +709,7 @@ export default function ImmersiveScrollDesign() {
             </div>
           </section>
 
-          {/* Chapter 06 — Begin */}
+          {/* Chapter 06 — Begin (dual CTAs: client + practitioner) */}
           <section
             id="begin"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
@@ -564,48 +726,54 @@ export default function ImmersiveScrollDesign() {
               <PinnedHeadline
                 eyebrow={`${chapters[5].index} / ${chapters[5].label}`}
                 align="center"
-                body="Tell us where you are. We answer with names, by name, within five business days. The first match is free."
               >
-                Two paragraphs.
-                <br />
-                <span className="italic text-seafoam">A real reply.</span>
+                Begin.
               </PinnedHeadline>
 
-              <motion.form
-                action="mailto:hello@healingtides.co"
-                method="post"
-                encType="text/plain"
+              <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, amount: 0.5 }}
+                viewport={{ once: false, amount: 0.4 }}
                 transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="mx-auto mt-12 flex w-full max-w-xl flex-col gap-3 sm:flex-row"
+                className="mx-auto mt-14 grid w-full max-w-2xl grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-5"
               >
-                <label htmlFor="email" className="sr-only">
-                  Your email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="you@somewhere.com"
-                  className="flex-1 rounded-full border border-sand/30 bg-charcoal/40 px-6 py-4 text-base text-sand placeholder:text-sand/45 backdrop-blur-md outline-none transition-colors focus:border-seafoam"
-                />
-                <button
-                  type="submit"
-                  className="meta inline-flex items-center justify-center gap-2 rounded-full bg-seafoam px-6 py-4 text-charcoal transition-colors hover:bg-sand"
+                {/* Primary — client / seeker */}
+                <a
+                  href="mailto:hello@healingtides.co?subject=Get%20matched"
+                  className="group flex flex-col rounded-3xl bg-seafoam p-7 text-left text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
-                  Begin →
-                </button>
-              </motion.form>
+                  <span className="meta text-charcoal/70">For seekers</span>
+                  <span className="font-display mt-4 text-2xl leading-tight md:text-[28px]">
+                    I&rsquo;m seeking care
+                    <span aria-hidden className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
+                  </span>
+                  <span className="mt-4 text-[14px] leading-[1.6] text-charcoal/80">
+                    Two paragraphs. We choose the right person.
+                  </span>
+                </a>
+
+                {/* Secondary — practitioner */}
+                <a
+                  href="mailto:hello@healingtides.co?subject=Practitioner%20inquiry"
+                  className="group flex flex-col rounded-3xl border border-sand/35 bg-charcoal/40 p-7 text-left text-sand backdrop-blur-md transition-colors hover:border-sand/70 hover:bg-charcoal/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
+                >
+                  <span className="meta text-sand/70">For practitioners</span>
+                  <span className="font-display mt-4 text-2xl leading-tight md:text-[28px]">
+                    I&rsquo;m a practitioner
+                    <span aria-hidden className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
+                  </span>
+                  <span className="mt-4 text-[14px] leading-[1.6] text-sand/80">
+                    Tell us about your practice. We will read it.
+                  </span>
+                </a>
+              </motion.div>
 
               <motion.p
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: false, amount: 0.5 }}
                 transition={{ duration: 1.2, delay: 0.6 }}
-                className="meta mt-8 text-sand/65"
+                className="meta mt-10 text-sand/65"
               >
                 or write directly to{" "}
                 <a
