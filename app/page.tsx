@@ -11,7 +11,6 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { photos, type PhotoKey } from "@/app/_lib/images";
-import VideoWell from "@/app/_components/VideoWell";
 
 type Chapter = {
   index: string;
@@ -292,7 +291,6 @@ function PersistentBeginCTA({ active }: { active: MotionValue<number> }) {
 export default function ImmersiveScrollDesign() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const modalitiesRef = useRef<HTMLDivElement | null>(null);
-  const getMatchedRef = useRef<HTMLDivElement | null>(null);
 
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
   const smoothProgress = useSpring(scrollYProgress, {
@@ -310,13 +308,6 @@ export default function ImmersiveScrollDesign() {
   });
   // Desktop scroll-driven horizontal pan. On mobile we swap to native snap scroll.
   const modX = useTransform(modProgress, [0.0, 1.0], ["6%", "-58%"]);
-
-  // Get Matched: drive a subtle parallax/zoom on the steps content as user scrolls through.
-  const { scrollYProgress: matchedProgress } = useScroll({
-    target: getMatchedRef,
-    offset: ["start end", "end start"],
-  });
-  const matchedOverlayOpacity = useTransform(matchedProgress, [0, 0.2, 0.8, 1], [0.55, 0.7, 0.7, 0.55]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -403,42 +394,6 @@ export default function ImmersiveScrollDesign() {
               >
                 Scroll to continue ↓
               </motion.p>
-            </div>
-          </section>
-
-          {/* Find Your Fit — STATIC BREAK (not a chapter, opaque bg covers sticky photo well) */}
-          {/* Layout: 50/50 desktop (text left, VideoWell right). Stack mobile (well on top). */}
-          <section
-            id="find-your-fit"
-            aria-label="Find your fit"
-            className="relative bg-sand text-charcoal"
-          >
-            <div className="grid min-h-[80vh] grid-cols-1 md:grid-cols-2">
-              {/* Mobile: VideoWell first (top). Desktop: text left, well right via order. */}
-              <div className="order-1 h-[60vh] md:order-2 md:h-auto">
-                <VideoWell
-                  keys={["practice", "acupuncture", "windowView", "teaPour"]}
-                  interval={5800}
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                />
-              </div>
-              <div className="order-2 flex items-center justify-center px-6 py-16 md:order-1 md:px-12 md:py-24">
-                <div className="max-w-md">
-                  <p className="meta text-charcoal/60">A short break</p>
-                  <h2
-                    className="font-display mt-8 leading-[0.95] tracking-[-0.025em] text-charcoal"
-                    style={{ fontSize: "clamp(34px, 5vw, 64px)" }}
-                  >
-                    Find your fit.
-                  </h2>
-                  <p className="mt-8 text-[16px] leading-[1.7] text-charcoal/75 md:text-lg">
-                    Matching is not a search box. A person reads what you sent, considers
-                    the modalities, the practitioner&rsquo;s availability and temperament,
-                    and writes back with a shortlist. Three to five names. Each with a
-                    reason.
-                  </p>
-                </div>
-              </div>
             </div>
           </section>
 
@@ -546,74 +501,6 @@ export default function ImmersiveScrollDesign() {
                   </motion.li>
                 ))}
               </ol>
-            </div>
-          </section>
-
-          {/* Get Matched — STATIC BREAK with scrolling photos behind the steps. Augments How section. */}
-          {/* VideoWell sits as a fixed-position background within this section's local stacking. */}
-          <section
-            ref={getMatchedRef}
-            id="get-matched"
-            aria-label="Get matched"
-            className="relative overflow-hidden bg-charcoal text-sand"
-          >
-            {/* Background photo well (sticky inside section so it scrolls with the section but stays visible) */}
-            <div className="pointer-events-none sticky top-0 h-[100dvh] w-full">
-              <VideoWell
-                keys={["studio", "landing", "desk", "attic"]}
-                interval={6500}
-                sizes="100vw"
-              />
-              <motion.div
-                className="absolute inset-0 bg-charcoal"
-                style={{ opacity: matchedOverlayOpacity }}
-                aria-hidden
-              />
-            </div>
-
-            {/* Foreground content pulls up over the sticky well */}
-            <div className="relative z-10 -mt-[100dvh] px-6 py-24 md:px-16 md:py-32">
-              <div className="mx-auto w-full max-w-[1400px]">
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: false, amount: 0.4 }}
-                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                  className="max-w-2xl"
-                >
-                  <span className="meta text-seafoam/90">Get matched</span>
-                  <h2 className="font-display mt-6 text-[clamp(38px,6vw,80px)] leading-[0.95] tracking-[-0.03em] text-sand">
-                    What it looks like
-                    <br />
-                    <span className="italic text-seafoam">from your side.</span>
-                  </h2>
-                </motion.div>
-
-                <ol className="mt-16 grid grid-cols-1 gap-5 md:mt-24 md:grid-cols-3">
-                  {steps.map((s, i) => (
-                    <motion.li
-                      key={s.n}
-                      initial={{ opacity: 0, y: 32 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: 0.4 }}
-                      transition={{
-                        duration: 0.8,
-                        delay: 0.15 * i,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className="rounded-3xl border border-sand/20 bg-charcoal/55 p-8 backdrop-blur-lg md:p-10"
-                    >
-                      <span className="font-display text-5xl leading-none text-seafoam md:text-6xl">
-                        {s.n}
-                      </span>
-                      <h3 className="font-display mt-8 text-2xl leading-tight text-sand md:text-[28px]">
-                        {s.title}
-                      </h3>
-                      <p className="mt-4 text-[15px] leading-[1.7] text-sand/85">{s.body}</p>
-                    </motion.li>
-                  ))}
-                </ol>
-              </div>
             </div>
           </section>
 
