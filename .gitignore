@@ -46,3 +46,6 @@ coverage/
 
 # OS / misc
 Thumbs.db
+
+# remember-plugin local buffer
+.remember/
