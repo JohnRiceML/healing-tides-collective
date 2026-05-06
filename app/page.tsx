@@ -32,15 +32,15 @@ const chapters: Chapter[] = [
 const modalityCards = [
   {
     name: "Therapy",
-    line: "Licensed clinicians who answer the phone before the pitch.",
+    line: "Licensed clinicians who pick up the phone before the pitch.",
   },
   {
     name: "Acupuncture",
-    line: "Practitioners with a real clinical record, not a weekend course.",
+    line: "Practitioners with a real clinical record. Not a weekend course.",
   },
   {
     name: "Reiki",
-    line: "Energy work held with care and clear consent. No mystique theatre.",
+    line: "Energy work, held with care. Clear consent, no mysticism.",
   },
   {
     name: "Movement",
@@ -48,7 +48,7 @@ const modalityCards = [
   },
   {
     name: "Trauma-informed",
-    line: "Across modalities. Pace set by you, never by the practitioner.",
+    line: "Across every modality. You set the pace. Not the practitioner.",
   },
 ];
 
@@ -56,12 +56,12 @@ const steps = [
   {
     n: "01",
     title: "Tell us where you are.",
-    body: "Two paragraphs is plenty. Plain language. We do not send you a form.",
+    body: "Two paragraphs is plenty. Plain language. No forms.",
   },
   {
     n: "02",
     title: "Read the shortlist.",
-    body: "Three to five practitioners chosen by a person. Each named with a reason.",
+    body: "Three to five practitioners, chosen by a person. Each one with a reason.",
   },
   {
     n: "03",
@@ -73,19 +73,19 @@ const steps = [
 const faqs = [
   {
     q: "Is this a directory?",
-    a: "No. A directory hands you a list and walks away. We hand you a shortlist with the reasoning, written by a person.",
+    a: "No. A directory hands you a list and walks away. We hand you a shortlist with the reasoning, written by a person who read what you sent.",
   },
   {
     q: "How are practitioners vetted?",
-    a: "License where applicable, training where it matters, working relationship where neither is enough. We turn away more than we accept.",
+    a: "Licensing when it applies. Training when it matters. A working relationship when neither is enough. We turn away more practitioners than we accept.",
   },
   {
     q: "Clinical or holistic?",
-    a: "Both. Side by side. Without a hierarchy. A licensed therapist and a craniosacral practitioner can both be the right answer.",
+    a: "Both, side by side, without a hierarchy. A licensed therapist and a craniosacral practitioner can both be the right answer.",
   },
   {
     q: "What about my privacy?",
-    a: "Your story is yours. We never sell your information. Practitioners only learn what you choose to share.",
+    a: "Your story is yours. We never sell it. Practitioners only learn what you decide to share.",
   },
 ];
 
@@ -384,9 +384,9 @@ export default function ImmersiveScrollDesign() {
                 eyebrow={`${chapters[0].index} / ${chapters[0].label}`}
                 body={
                   <>
-                    A guided care-matching service that replaces overwhelming directories with a shortlist
-                    written by a person. Therapy, acupuncture, reiki, movement-based care, and
-                    trauma-informed support. Held side by side, without a hierarchy.
+                    Therapy, acupuncture, reiki, movement, trauma-informed care.
+                    Held side by side, without a hierarchy. A person reads what you
+                    sent and writes back with three to five names.
                   </>
                 }
                 align={chapters[0].align}
@@ -437,7 +437,7 @@ export default function ImmersiveScrollDesign() {
                 <PinnedHeadline
                   eyebrow={`${chapters[1].index} / ${chapters[1].label}`}
                   align={chapters[1].align}
-                  body="Five forms of care, held in one collective. None ranked above the other. The right one is the one that breathes right for you."
+                  body="Five forms of care in one collective. None outranks another. The right one is the one that fits when you sit with it."
                 >
                   Care, held
                   <br />
@@ -544,7 +544,7 @@ export default function ImmersiveScrollDesign() {
               <PinnedHeadline
                 eyebrow={`${chapters[3].index} / ${chapters[3].label}`}
                 align={chapters[3].align}
-                body="A streamlined referral pipeline. Each introduction arrives with context: what the seeker is working on, what they have tried, why we picked you. Aligned clients, not lead lists."
+                body="Real referrals, not lead lists. Each introduction arrives with context — what the seeker is working on, what they have tried, why we picked you."
               >
                 Fewer leads.
                 <br />
