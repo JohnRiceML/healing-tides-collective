@@ -105,7 +105,11 @@ function PinnedHeadline({
 }) {
   const justify =
     align === "right" ? "items-end text-right" : align === "center" ? "items-center text-center" : "items-start text-left";
-  const maxW = align === "center" ? "max-w-3xl" : "max-w-2xl";
+  // Center-aligned headlines need mx-auto on the flex container itself so the
+  // 768px max-w-3xl box centers within its parent — without it the box pins
+  // to the parent's left edge and the headline visually shifts left of any
+  // sibling block-level content (e.g. the dual CTA grid in chapter 06).
+  const maxW = align === "center" ? "max-w-3xl mx-auto" : "max-w-2xl";
   return (
     <motion.div
       className={`flex flex-col ${justify} ${maxW}`}
@@ -351,8 +355,16 @@ export default function ImmersiveScrollDesign() {
     target: modalitiesRef,
     offset: ["start start", "end end"],
   });
-  // Linear pan from flush-left (0%) to flush-right (-57% of ul width on desktop).
-  const modX = useTransform(modPanProgress, [0, 1], ["0%", "-57%"]);
+  // Symmetric inset: at pan start, container shifted +20% right (cards 1-2
+  // visible with empty space to the LEFT of card 1, mirroring the right-side
+  // empty space at pan end). At pan end, container shifted -57% (cards 4-5
+  // flush right with empty space on the right). This matches Greg's note
+  // that the start of the cards should not hug the viewport edge.
+  const modX = useTransform(modPanProgress, [0, 1], ["20%", "-57%"]);
+
+  // Begin section overlay: darken the photo background as the section scrolls
+  // into view rather than via a static semi-transparent square in the middle.
+  const beginOverlayOpacity = useTransform(beginProgress, [0.15, 0.55], [0, 1]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -658,13 +670,15 @@ export default function ImmersiveScrollDesign() {
             id="begin"
             className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
           >
-            <div
-              className="absolute inset-0 -z-0"
+            {/* Vertical scroll-driven darkening: as the section scrolls into
+                viewport the overlay opacity ramps from 0 to 1, so the photo
+                background gradually deepens to charcoal as the user enters
+                Begin instead of a static semi-transparent square sitting in
+                the middle of the section. */}
+            <motion.div
+              className="absolute inset-0 -z-0 bg-gradient-to-b from-charcoal/40 via-charcoal/70 to-charcoal/95"
+              style={{ opacity: beginOverlayOpacity }}
               aria-hidden
-              style={{
-                background:
-                  "radial-gradient(50% 60% at 50% 60%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.85) 100%)",
-              }}
             />
             <div className="relative mx-auto w-full max-w-[900px] text-center">
               <PinnedHeadline
