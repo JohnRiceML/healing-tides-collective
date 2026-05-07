@@ -373,6 +373,27 @@ export default function ImmersiveScrollDesign() {
       <ChapterBadge active={active} />
       <PersistentBeginCTA active={active} />
 
+      {/* Brand mark — fixed top-left, always visible. Logo PNG includes the
+          wave-circle icon + HEALING TIDES wordmark + tagline on a white
+          background. Sized at ~96px square so the full lockup is legible.
+          The white PNG bg sits inside a sand-cream rounded card (matches the
+          design palette) so the badge reads as an intentional brand panel
+          floating above the photo backgrounds. */}
+      <a
+        href="#main-content"
+        aria-label="Healing Tides Collective — top of page"
+        className="group fixed left-5 top-5 z-30 flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-2xl bg-sand p-2 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.55)] ring-1 ring-charcoal/10 transition-transform hover:-translate-y-0.5 sm:left-7 sm:top-7 sm:h-[104px] sm:w-[104px]"
+      >
+        <Image
+          src="/healing-tides-logo.png"
+          alt="Healing Tides Collective"
+          width={208}
+          height={208}
+          priority
+          className="h-full w-full object-contain"
+        />
+      </a>
+
       <main
         id="main-content"
         ref={containerRef}
@@ -770,7 +791,18 @@ export default function ImmersiveScrollDesign() {
                 gradient overlay extends behind the footer. */}
             <footer className="absolute inset-x-0 bottom-0 z-10 px-6 py-8 md:px-16">
               <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6">
-                <p className="font-display text-base text-sand">Healing Tides Collective</p>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-sand p-1">
+                    <Image
+                      src="/healing-tides-logo.png"
+                      alt=""
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-contain"
+                    />
+                  </span>
+                  <p className="font-display text-base text-sand">Healing Tides Collective</p>
+                </div>
                 <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
               </div>
             </footer>
