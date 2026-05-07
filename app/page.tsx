@@ -336,13 +336,23 @@ export default function ImmersiveScrollDesign() {
     beginProgress,
   ];
 
-  // Desktop scroll-driven horizontal pan inside the Modalities section uses the
-  // same per-section progress signal as the photo crossfade.
-  // Range tuned so the first card is flush left at section entry (x=0%) and
-  // the last card is flush right at section exit. The viewport-edge mask
-  // (applied to the motion.ul below) adds a soft fade so cards in mid-transit
-  // taper out gracefully instead of hard-cutting at the viewport edge.
-  const modX = useTransform(modProgress, [0.15, 0.85], ["0%", "-57%"]);
+  // Desktop scroll-driven horizontal pan inside the Modalities section.
+  // PIN-THEN-PAN UX: pan only runs while the section is sticky/pinned in the
+  // viewport — i.e. from when the section top reaches the viewport top until
+  // the section bottom reaches the viewport bottom. Before that, the section
+  // is still scrolling INTO view (cards stay flush at start). After that,
+  // the section is scrolling OUT of view (cards stay flush at end).
+  //
+  // Offset ["start start", "end end"] is what gives us the "while pinned"
+  // semantics — distinct from modProgress (offset ["start end", "end start"])
+  // which spans the entire viewport-entry-to-viewport-exit and is correct
+  // for the photo crossfade above.
+  const { scrollYProgress: modPanProgress } = useScroll({
+    target: modalitiesRef,
+    offset: ["start start", "end end"],
+  });
+  // Linear pan from flush-left (0%) to flush-right (-57% of ul width on desktop).
+  const modX = useTransform(modPanProgress, [0, 1], ["0%", "-57%"]);
 
   return (
     <MotionConfig reducedMotion="user">
