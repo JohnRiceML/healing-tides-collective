@@ -461,13 +461,12 @@ export default function ImmersiveScrollDesign() {
                 </PinnedHeadline>
               </div>
 
-              {/* Mobile: snap-x snap-mandatory horizontal scroll. Desktop: scroll-driven motion pan.
-                  Edge-fade mask on the desktop wrapper only (md:[mask-image:...]) so cards
-                  panning past the viewport edges taper out gracefully instead of hard-cutting.
-                  Mask is bound to the visible region (overflow-hidden width), NOT the inner ul. */}
-              <div
-                className="mt-14 md:overflow-hidden md:[mask-image:linear-gradient(to_right,transparent_0,black_6%,black_94%,transparent_100%)] md:[-webkit-mask-image:linear-gradient(to_right,transparent_0,black_6%,black_94%,transparent_100%)]"
-              >
+              {/* Mobile: snap-x snap-mandatory horizontal scroll. Desktop: scroll-driven motion pan
+                  inside an overflow-hidden viewport-width clip. No fade mask — pin-then-pan UX
+                  keeps the first card flush-left at start and the last card flush-right at end,
+                  so cards are fully visible at rest. Hard card edges during the active pan
+                  read as intentional motion, not as truncation. */}
+              <div className="mt-14 md:overflow-hidden">
                 {/* Mobile carousel */}
                 <ul className="flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {modalityCards.map((m, i) => (
