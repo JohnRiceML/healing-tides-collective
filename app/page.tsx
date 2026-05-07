@@ -461,12 +461,11 @@ export default function ImmersiveScrollDesign() {
                     </motion.p>
                   </div>
 
-                  {/* Brand logo card — sand-cream surface so the dark wordmark
-                      reads against the dark photo background. Larger on desktop
-                      to be the visual counterpart to the headline; full-width
-                      capped at max-w-[280px] on mobile so it never crowds the
-                      vertical stack or collides with the top-right chapter
-                      badge. */}
+                  {/* Brand logo — floats directly on the photo background, no
+                      backdrop card. Logo source is 3000x1800 (5:3) with the
+                      content tightly cropped, transparent bg. Visual counterpart
+                      to the headline on desktop; capped on mobile so it does
+                      not crowd the vertical stack or collide with fixed UI. */}
                   <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -474,16 +473,14 @@ export default function ImmersiveScrollDesign() {
                     transition={{ duration: 1, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
                     className="flex justify-center md:justify-end"
                   >
-                    <div className="aspect-square w-full max-w-[280px] rounded-[2rem] bg-sand p-7 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.65)] ring-1 ring-charcoal/5 sm:max-w-[320px] md:max-w-[360px] md:p-10">
-                      <Image
-                        src="/healing-tides-logo.png"
-                        alt="Healing Tides Collective"
-                        width={720}
-                        height={720}
-                        priority
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
+                    <Image
+                      src="/healing-tides-logo.png"
+                      alt="Healing Tides Collective"
+                      width={600}
+                      height={360}
+                      priority
+                      className="h-auto w-full max-w-[280px] sm:max-w-[340px] md:max-w-[420px]"
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -805,15 +802,13 @@ export default function ImmersiveScrollDesign() {
             <footer className="absolute inset-x-0 bottom-0 z-10 px-6 py-8 md:px-16">
               <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-sand p-1">
-                    <Image
-                      src="/healing-tides-logo.png"
-                      alt=""
-                      width={40}
-                      height={40}
-                      className="h-full w-full object-contain"
-                    />
-                  </span>
+                  <Image
+                    src="/healing-tides-logo.png"
+                    alt=""
+                    width={140}
+                    height={84}
+                    className="h-auto w-[80px]"
+                  />
                   <p className="font-display text-base text-sand">Healing Tides Collective</p>
                 </div>
                 <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
