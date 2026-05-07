@@ -451,8 +451,13 @@ export default function ImmersiveScrollDesign() {
                 </PinnedHeadline>
               </div>
 
-              {/* Mobile: snap-x snap-mandatory horizontal scroll. Desktop: scroll-driven motion pan. */}
-              <div className="mt-14 md:overflow-hidden">
+              {/* Mobile: snap-x snap-mandatory horizontal scroll. Desktop: scroll-driven motion pan.
+                  Edge-fade mask on the desktop wrapper only (md:[mask-image:...]) so cards
+                  panning past the viewport edges taper out gracefully instead of hard-cutting.
+                  Mask is bound to the visible region (overflow-hidden width), NOT the inner ul. */}
+              <div
+                className="mt-14 md:overflow-hidden md:[mask-image:linear-gradient(to_right,transparent_0,black_6%,black_94%,transparent_100%)] md:[-webkit-mask-image:linear-gradient(to_right,transparent_0,black_6%,black_94%,transparent_100%)]"
+              >
                 {/* Mobile carousel */}
                 <ul className="flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {modalityCards.map((m, i) => (
@@ -470,16 +475,13 @@ export default function ImmersiveScrollDesign() {
                     </li>
                   ))}
                 </ul>
-                {/* Desktop scroll-driven pan with edge-fade mask so cards in
-                    mid-transit taper out gracefully instead of hard-cutting. */}
+                {/* Desktop scroll-driven pan. Mask is on the wrapper above
+                    (the overflow-hidden viewport-width clip), NOT on this ul,
+                    so the gradient measures across the visible region rather
+                    than across the 5-card-wide ul which would hide the
+                    leading/trailing cards. */}
                 <motion.ul
-                  style={{
-                    x: modX,
-                    maskImage:
-                      "linear-gradient(to right, transparent 0, black 6%, black 94%, transparent 100%)",
-                    WebkitMaskImage:
-                      "linear-gradient(to right, transparent 0, black 6%, black 94%, transparent 100%)",
-                  }}
+                  style={{ x: modX }}
                   className="hidden md:flex w-max gap-6 will-change-transform"
                 >
                   {modalityCards.map((m, i) => (
