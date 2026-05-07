@@ -405,9 +405,10 @@ export default function ImmersiveScrollDesign() {
           <section
             ref={missionRef}
             id="mission"
-            className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
+            className="relative md:min-h-[150vh] px-0 md:px-16"
           >
-            <div className="mx-auto w-full max-w-[1400px]">
+            <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
+              <div className="mx-auto w-full max-w-[1400px]">
               <PinnedHeadline
                 eyebrow={`${chapters[0].index} / ${chapters[0].label}`}
                 body={
@@ -451,6 +452,7 @@ export default function ImmersiveScrollDesign() {
               >
                 Scroll to continue ↓
               </motion.p>
+              </div>
             </div>
           </section>
 
@@ -528,9 +530,10 @@ export default function ImmersiveScrollDesign() {
           <section
             ref={howRef}
             id="how"
-            className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
+            className="relative md:min-h-[150vh] px-0 md:px-16"
           >
-            <div className="mx-auto w-full max-w-[1400px]">
+            <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
+              <div className="mx-auto w-full max-w-[1400px]">
               <div className="ml-auto">
                 <PinnedHeadline
                   eyebrow={`${chapters[2].index} / ${chapters[2].label}`}
@@ -567,6 +570,7 @@ export default function ImmersiveScrollDesign() {
                   </motion.li>
                 ))}
               </ol>
+              </div>
             </div>
           </section>
 
@@ -574,9 +578,10 @@ export default function ImmersiveScrollDesign() {
           <section
             ref={practitionersRef}
             id="practitioners"
-            className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
+            className="relative md:min-h-[150vh] px-0 md:px-16"
           >
-            <div className="mx-auto w-full max-w-[1400px]">
+            <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
+              <div className="mx-auto w-full max-w-[1400px]">
               <PinnedHeadline
                 eyebrow={`${chapters[3].index} / ${chapters[3].label}`}
                 align={chapters[3].align}
@@ -619,6 +624,7 @@ export default function ImmersiveScrollDesign() {
               >
                 Apply to join the collective →
               </motion.a>
+              </div>
             </div>
           </section>
 
@@ -626,9 +632,10 @@ export default function ImmersiveScrollDesign() {
           <section
             ref={faqRef}
             id="faq"
-            className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
+            className="relative md:min-h-[150vh] px-0 md:px-16"
           >
-            <div className="mx-auto w-full max-w-[1400px]">
+            <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
+              <div className="mx-auto w-full max-w-[1400px]">
               <div className="ml-auto max-w-2xl">
                 <PinnedHeadline
                   eyebrow={`${chapters[4].index} / ${chapters[4].label}`}
@@ -661,6 +668,7 @@ export default function ImmersiveScrollDesign() {
                   </motion.li>
                 ))}
               </ul>
+              </div>
             </div>
           </section>
 
@@ -668,7 +676,7 @@ export default function ImmersiveScrollDesign() {
           <section
             ref={beginRef}
             id="begin"
-            className="relative flex min-h-[100dvh] items-center px-6 py-24 md:px-16"
+            className="relative md:min-h-[150vh] px-0 md:px-16"
           >
             {/* Vertical scroll-driven darkening: as the section scrolls into
                 viewport the overlay opacity ramps from 0 to 1, so the photo
@@ -676,11 +684,12 @@ export default function ImmersiveScrollDesign() {
                 Begin instead of a static semi-transparent square sitting in
                 the middle of the section. */}
             <motion.div
-              className="absolute inset-0 -z-0 bg-gradient-to-b from-charcoal/40 via-charcoal/70 to-charcoal/95"
+              className="absolute inset-0 -z-0 bg-gradient-to-b from-transparent via-charcoal/55 to-charcoal/90"
               style={{ opacity: beginOverlayOpacity }}
               aria-hidden
             />
-            <div className="relative mx-auto w-full max-w-[900px] text-center">
+            <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
+              <div className="relative mx-auto w-full max-w-[900px] text-center">
               <PinnedHeadline
                 eyebrow={`${chapters[5].index} / ${chapters[5].label}`}
                 align="center"
@@ -751,6 +760,7 @@ export default function ImmersiveScrollDesign() {
                   hello@healingtides.co
                 </a>
               </motion.p>
+              </div>
             </div>
           </section>
 
