@@ -762,14 +762,19 @@ export default function ImmersiveScrollDesign() {
               </motion.p>
               </div>
             </div>
+            {/* Footer integrated into Begin section: absolute-positioned at
+                section bottom so it sits at the very end of the 150vh section
+                regardless of the sticky pin wrapper's flow height. Off-screen
+                during pin (below viewport), comes into view at viewport bottom
+                exactly when the pin window ends. No top border — the section's
+                gradient overlay extends behind the footer. */}
+            <footer className="absolute inset-x-0 bottom-0 z-10 px-6 py-8 md:px-16">
+              <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6">
+                <p className="font-display text-base text-sand">Healing Tides Collective</p>
+                <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
+              </div>
+            </footer>
           </section>
-
-          <footer className="relative border-t border-sand/15 bg-charcoal/80 px-6 py-10 backdrop-blur-md md:px-16">
-            <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6">
-              <p className="font-display text-base text-sand">Healing Tides Collective</p>
-              <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
-            </div>
-          </footer>
         </div>
       </main>
     </MotionConfig>
