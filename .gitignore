@@ -49,3 +49,6 @@ Thumbs.db
 
 # remember-plugin local buffer
 .remember/
+
+# local screenshot scratchpad (chrome devtools dev)
+.tmp-screenshots/
