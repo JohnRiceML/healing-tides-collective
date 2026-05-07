@@ -684,30 +684,40 @@ export default function ImmersiveScrollDesign() {
                 {/* Primary — client / seeker */}
                 <a
                   href="mailto:hello@healingtides.co?subject=Get%20matched"
-                  className="group flex flex-col rounded-3xl bg-seafoam p-7 text-left text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
+                  className="group relative flex flex-col rounded-3xl bg-seafoam p-7 text-left text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-charcoal/70">For seekers</span>
-                  <span className="font-display mt-4 text-2xl leading-tight md:text-[28px]">
+                  <span className="font-display mt-4 text-2xl leading-tight md:text-[26px]">
                     I&rsquo;m seeking care
-                    <span aria-hidden className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
                   </span>
                   <span className="mt-4 text-[14px] leading-[1.6] text-charcoal/80">
                     Two paragraphs. We choose the right person.
+                  </span>
+                  <span
+                    aria-hidden
+                    className="absolute bottom-6 right-6 flex h-9 w-9 items-center justify-center rounded-full bg-charcoal/10 text-charcoal transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:bg-charcoal/15"
+                  >
+                    →
                   </span>
                 </a>
 
                 {/* Secondary — practitioner */}
                 <a
                   href="mailto:hello@healingtides.co?subject=Practitioner%20inquiry"
-                  className="group flex flex-col rounded-3xl border border-sand/35 bg-charcoal/40 p-7 text-left text-sand backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)] transition-colors hover:border-sand/70 hover:bg-charcoal/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
+                  className="group relative flex flex-col rounded-3xl border border-sand/35 bg-charcoal/55 p-7 text-left text-sand backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)] transition-colors hover:border-sand/70 hover:bg-charcoal/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-sand/70">For practitioners</span>
-                  <span className="font-display mt-4 text-2xl leading-tight md:text-[28px]">
+                  <span className="font-display mt-4 text-2xl leading-tight md:text-[26px]">
                     I&rsquo;m a practitioner
-                    <span aria-hidden className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
                   </span>
                   <span className="mt-4 text-[14px] leading-[1.6] text-sand/80">
-                    Tell us about your practice. We will read it.
+                    Tell us about your practice. We&rsquo;ll read it.
+                  </span>
+                  <span
+                    aria-hidden
+                    className="absolute bottom-6 right-6 flex h-9 w-9 items-center justify-center rounded-full bg-sand/10 text-sand transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:bg-sand/20"
+                  >
+                    →
                   </span>
                 </a>
               </motion.div>
