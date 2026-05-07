@@ -338,7 +338,11 @@ export default function ImmersiveScrollDesign() {
 
   // Desktop scroll-driven horizontal pan inside the Modalities section uses the
   // same per-section progress signal as the photo crossfade.
-  const modX = useTransform(modProgress, [0.0, 1.0], ["6%", "-58%"]);
+  // Range tuned so the first card is flush left at section entry (x=0%) and
+  // the last card is flush right at section exit. The viewport-edge mask
+  // (applied to the motion.ul below) adds a soft fade so cards in mid-transit
+  // taper out gracefully instead of hard-cutting at the viewport edge.
+  const modX = useTransform(modProgress, [0.15, 0.85], ["0%", "-57%"]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -466,9 +470,16 @@ export default function ImmersiveScrollDesign() {
                     </li>
                   ))}
                 </ul>
-                {/* Desktop scroll-driven pan */}
+                {/* Desktop scroll-driven pan with edge-fade mask so cards in
+                    mid-transit taper out gracefully instead of hard-cutting. */}
                 <motion.ul
-                  style={{ x: modX }}
+                  style={{
+                    x: modX,
+                    maskImage:
+                      "linear-gradient(to right, transparent 0, black 6%, black 94%, transparent 100%)",
+                    WebkitMaskImage:
+                      "linear-gradient(to right, transparent 0, black 6%, black 94%, transparent 100%)",
+                  }}
                   className="hidden md:flex w-max gap-6 will-change-transform"
                 >
                   {modalityCards.map((m, i) => (
