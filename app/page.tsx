@@ -461,11 +461,11 @@ export default function ImmersiveScrollDesign() {
                     </motion.p>
                   </div>
 
-                  {/* Brand logo — floats directly on the photo background, no
-                      backdrop card. Logo source is 3000x1800 (5:3) with the
-                      content tightly cropped, transparent bg. Visual counterpart
-                      to the headline on desktop; capped on mobile so it does
-                      not crowd the vertical stack or collide with fixed UI. */}
+                  {/* Brand logo — sits on a faint white wash so the dark
+                      wordmark lifts off the photo background without reading
+                      as a hard card. backdrop-blur softens the photo behind
+                      slightly; bg-white/10 + ring-white/15 give just enough
+                      surface to float the lockup. */}
                   <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -473,14 +473,16 @@ export default function ImmersiveScrollDesign() {
                     transition={{ duration: 1, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
                     className="flex justify-center md:justify-end"
                   >
-                    <Image
-                      src="/healing-tides-logo.png"
-                      alt="Healing Tides Collective"
-                      width={600}
-                      height={360}
-                      priority
-                      className="h-auto w-full max-w-[280px] sm:max-w-[340px] md:max-w-[420px]"
-                    />
+                    <div className="rounded-[2rem] bg-white/10 px-8 py-7 ring-1 ring-white/15 backdrop-blur-md sm:px-10 sm:py-8 md:px-12 md:py-10">
+                      <Image
+                        src="/healing-tides-logo.png"
+                        alt="Healing Tides Collective"
+                        width={600}
+                        height={360}
+                        priority
+                        className="h-auto w-full max-w-[240px] sm:max-w-[300px] md:max-w-[360px]"
+                      />
+                    </div>
                   </motion.div>
                 </div>
               </div>
