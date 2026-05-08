@@ -771,16 +771,7 @@ export default function ImmersiveScrollDesign() {
                 gradient overlay extends behind the footer. */}
             <footer className="absolute inset-x-0 bottom-0 z-10 px-6 py-8 md:px-16">
               <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/healing-tides-logo.png"
-                    alt=""
-                    width={140}
-                    height={84}
-                    className="h-auto w-[80px]"
-                  />
-                  <p className="font-display text-base text-sand">Healing Tides Collective</p>
-                </div>
+                <p className="font-display text-base text-sand">Healing Tides Collective</p>
                 <div className="flex items-center gap-6">
                   <Link
                     href="/journal"
