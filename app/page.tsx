@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef } from "react";
 import {
   motion,
@@ -813,7 +814,15 @@ export default function ImmersiveScrollDesign() {
                   />
                   <p className="font-display text-base text-sand">Healing Tides Collective</p>
                 </div>
-                <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
+                <div className="flex items-center gap-6">
+                  <Link
+                    href="/journal"
+                    className="meta text-sand/60 transition-colors hover:text-sand"
+                  >
+                    Journal
+                  </Link>
+                  <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
+                </div>
               </div>
             </footer>
           </section>
