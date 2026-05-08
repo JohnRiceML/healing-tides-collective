@@ -6,14 +6,22 @@
     "dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sanity:extract": "sanity schema extract",
+    "sanity:typegen": "sanity schema extract && sanity typegen generate"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.4",
+    "@portabletext/react": "^6.2.0",
+    "@sanity/image-url": "^2.1.1",
+    "@sanity/vision": "^5.24.0",
     "framer-motion": "^12.38.0",
     "next": "^16.0.0",
+    "next-sanity": "^12.4.5",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sanity": "^5.24.0",
+    "styled-components": "^6.4.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
