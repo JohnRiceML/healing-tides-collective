@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { SanityLive } from "@/sanity/lib/live";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         {children}
+        <SanityLive />
       </body>
       <GoogleAnalytics gaId="G-EJZ1TBDT3W" />
     </html>
