@@ -410,82 +410,49 @@ export default function ImmersiveScrollDesign() {
           >
             <div className="md:sticky md:top-0 md:flex md:h-[100dvh] md:flex-col md:justify-center px-6 py-24 md:py-0">
               <div className="mx-auto w-full max-w-[1400px]">
-                {/* Two-column hero on desktop: text content left, brand logo
-                    panel right. Stacks to single column on mobile (text first,
-                    logo below) so the hero reads top-down and the logo never
-                    collides with chapter index dots, top-right badge, or other
-                    fixed UI on narrow viewports. */}
-                <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-[3fr_2fr] md:gap-16">
-                  <div>
-                    <PinnedHeadline
-                      eyebrow={`${chapters[0].index} / ${chapters[0].label}`}
-                      body={
-                        <>
-                          Therapy, acupuncture, reiki, movement, trauma-informed care.
-                          Held side by side, without a hierarchy. A person reads what you
-                          sent and writes back with three to five names.
-                        </>
-                      }
-                      align={chapters[0].align}
-                      isFirst
-                    >
-                      Less searching.
-                      <br />
-                      <span className="italic text-seafoam">More healing.</span>
-                    </PinnedHeadline>
+                <PinnedHeadline
+                  eyebrow={`${chapters[0].index} / ${chapters[0].label}`}
+                  body={
+                    <>
+                      Therapy, acupuncture, reiki, movement, trauma-informed care.
+                      Held side by side, without a hierarchy. A person reads what you
+                      sent and writes back with three to five names.
+                    </>
+                  }
+                  align={chapters[0].align}
+                  isFirst
+                >
+                  Less searching.
+                  <br />
+                  <span className="italic text-seafoam">More healing.</span>
+                </PinnedHeadline>
 
-                    <motion.div
-                      initial={{ opacity: 0, y: 16 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: 0.4 }}
-                      transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3"
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false, amount: 0.4 }}
+                  transition={{ duration: 1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3"
+                >
+                  {modalityCards.map((m) => (
+                    <span
+                      key={m.name}
+                      className="rounded-full border border-sand/25 bg-charcoal/30 px-4 py-2 text-sm text-sand backdrop-blur-md"
                     >
-                      {modalityCards.map((m) => (
-                        <span
-                          key={m.name}
-                          className="rounded-full border border-sand/25 bg-charcoal/30 px-4 py-2 text-sm text-sand backdrop-blur-md"
-                        >
-                          {m.name}
-                        </span>
-                      ))}
-                    </motion.div>
+                      {m.name}
+                    </span>
+                  ))}
+                </motion.div>
 
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: false, amount: 0.5 }}
-                      transition={{ duration: 1.4, delay: 0.5 }}
-                      className="meta mt-16 text-sand/70 md:mt-20"
-                    >
-                      Scroll to continue ↓
-                    </motion.p>
-                  </div>
-
-                  {/* Brand logo — sits on a faint white wash so the dark
-                      wordmark lifts off the photo background without reading
-                      as a hard card. backdrop-blur softens the photo behind
-                      slightly; bg-white/10 + ring-white/15 give just enough
-                      surface to float the lockup. */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.4 }}
-                    transition={{ duration: 1, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex justify-center md:justify-end"
-                  >
-                    <div className="rounded-[2rem] bg-white/10 px-8 py-7 ring-1 ring-white/15 backdrop-blur-md sm:px-10 sm:py-8 md:px-12 md:py-10">
-                      <Image
-                        src="/healing-tides-logo.png"
-                        alt="Healing Tides Collective"
-                        width={600}
-                        height={360}
-                        priority
-                        className="h-auto w-full max-w-[240px] sm:max-w-[300px] md:max-w-[360px]"
-                      />
-                    </div>
-                  </motion.div>
-                </div>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: false, amount: 0.5 }}
+                  transition={{ duration: 1.4, delay: 0.5 }}
+                  className="meta mt-16 text-sand/70 md:mt-20"
+                >
+                  Scroll to continue ↓
+                </motion.p>
               </div>
             </div>
           </section>
