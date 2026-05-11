@@ -19,6 +19,11 @@ export const photos = {
     src: "/hero-meditation.jpg",
     alt: "Two practitioners seated in meditation, monstera in foreground",
   },
+  /** Two seated practitioners facing each other in profile, white shelving + window light behind, hands resting on knees. Owned asset — Modalities "side by side" hero. */
+  careSideBySide: {
+    src: "/care-side-by-side.jpg",
+    alt: "Two practitioners seated facing each other in quiet practice",
+  },
   /** Wide yoga studio interior, wood ceiling, warm afternoon light, no people. The "spacious" hero shot. */
   studio: {
     src: u("1687783615494-b4a1f1af8b58"),
