@@ -24,6 +24,7 @@ export type Category = {
   title?: string;
   slug?: Slug;
   description?: string;
+  color?: string;
 };
 
 export type Slug = {
@@ -85,10 +86,11 @@ export type Post = {
           _type: "span";
           _key: string;
         }>;
-        style?: "normal" | "h2" | "h3" | "blockquote";
+        style?: "normal" | "h1" | "h2" | "h3" | "blockquote";
         listItem?: "bullet" | "number";
         markDefs?: Array<{
           href?: string;
+          blank?: boolean;
           _type: "link";
           _key: string;
         }>;
@@ -106,7 +108,42 @@ export type Post = {
         _type: "image";
         _key: string;
       }
+    | {
+        columns?: Array<string>;
+        rows?: Array<{
+          cells?: Array<string>;
+          _type: "row";
+          _key: string;
+        }>;
+        caption?: string;
+        _type: "table";
+        _key: string;
+      }
+    | {
+        url?: string;
+        _type: "youtube";
+        _key: string;
+      }
+    | {
+        question?: string;
+        answer?: string;
+        _type: "qa";
+        _key: string;
+      }
+    | {
+        title?: string;
+        faqs?: Array<{
+          question?: string;
+          answer?: string;
+          _type: "faqItem";
+          _key: string;
+        }>;
+        _type: "faqSection";
+        _key: string;
+      }
   >;
+  canonicalUrl?: string;
+  structuredData?: string;
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
@@ -171,6 +208,12 @@ export type Author = {
     _type: "block";
     _key: string;
   }>;
+  email?: string;
+  website?: string;
+  social?: {
+    twitter?: string;
+    linkedin?: string;
+  };
 };
 
 export type SanityImagePaletteSwatch = {
@@ -291,7 +334,7 @@ export type AllSanitySchemaTypes =
 
 // Source: sanity/lib/queries.ts
 // Variable: POSTS_LIST_QUERY
-// Query: *[_type == "post" && defined(slug.current) && publishedAt < now()]    | order(publishedAt desc) {      _id,      title,      "slug": slug.current,      excerpt,      heroImage,      publishedAt,      "author": author->{name, "slug": slug.current, image},      "categories": categories[]->{title, "slug": slug.current}    }
+// Query: *[_type == "post" && defined(slug.current) && publishedAt < now()]    | order(publishedAt desc) {      _id,      title,      "slug": slug.current,      excerpt,      heroImage,      publishedAt,      "author": author->{name, "slug": slug.current, image},      "categories": categories[]->{title, "slug": slug.current, color}    }
 export type POSTS_LIST_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -321,12 +364,13 @@ export type POSTS_LIST_QUERY_RESULT = Array<{
   categories: Array<{
     title: string | null;
     slug: string | null;
+    color: string | null;
   }> | null;
 }>;
 
 // Source: sanity/lib/queries.ts
 // Variable: POST_BY_SLUG_QUERY
-// Query: *[_type == "post" && slug.current == $slug][0]{    _id,    title,    "slug": slug.current,    excerpt,    heroImage,    publishedAt,    body,    seo,    "author": author->{      name,      "slug": slug.current,      role,      image,      bio    },    "categories": categories[]->{title, "slug": slug.current}  }
+// Query: *[_type == "post" && slug.current == $slug][0]{    _id,    title,    "slug": slug.current,    excerpt,    heroImage,    publishedAt,    body,    seo,    canonicalUrl,    structuredData,    "author": author->{      name,      "slug": slug.current,      role,      image,      bio,      email,      website,      social    },    "categories": categories[]->{title, "slug": slug.current, color}  }
 export type POST_BY_SLUG_QUERY_RESULT = {
   _id: string;
   title: string | null;
@@ -349,15 +393,27 @@ export type POST_BY_SLUG_QUERY_RESULT = {
           _type: "span";
           _key: string;
         }>;
-        style?: "blockquote" | "h2" | "h3" | "normal";
+        style?: "blockquote" | "h1" | "h2" | "h3" | "normal";
         listItem?: "bullet" | "number";
         markDefs?: Array<{
           href?: string;
+          blank?: boolean;
           _type: "link";
           _key: string;
         }>;
         level?: number;
         _type: "block";
+        _key: string;
+      }
+    | {
+        title?: string;
+        faqs?: Array<{
+          question?: string;
+          answer?: string;
+          _type: "faqItem";
+          _key: string;
+        }>;
+        _type: "faqSection";
         _key: string;
       }
     | {
@@ -368,6 +424,28 @@ export type POST_BY_SLUG_QUERY_RESULT = {
         alt?: string;
         caption?: string;
         _type: "image";
+        _key: string;
+      }
+    | {
+        question?: string;
+        answer?: string;
+        _type: "qa";
+        _key: string;
+      }
+    | {
+        columns?: Array<string>;
+        rows?: Array<{
+          cells?: Array<string>;
+          _type: "row";
+          _key: string;
+        }>;
+        caption?: string;
+        _type: "table";
+        _key: string;
+      }
+    | {
+        url?: string;
+        _type: "youtube";
         _key: string;
       }
   > | null;
@@ -382,6 +460,8 @@ export type POST_BY_SLUG_QUERY_RESULT = {
       _type: "image";
     };
   } | null;
+  canonicalUrl: string | null;
+  structuredData: string | null;
   author: {
     name: string | null;
     slug: string | null;
@@ -412,10 +492,17 @@ export type POST_BY_SLUG_QUERY_RESULT = {
       _type: "block";
       _key: string;
     }> | null;
+    email: string | null;
+    website: string | null;
+    social: {
+      twitter?: string;
+      linkedin?: string;
+    } | null;
   } | null;
   categories: Array<{
     title: string | null;
     slug: string | null;
+    color: string | null;
   }> | null;
 } | null;
 
@@ -430,8 +517,8 @@ export type POST_SLUGS_QUERY_RESULT = Array<{
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '\n  *[_type == "post" && defined(slug.current) && publishedAt < now()]\n    | order(publishedAt desc) {\n      _id,\n      title,\n      "slug": slug.current,\n      excerpt,\n      heroImage,\n      publishedAt,\n      "author": author->{name, "slug": slug.current, image},\n      "categories": categories[]->{title, "slug": slug.current}\n    }\n': POSTS_LIST_QUERY_RESULT;
-    '\n  *[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    heroImage,\n    publishedAt,\n    body,\n    seo,\n    "author": author->{\n      name,\n      "slug": slug.current,\n      role,\n      image,\n      bio\n    },\n    "categories": categories[]->{title, "slug": slug.current}\n  }\n': POST_BY_SLUG_QUERY_RESULT;
+    '\n  *[_type == "post" && defined(slug.current) && publishedAt < now()]\n    | order(publishedAt desc) {\n      _id,\n      title,\n      "slug": slug.current,\n      excerpt,\n      heroImage,\n      publishedAt,\n      "author": author->{name, "slug": slug.current, image},\n      "categories": categories[]->{title, "slug": slug.current, color}\n    }\n': POSTS_LIST_QUERY_RESULT;
+    '\n  *[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    heroImage,\n    publishedAt,\n    body,\n    seo,\n    canonicalUrl,\n    structuredData,\n    "author": author->{\n      name,\n      "slug": slug.current,\n      role,\n      image,\n      bio,\n      email,\n      website,\n      social\n    },\n    "categories": categories[]->{title, "slug": slug.current, color}\n  }\n': POST_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "post" && defined(slug.current)]{ "slug": slug.current }\n': POST_SLUGS_QUERY_RESULT;
   }
 }

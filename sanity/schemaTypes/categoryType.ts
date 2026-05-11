@@ -23,5 +23,16 @@ export const categoryType = defineType({
       type: 'text',
       rows: 3,
     }),
+    defineField({
+      name: 'color',
+      title: 'Color',
+      type: 'string',
+      description: 'Hex color code for category badges and displays (e.g., #ff0000)',
+      validation: (rule) =>
+        rule.regex(/^#[0-9A-Fa-f]{6}$/).error('Must be a valid hex color (e.g., #ff0000)'),
+    }),
   ],
+  preview: {
+    select: {title: 'title', subtitle: 'description'},
+  },
 })

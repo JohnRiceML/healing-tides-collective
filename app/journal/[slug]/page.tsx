@@ -42,6 +42,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: post.canonicalUrl ? {canonical: post.canonicalUrl} : undefined,
     openGraph: {
       title,
       description,
@@ -57,14 +58,93 @@ export async function generateMetadata({
   }
 }
 
+type FaqItem = {question?: string; answer?: string}
+type FaqSectionBlock = {_type?: string; faqs?: FaqItem[]}
+
+function escapeJsonLd(json: string): string {
+  return json.replace(/</g, '\\u003c').replace(/-->/g, '--\\u003e')
+}
+
+function buildStructuredData(post: {
+  title?: string | null
+  excerpt?: string | null
+  publishedAt?: string | null
+  canonicalUrl?: string | null
+  structuredData?: string | null
+  heroImage?: {asset?: unknown} | null
+  author?: {name?: string | null} | null
+  body?: unknown[] | null
+}): string | null {
+  if (post.structuredData) {
+    try {
+      const parsed = JSON.parse(post.structuredData)
+      return escapeJsonLd(JSON.stringify(parsed))
+    } catch {
+      return null
+    }
+  }
+
+  const article: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+  }
+  if (post.title) article.headline = post.title
+  if (post.excerpt) article.description = post.excerpt
+  if (post.publishedAt) article.datePublished = post.publishedAt
+  if (post.canonicalUrl) article.mainEntityOfPage = post.canonicalUrl
+  if (post.author?.name) {
+    article.author = {'@type': 'Person', name: post.author.name}
+  }
+  if (post.heroImage?.asset) {
+    const heroUrl = urlFor(post.heroImage as Parameters<typeof urlFor>[0])
+      .width(1200)
+      .height(630)
+      .fit('crop')
+      .auto('format')
+      .url()
+    if (heroUrl) article.image = heroUrl
+  }
+
+  const faqBlocks = ((post.body ?? []) as FaqSectionBlock[]).filter(
+    (b) => b?._type === 'faqSection' && Array.isArray(b.faqs) && b.faqs.length > 0,
+  )
+  const faqItems = faqBlocks
+    .flatMap((b) => b.faqs ?? [])
+    .filter((f): f is Required<FaqItem> => Boolean(f?.question && f?.answer))
+    .map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {'@type': 'Answer', text: f.answer},
+    }))
+
+  if (faqItems.length === 0) {
+    return escapeJsonLd(JSON.stringify(article))
+  }
+
+  const faqPage = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems,
+  }
+  return escapeJsonLd(JSON.stringify([article, faqPage]))
+}
+
 export default async function PostPage({params}: {params: Promise<{slug: string}>}) {
   const {slug} = await params
   const {data: post} = await sanityFetch({query: POST_BY_SLUG_QUERY, params: {slug}})
 
   if (!post) notFound()
 
+  const jsonLd = buildStructuredData(post)
+
   return (
     <main id="main-content" className="min-h-screen bg-sand">
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{__html: jsonLd}}
+        />
+      )}
       <div className="mx-auto max-w-[1400px] px-6 pt-12 md:px-16 md:pt-16">
         <Link
           href="/journal"
