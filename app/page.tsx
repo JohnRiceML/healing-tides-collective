@@ -22,8 +22,8 @@ type Chapter = {
 };
 
 const chapters: Chapter[] = [
-  { index: "01", label: "Mission", photoKey: "threshold", align: "left", tone: "dark" },
-  { index: "02", label: "Modalities", photoKey: "studio", align: "left", tone: "dark" },
+  { index: "01", label: "Mission", photoKey: "heroMeditation", align: "left", tone: "dark" },
+  { index: "02", label: "Modalities", photoKey: "heroMeditation", align: "left", tone: "dark" },
   { index: "03", label: "How", photoKey: "practice", align: "right", tone: "dark" },
   { index: "04", label: "Practitioners", photoKey: "acupuncture", align: "left", tone: "dark" },
   { index: "05", label: "Questions", photoKey: "teaPour", align: "right", tone: "dark" },

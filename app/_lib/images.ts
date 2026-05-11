@@ -14,6 +14,11 @@ const u = (id: string, w = 1600) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
 
 export const photos = {
+  /** Two seated practitioners in prayer position, monstera in foreground, soft warm window light. Owned asset — local file. */
+  heroMeditation: {
+    src: "/hero-meditation.jpg",
+    alt: "Two practitioners seated in meditation, monstera in foreground",
+  },
   /** Wide yoga studio interior, wood ceiling, warm afternoon light, no people. The "spacious" hero shot. */
   studio: {
     src: u("1687783615494-b4a1f1af8b58"),
