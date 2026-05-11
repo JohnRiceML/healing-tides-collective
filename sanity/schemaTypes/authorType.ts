@@ -46,6 +46,35 @@ export const authorType = defineType({
       type: 'array',
       of: [defineArrayMember({type: 'block', styles: [{title: 'Normal', value: 'normal'}], lists: []})],
     }),
+    defineField({
+      name: 'email',
+      title: 'Email',
+      type: 'string',
+      validation: (rule) => rule.email(),
+    }),
+    defineField({
+      name: 'website',
+      title: 'Website',
+      type: 'url',
+    }),
+    defineField({
+      name: 'social',
+      title: 'Social Media',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'twitter',
+          title: 'Twitter Handle',
+          type: 'string',
+          description: 'Twitter handle without @',
+        }),
+        defineField({
+          name: 'linkedin',
+          title: 'LinkedIn URL',
+          type: 'url',
+        }),
+      ],
+    }),
   ],
   preview: {
     select: {title: 'name', subtitle: 'role', media: 'image'},

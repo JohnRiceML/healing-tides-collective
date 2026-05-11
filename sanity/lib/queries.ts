@@ -10,7 +10,7 @@ export const POSTS_LIST_QUERY = defineQuery(`
       heroImage,
       publishedAt,
       "author": author->{name, "slug": slug.current, image},
-      "categories": categories[]->{title, "slug": slug.current}
+      "categories": categories[]->{title, "slug": slug.current, color}
     }
 `)
 
@@ -24,14 +24,19 @@ export const POST_BY_SLUG_QUERY = defineQuery(`
     publishedAt,
     body,
     seo,
+    canonicalUrl,
+    structuredData,
     "author": author->{
       name,
       "slug": slug.current,
       role,
       image,
-      bio
+      bio,
+      email,
+      website,
+      social
     },
-    "categories": categories[]->{title, "slug": slug.current}
+    "categories": categories[]->{title, "slug": slug.current, color}
   }
 `)
 
