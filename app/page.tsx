@@ -774,6 +774,12 @@ export default function ImmersiveScrollDesign() {
                 <p className="font-display text-base text-sand">Healing Tides Collective</p>
                 <div className="flex items-center gap-6">
                   <Link
+                    href="/about"
+                    className="meta text-sand/60 transition-colors hover:text-sand"
+                  >
+                    Meet Nora
+                  </Link>
+                  <Link
                     href="/journal"
                     className="meta text-sand/60 transition-colors hover:text-sand"
                   >
