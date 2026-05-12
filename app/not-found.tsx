@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { photos } from "@/app/_lib/images";
 
 export const metadata: Metadata = {
   title: "Page not found — Healing Tides Collective",
@@ -7,19 +9,30 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
+  const photo = photos.sunsetWalk;
   return (
     <main
       id="main-content"
       className="relative flex min-h-[100dvh] flex-col bg-charcoal text-sand"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(80% 60% at 50% 30%, rgba(31,58,95,0.55) 0%, transparent 60%), radial-gradient(60% 50% at 80% 90%, rgba(95,143,139,0.25) 0%, transparent 60%)",
-        }}
-      />
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <Image
+          src={photo.src}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-charcoal/65" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(80% 60% at 50% 30%, rgba(31,58,95,0.35) 0%, transparent 60%), linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%)",
+          }}
+        />
+      </div>
 
       <header className="relative z-10 px-6 py-8 md:px-16">
         <Link
