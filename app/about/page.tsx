@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Meet Nora — Healing Tides Collective",
   description:
-    "Nora L. Hollenkamp, MSW, LICSW — therapist for anxiety, life transitions, and relationships. Saint Paul, MN, and telehealth across Minnesota.",
+    "Nora L. Hollenkamp, MSW, LICSW — therapist, founder of Healing Tides Collective, with 20+ years across hospitals, schools, hospice, and community settings. Saint Paul, MN, and telehealth across Minnesota.",
 };
 
 const approaches = [
