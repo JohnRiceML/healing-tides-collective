@@ -616,7 +616,7 @@ export default function ImmersiveScrollDesign() {
               </motion.div>
 
               <motion.a
-                href="mailto:practitioners@healingtides.co"
+                href="mailto:nora@healingtidestherapy.com?subject=Apply%20to%20the%20collective"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: false, amount: 0.5 }}
@@ -707,7 +707,7 @@ export default function ImmersiveScrollDesign() {
               >
                 {/* Primary — client / seeker */}
                 <a
-                  href="mailto:hello@healingtides.co?subject=Get%20matched"
+                  href="mailto:nora@healingtidestherapy.com?subject=Get%20matched"
                   className="group relative flex flex-col rounded-3xl bg-seafoam p-7 text-left text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-charcoal/70">For seekers</span>
@@ -727,7 +727,7 @@ export default function ImmersiveScrollDesign() {
 
                 {/* Secondary — practitioner */}
                 <a
-                  href="mailto:hello@healingtides.co?subject=Practitioner%20inquiry"
+                  href="mailto:nora@healingtidestherapy.com?subject=Practitioner%20inquiry"
                   className="group relative flex flex-col rounded-3xl border border-sand/35 bg-charcoal/55 p-7 text-left text-sand backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)] transition-colors hover:border-sand/70 hover:bg-charcoal/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-sand/70">For practitioners</span>
@@ -755,10 +755,10 @@ export default function ImmersiveScrollDesign() {
               >
                 or write directly to{" "}
                 <a
-                  href="mailto:hello@healingtides.co"
+                  href="mailto:nora@healingtidestherapy.com"
                   className="text-seafoam underline-offset-4 hover:underline"
                 >
-                  hello@healingtides.co
+                  nora@healingtidestherapy.com
                 </a>
               </motion.p>
               </div>
