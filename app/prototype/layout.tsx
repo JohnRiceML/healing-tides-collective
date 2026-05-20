@@ -38,6 +38,9 @@ export default function PrototypeLayout({ children }: { children: React.ReactNod
             <Link href="/prototype/provider" className="meta text-ink-soft hover:text-charcoal">
               Portal
             </Link>
+            <Link href="/prototype/resources" className="meta text-ink-soft hover:text-charcoal">
+              Resources
+            </Link>
             <Link href="/prototype/scope" className="meta text-ink-soft hover:text-charcoal">
               Scope
             </Link>

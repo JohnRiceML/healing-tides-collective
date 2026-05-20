@@ -27,8 +27,14 @@ const sections = [
     body: "Where a practitioner edits availability, sees referral history, pauses or resumes referrals.",
   },
   {
+    href: "/prototype/resources",
+    eyebrow: "05 / Resources",
+    title: "Care, today",
+    body: "Public-facing dashboard: practitioner profiles, free practices, and outside resources for when matching isn't the right fit.",
+  },
+  {
     href: "/prototype/scope",
-    eyebrow: "05 / Scope",
+    eyebrow: "06 / Scope",
     title: "Phase 2 scope decisions",
     body: "What's in Phase 2 and what's deliberately later. A reference page Nora can return to.",
   },

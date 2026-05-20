@@ -52,3 +52,4 @@ Thumbs.db
 
 # local screenshot scratchpad (chrome devtools dev)
 .tmp-screenshots/
+.vercel
