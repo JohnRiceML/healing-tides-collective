@@ -25,11 +25,13 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal | Live |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
-| `/join` | Practitioner sign-up (Clerk + Google) | 🚧 In build (`feat/practitioner-listing-mvp`) |
+| `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🚧 In build (`feat/practitioner-listing-mvp`) |
 | `/practitioner` | Signed-in practitioner home (ensures the profile row) | 🚧 In build |
 
+> **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory, no account) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). Planned MVP routes not yet built: `/practitioners` (directory), `/practitioners/[slug]` (SEO profile page), `/for-practitioners` (pitch). Seekers browse **anonymously**; accounts are typed by `User.role`. `/join` is practitioner-only.
+
 ## Subsystems & ownership
-**Frontend** — Next.js 16 App Router, React 19, Tailwind v4, Framer Motion. Entry: `app/` (landing `app/page.tsx`; prototype `app/prototype/`; shared helpers `app/_lib/`).
+**Frontend** — Next.js 16 App Router, React 19, Tailwind v4, Framer Motion. Entry: `app/` (landing `app/page.tsx`; prototype `app/prototype/`; shared helpers `app/_lib/`). **Owned by the style team** — tokens in `app/globals.css` (`@theme`), the build-the-UI system in [`docs/design/UI-SYSTEM.md`](design/UI-SYSTEM.md), the component library in `app/prototype/_components/ui.tsx` (to be promoted to `app/_components/`). Agents: `design-system-steward` (lead) + `component-architect` / `page-builder` / `a11y-steward` / `motion-designer`.
 
 **CMS — Sanity (editorial only).** Entry: `sanity/` (client, queries, schema types: `post` / `author` / `category`) + the `/studio` route. Journal + page copy. **Not** for app/matching data.
 

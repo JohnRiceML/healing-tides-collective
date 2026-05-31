@@ -9,6 +9,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 - **[docs/SYSTEM.md](docs/SYSTEM.md)** — the **living system map**: where things live + current status. The source of truth. *If this file and the code disagree, the code wins — fix the doc.*
 - **[docs/architecture/PHASE-2-SYSTEMS.md](docs/architecture/PHASE-2-SYSTEMS.md)** — the Phase 2 plan: locked stack, system ownership, env contract, open scope questions.
 - **[planning/decisions-log.md](planning/decisions-log.md)** — the ADR log: *why* things are the way they are (append-only).
+- **[docs/design/UI-SYSTEM.md](docs/design/UI-SYSTEM.md)** — how to build any page/component (tokens, the component library, the checklist). Read before touching UI.
 
 ## This is Next.js 16 — not the Next.js you may know
 App Router, React 19. APIs and conventions may differ from older training data. When unsure about framework behavior, **read `node_modules/next/dist/docs/` before writing code.** Heed deprecation notices.
@@ -45,6 +46,14 @@ Each backend system is owned by an agent in `.claude/agents/` — use them; don'
 - **`auth-clerk`** — Clerk, route protection (`proxy.ts`), roles, the Clerk→User webhook
 - **`billing-stripe`** — Stripe, Checkout/portal/webhooks, gating
 - **`email-resend`** — Resend, templates, send helpers
+
+## Frontend / UI work → the style team
+Building a page or component? Follow **[docs/design/UI-SYSTEM.md](docs/design/UI-SYSTEM.md)** (tokens not hardcoded values, the shared component library, the checklist) and delegate to the style team in `.claude/agents/`:
+- **`design-system-steward`** (lead) — tokens (`@theme`), the design spec, brand feel, routing
+- **`component-architect`** — the shared component library; no hand-rolled/duplicated styles
+- **`page-builder`** — new routes (page shell, SEO/metadata, responsive, loading/empty/error states)
+- **`a11y-steward`** — WCAG + trauma-informed UX (calm, non-alarming, reduced-motion)
+- **`motion-designer`** — Framer Motion patterns, the motion language
 
 ## Product voice & principles (stable)
 - **Voice:** clear, grounded, human. Not clinical, not fluffy. Slightly elevated, approachable. Trauma-informed — the reader sets the pace.

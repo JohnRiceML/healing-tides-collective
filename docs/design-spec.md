@@ -1,6 +1,6 @@
 # Design Spec — Healing Tides Collective
 
-**Status:** v0.1 draft (2026-04-26). Will iterate after first landing page render.
+**Status:** v0.1 draft (2026-04-26), now partly shipped. The tokens below are **live in `app/globals.css` (`@theme`)** and fonts are confirmed — **Fraunces** (display) + **Inter** (sans). For *how to build* with this spec — the component library, the page shell, and checklists — see **[`docs/design/UI-SYSTEM.md`](design/UI-SYSTEM.md)**. Owned by the `design-system-steward` (style team).
 
 ## Design principles
 1. **Spacious over dense.** Generous whitespace is the brand. If a section feels tight, it's wrong.
