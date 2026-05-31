@@ -41,7 +41,7 @@ npx tsc --noEmit
 
 ## Backend work → delegate to the system-owner agents
 Each backend system is owned by an agent in `.claude/agents/` — use them; don't freelance across boundaries:
-- **`db-architect`** — Prisma schema, Neon, migrations
+- **`db-architect`** — lead of the **DB team** (+ `db-migration-engineer`, `db-performance`, `db-reliability`, `db-integrity`): data modeling, migrations, performance, backups/restore, data safety
 - **`auth-clerk`** — Clerk, route protection (`proxy.ts`), roles, the Clerk→User webhook
 - **`billing-stripe`** — Stripe, Checkout/portal/webhooks, gating
 - **`email-resend`** — Resend, templates, send helpers

@@ -64,7 +64,7 @@ Each system is owned by a dedicated agent under `.claude/agents/`. They write th
 
 | Agent | Owns | Must not touch |
 | --- | --- | --- |
-| [`db-architect`](../../.claude/agents/db-architect.md) | `prisma/schema.prisma`, `lib/db.ts`, migrations, DB env | business rules, identity, billing logic |
+| [`db-architect`](../../.claude/agents/db-architect.md) **+ DB team** (`db-migration-engineer`, `db-performance`, `db-reliability`, `db-integrity`) | `prisma/schema.prisma`, `lib/db.ts`, migrations, backups/restore, perf, data safety, DB env | business rules, identity, billing logic |
 | [`auth-clerk`](../../.claude/agents/auth-clerk.md) | `proxy.ts` (Next 16 middleware), `lib/auth.ts`, Clerk webhook, roles | the `User` *table shape*, billing |
 | [`billing-stripe`](../../.claude/agents/billing-stripe.md) | Stripe client, Checkout/portal, Stripe webhook, `lib/subscription.ts` | the `User` *table shape*, identity |
 | [`email-resend`](../../.claude/agents/email-resend.md) | Resend client, templates, from-domain, send helpers | *deciding* what triggers a send |

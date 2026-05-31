@@ -35,7 +35,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 
 | System | Owner agent | Target location (HTC: root `app/`, no `src/`) |
 |---|---|---|
-| Data — Prisma 7 → Neon Postgres | `db-architect` | `prisma/schema.prisma`, `lib/db.ts`, client → `lib/generated/prisma` |
+| Data — Prisma 7 → Neon Postgres | **DB team** (lead `db-architect` + `db-migration-engineer` / `db-performance` / `db-reliability` / `db-integrity`) | `prisma/schema.prisma`, `lib/db.ts`, client → `lib/generated/prisma` |
 | Auth — Clerk (identity, roles, webhook→User mirror) | `auth-clerk` | `proxy.ts` (root; Next 16's renamed middleware), `lib/auth.ts` |
 | Billing — Stripe (Checkout/portal/webhook, gating) | `billing-stripe` | `lib/subscription.ts`, Stripe webhook route |
 | Email — Resend (transactional, templates) | `email-resend` | `lib/email.ts`, `emails/` |
