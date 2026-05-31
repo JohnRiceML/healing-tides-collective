@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { SanityLive } from "@/sanity/lib/live";
+import { clerkEnabled } from "@/lib/clerk-enabled";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -52,8 +54,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        {children}
-        <SanityLive />
+        {clerkEnabled ? (
+          <ClerkProvider>
+            {children}
+            <SanityLive />
+          </ClerkProvider>
+        ) : (
+          <>
+            {children}
+            <SanityLive />
+          </>
+        )}
       </body>
       <GoogleAnalytics gaId="G-EJZ1TBDT3W" />
     </html>

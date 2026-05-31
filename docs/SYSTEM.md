@@ -12,8 +12,9 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 |---|---|---|
 | **Phase 1** | Immersive landing + "Meet Nora" + Sanity journal | ✅ **Live** |
 | **Phase 2 (UI)** | Get Matched: seeker intake, practitioner apply, admin/matching, provider portal, resources | 🧩 **Clickable prototype** (no backend) |
+| **Practitioner Listing MVP** | Practitioner sign-up → profile → public directory (no PHI; ships first) | 🚧 **In build** on `feat/practitioner-listing-mvp` — [brief](briefs/practitioner-listing-mvp.md) |
 | **Database** | Prisma 7 → Neon Postgres | 🟡 **Scaffolded** (schema + client wired & type-checked; live migration pending creds) |
-| **Phase 2 (backend)** | Clerk + Stripe + Resend | 🔒 **Decided, not wired** — see [PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) |
+| **Phase 2 (backend)** | Clerk · Stripe · Resend | 🟡 **Clerk wired** (env-gated, Google sign-up); Stripe/Resend decided, not wired — see [PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) |
 | **Phase 2 (scope)** | What we charge for, matching/email flows, data model | ⏳ **Pending the client call recap** (`notes/`) |
 
 ## Surfaces (routes)
@@ -23,8 +24,9 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/about` | "Meet Nora" — founder bio | Live |
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal | Live |
 | `/studio` | Embedded Sanity Studio | Live |
-| `/designs/split`, `/designs/_archive/*` | Landing layout explorations | Reference only |
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
+| `/join` | Practitioner sign-up (Clerk + Google) | 🚧 In build (`feat/practitioner-listing-mvp`) |
+| `/practitioner` | Signed-in practitioner home (ensures the profile row) | 🚧 In build |
 
 ## Subsystems & ownership
 **Frontend** — Next.js 16 App Router, React 19, Tailwind v4, Framer Motion. Entry: `app/` (landing `app/page.tsx`; prototype `app/prototype/`; shared helpers `app/_lib/`).
@@ -42,7 +44,9 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 
 Reference implementation for all four: the sibling **counsel-post** repo (which uses a `src/` layout — translate `src/lib/x` → our `lib/x`).
 
-**DB layer — scaffolded 2026-05-31** (✅ `tsc` passes): `prisma/schema.prisma` (`User` + `Role`/`SubscriptionStatus` enums), `prisma.config.ts` (Prisma 7 CLI config — connection URLs live here, *not* in the schema), `lib/db.ts` (pg-adapter singleton on pooled `DATABASE_URL`), generated client → `lib/generated/prisma` (gitignored, `postinstall: prisma generate`). **Pending:** rotate the Neon password (exposed in chat during setup) → `vercel env pull .env.local` → `npm run db:migrate` to create the `users` table. Seeker/Practitioner/Match models still await the call recap.
+**DB layer — scaffolded 2026-05-31** (✅ `tsc` passes): `prisma/schema.prisma` (`User` + `Role`/`SubscriptionStatus` enums), `prisma.config.ts` (Prisma 7 CLI config — connection URLs live here, *not* in the schema), `lib/db.ts` (pg-adapter singleton on pooled `DATABASE_URL`), generated client → `lib/generated/prisma` (gitignored, `postinstall: prisma generate`). **Pending:** rotate the Neon password (exposed in chat during setup) → `vercel env pull .env.local` → `npm run db:migrate` to create the tables. **`Practitioner` + `ProfileView`** models added for the listing MVP (PII, not PHI); `Seeker`/`Match` still await the matching brief.
+
+**Auth — wired 2026-05-31** (env-gated; ✅ `tsc`): `lib/clerk-enabled.ts` (the gate boolean — db-free), `lib/auth.ts` (`getCurrentDbUser`, `getOrCreatePractitioner`), `proxy.ts` (Clerk proxy), `<ClerkProvider>` in `app/layout.tsx`. With no Clerk keys it all no-ops so the app still runs. Flow: `/join` (sign-up) → `/practitioner`. **Pending:** add Clerk keys to `.env.local` + enable Google in the Clerk dashboard.
 
 ## Where plans & decisions live
 - **Next-stage plan:** [docs/architecture/PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) — stack, ownership, env contract, open scope questions.

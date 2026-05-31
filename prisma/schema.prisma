@@ -5,8 +5,9 @@
 //   synced via a Clerk webhook (auth-clerk). Billing state (Stripe) is mirrored
 //   on the row (billing-stripe) so access gating is a single row read.
 // - This DB is DEDICATED to Healing Tides — never shared with another product.
-// - Seeker / Practitioner / Match models are intentionally NOT here yet — they
-//   await the client call recap (notes/). db-architect adds them once scope lands.
+// - Practitioner Listing MVP (docs/briefs/practitioner-listing-mvp.md): the
+//   Practitioner profile is PII, NOT client PHI — which is why it ships first.
+//   Seeker / Match models still await the matching brief.
 
 generator client {
   provider = "prisma-client"
@@ -36,7 +37,7 @@ enum SubscriptionStatus {
 }
 
 model User {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   clerkUserId String  @unique @map("clerk_user_id")
   email       String?
   role        Role    @default(SEEKER)
@@ -50,5 +51,86 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  practitioner Practitioner?
+
   @@map("users")
+}
+
+// ── Practitioner Listing MVP ────────────────────────────────────────────────
+// Profile data is PII, NOT client PHI (see the brief). Standard PII handling only.
+
+enum ProfileVisibility {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  NEEDS_REVIEW
+}
+
+enum Modality {
+  IN_PERSON
+  HYBRID
+  VIRTUAL
+}
+
+// Dormant in V1 — INDIVIDUAL only. The others let one umbrella account hold
+// multiple sub-listings later (group practice / treatment center).
+enum AccountType {
+  INDIVIDUAL
+  GROUP_PRACTICE
+  TREATMENT_CENTER
+}
+
+model Practitioner {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Public profile — mostly nullable so sign-up creates a DRAFT shell.
+  slug        String? @unique
+  displayName String? @map("display_name")
+  photoUrl    String? @map("photo_url") // Vercel Blob
+  bio         String?
+  website     String?
+  socialLinks Json?   @map("social_links")
+
+  // Match-critical, STRUCTURED — the future matcher consumes these (no re-intake).
+  specialties       String[]  @default([]) // taxonomy IDs; the taxonomy itself is admin-owned config
+  modality          Modality?
+  region            String?
+  insuranceAccepted String[]  @default([]) @map("insurance_accepted")
+  gender            String? // practitioner gender — used as a client preference filter in matching
+  values            String? // "what healing means to me" — the differentiator; powers values matching
+
+  // Answers to Nora's config-driven extra fields (the field schema is admin-owned config).
+  fieldValues Json? @map("field_values")
+
+  // State + instrumentation.
+  visibility   ProfileVisibility @default(DRAFT)
+  completeness Int               @default(0) // 0–100, recomputed on edit; drives nudges
+  viewCount    Int               @default(0) @map("view_count") // denormalized; ProfileView is source of truth
+
+  // Dormant hooks — unused/unenforced in V1; present so tiers/groups are cheap to switch on.
+  accountType AccountType @default(INDIVIDUAL) @map("account_type")
+  tier        String? // null = free (V1: everyone)
+  featured    Boolean     @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  views ProfileView[]
+
+  @@index([visibility])
+  @@map("practitioners")
+}
+
+// One profile view — minimal, no PII. The count becomes upsell evidence later.
+model ProfileView {
+  id             String       @id @default(cuid())
+  practitionerId String       @map("practitioner_id")
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  viewedAt       DateTime     @default(now()) @map("viewed_at")
+
+  @@index([practitionerId])
+  @@index([viewedAt])
+  @@map("profile_views")
 }

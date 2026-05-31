@@ -18,6 +18,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL,
+    // `||` (not `??`) so an EMPTY string also falls back. Note: Vercel marks the
+    // Neon integration's vars "Sensitive", so `vercel env pull` returns them blank —
+    // copy the connection string from the Neon dashboard into .env.local instead.
+    url: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL,
   },
 });
