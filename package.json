@@ -8,16 +8,24 @@
     "start": "next start",
     "lint": "next lint",
     "sanity:extract": "sanity schema extract",
-    "sanity:typegen": "sanity schema extract && sanity typegen generate"
+    "sanity:typegen": "sanity schema extract && sanity typegen generate",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.4",
     "@portabletext/react": "^6.2.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.24.0",
     "framer-motion": "^12.38.0",
     "next": "^16.0.0",
     "next-sanity": "^12.4.5",
+    "pg": "^8.21.0",
+    "prisma": "^7.8.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanity": "^5.24.0",
@@ -26,6 +34,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0",

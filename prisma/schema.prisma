@@ -1,0 +1,54 @@
+// Healing Tides Collective — data model. Postgres (Neon), Prisma 7 (`prisma-client` generator).
+//
+// Design (see docs/architecture/PHASE-2-SYSTEMS.md):
+// - Identity is owned by Clerk. `User` is a LOCAL MIRROR keyed by clerkUserId,
+//   synced via a Clerk webhook (auth-clerk). Billing state (Stripe) is mirrored
+//   on the row (billing-stripe) so access gating is a single row read.
+// - This DB is DEDICATED to Healing Tides — never shared with another product.
+// - Seeker / Practitioner / Match models are intentionally NOT here yet — they
+//   await the client call recap (notes/). db-architect adds them once scope lands.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+// Prisma 7 no longer accepts connection URLs here — they live in prisma.config.ts.
+// Runtime connection is supplied by the pg adapter in lib/db.ts (pooled DATABASE_URL);
+// the CLI (migrations) uses the direct DATABASE_URL_UNPOOLED via prisma.config.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SEEKER
+  PRACTITIONER
+  ADMIN
+}
+
+// Mirrors Stripe subscription state. NONE = never subscribed.
+enum SubscriptionStatus {
+  NONE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model User {
+  id          String @id @default(cuid())
+  clerkUserId String  @unique @map("clerk_user_id")
+  email       String?
+  role        Role    @default(SEEKER)
+
+  // Stripe billing mirror (source of truth = Stripe; written by the Stripe webhook).
+  stripeCustomerId     String?            @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
+  subscriptionStatus   SubscriptionStatus @default(NONE) @map("subscription_status")
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}

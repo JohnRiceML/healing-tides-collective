@@ -53,3 +53,6 @@ Thumbs.db
 # local screenshot scratchpad (chrome devtools dev)
 .tmp-screenshots/
 .vercel
+
+# Prisma — generated client (regenerated via `postinstall: prisma generate`)
+/lib/generated/

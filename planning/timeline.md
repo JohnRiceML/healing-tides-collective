@@ -4,6 +4,8 @@
 **Phase 1 goal:** Landing page live with waitlist capture, GA + GSC verified, Sanity wired in for editable copy.
 **Phase 1 launch target:** **2026-05-24 (Sun)** — 4 weeks.
 
+> **Status (2026-05-31): Phase 1 is complete and live.** The week-by-week plan below is a *historical record* of how Phase 1 was built — the dates are in the past. Phase 2 scope and dates are not set yet (await the client call recap + a Phase 1 retro). The Phase 2 *technical* direction is locked in `../docs/architecture/PHASE-2-SYSTEMS.md` and **supersedes** the "Phase 2 preview" at the bottom of this file — matching data is Prisma/Postgres-backed, **not** Sanity.
+
 ---
 
 ## Week 1 — Foundation (Apr 26 → May 3)
@@ -77,16 +79,12 @@
 
 ---
 
-## Phase 2 (preview, not yet scoped)
-**Earliest start:** 2026-05-25
+## Phase 2 (preview — technical direction locked, scope/dates pending)
 **Theme:** Get-Matched flow MVP — the actual matching tool.
-- Practitioner schema in Sanity
-- Onboarding questionnaire (likely 5–7 questions)
-- Match logic v1 (rules-based, not ML)
-- Match results screen
-- Practitioner-side intake form
 
-Phase 2 timeline TBD after Phase 1 retro. Don't pre-commit dates.
+**Technical direction (locked 2026-05-31 — see `../docs/architecture/PHASE-2-SYSTEMS.md`):** practitioner + seeker + matching data live in **Prisma → Neon Postgres** (NOT Sanity — Sanity stays for editorial/journal only); **Clerk** auth (seeker / practitioner / admin), **Stripe** billing, **Resend** email; each system owned by a `.claude/agents/` agent.
+
+Product shape — rules-based match v1, seeker onboarding questionnaire (~5–7 questions), match-results screen, practitioner-side intake — is sketched but **scope + dates remain TBD pending the client call recap + Phase 1 retro. Don't pre-commit dates.**
 
 ---
 

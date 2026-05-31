@@ -2,6 +2,8 @@
 
 Every account, integration, and config required to stand up Phase 1. Check off as we go.
 
+> **Status (2026-05-31):** Phase 1 is live — repo, Vercel, Sanity, GA, and the landing are done (see git history); §1–§10 below are now mostly a Phase-1 record. **Phase 2 backend provisioning (Neon / Clerk / Stripe) is in [§11](#11-phase-2--backend-services-provision-when-phase-2-build-starts).** Full env contract + patterns: `../docs/architecture/PHASE-2-SYSTEMS.md`.
+
 ---
 
 ## 1. Domain
@@ -128,3 +130,32 @@ Every account, integration, and config required to stand up Phase 1. Check off a
 - [ ] Check waitlist signups land in expected place
 - [ ] Set up weekly digest of signups (Resend audience or simple email)
 - [ ] Founder shares with first 20 contacts; collect qualitative feedback
+
+---
+
+## 11. Phase 2 — backend services (provision when Phase 2 build starts)
+
+Provision via the **Vercel Marketplace** (auto-injects env vars). Each system is owned by an agent in `.claude/agents/`. Full env contract + the reference patterns: `../docs/architecture/PHASE-2-SYSTEMS.md`.
+
+### Neon (Postgres) — the only datastore for now
+- [x] Add the **Neon** integration from the Vercel Marketplace (Storage tab) — *done 2026-05-31*
+- [x] **Leave the "Custom Prefix" field empty** — confirmed; injected `DATABASE_URL` (pooled) + `DATABASE_URL_UNPOOLED` (direct), plus harmless `PG*`/`POSTGRES_*` extras.
+- [x] Prisma scaffolded (`prisma/schema.prisma`, `prisma.config.ts` — connection lives here in Prisma 7, *not* the schema — `lib/db.ts`; client → `lib/generated/prisma`). `tsc` passes.
+- [ ] **Rotate the Neon password** (exposed in chat during setup), then `vercel env pull .env.local`.
+- [ ] Run the first migration: `npm run db:migrate` (creates the `users` table).
+- [ ] Do **not** add Blob / Upstash / Edge Config yet — only on a concrete trigger (see architecture doc)
+
+### Clerk (auth)
+- [ ] Add the **Clerk** integration from the Vercel Marketplace
+- [ ] Env: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL`
+- [ ] Wire the `user.created/updated/deleted` webhook → local `User` mirror (svix-verified)
+- [ ] Define roles: SEEKER / PRACTITIONER / ADMIN
+
+### Stripe (billing)
+- [ ] Create the Stripe account — **its own**, isolated to Healing Tides
+- [ ] Env: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price ID(s)
+- [ ] Wire the subscription/payment webhook → mirror state onto `User`
+- [ ] **Open scope (needs the call recap):** what do we charge for, and are practitioners paid *through* the platform? If yes → **Stripe Connect** (bigger build). See architecture doc.
+
+### Resend (extends §7)
+- [ ] Verify `healingtides.co` as a sending domain in Resend (DKIM/SPF/DMARC) so `hello@healingtides.co` can send — until then, CTAs route to Nora's direct email (`EMAIL_FROM`)

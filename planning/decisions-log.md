@@ -1,6 +1,6 @@
 # Decisions Log
 
-Append-only log of meaningful choices. Format:
+This is the project's **ADR log** (Architecture Decision Records) — the source of truth for *why* the system is the way it is. **Append-only:** to change a past decision, add a new entry that supersedes it (link back); don't edit history. Keep each entry to ~a page. See also the living-doc system in [AGENTS.md](../AGENTS.md) and [docs/SYSTEM.md](../docs/SYSTEM.md). Format:
 
 ```
 ## YYYY-MM-DD — Short title
@@ -48,3 +48,34 @@ Append-only log of meaningful choices. Format:
 **Why:** Validate name, brand, and demand before building the harder thing. Waitlist signups become the audience for Phase 2 launch.
 **Alternatives considered:** Ship a fake-door "Get Matched" button that just collects email — rejected as too cute. The waitlist framing is honest and still captures intent.
 **Revisit when:** End of Phase 1 (2026-05-24).
+
+## 2026-05-31 — Phase 2 stack locked
+**Decision:** Phase 2 (the real Get Matched product) runs on **Prisma 7 → a single dedicated Neon Postgres** (shard-ready, not sharded), **Clerk** for auth, **Stripe** for billing, **Resend** for transactional email — each isolated to Healing Tides (its own Clerk app / Stripe account / Resend domain / database). Documented in `docs/architecture/PHASE-2-SYSTEMS.md`.
+**Why:** Matches John's proven toolchain and, critically, the *clean* pattern already implemented in the `counsel-post` repo (Clerk owns identity → local `User` mirror; Stripe state mirrored on the row; Prisma 7 + PrismaPg adapter over Neon). One read gates a request. counsel-post becomes the reference implementation.
+**Alternatives considered:** (a) Auth.js/NextAuth instead of Clerk — rejected for speed; Clerk's hosted roles/orgs/UI get seeker/practitioner/admin RBAC shipped faster. (b) Mirroring the "sharded schema" from SubredditSignals/Mochi/Narrative Nooks — rejected after investigation (see next entry). (c) Physical sharding now — rejected as premature at zero users and hostile to the seeker↔practitioner matching joins.
+**Revisit when:** Real load justifies partitioning, or if a self-hosted-auth requirement appears.
+
+## 2026-05-31 — "Sharded schema" reframed (research finding)
+**Decision:** Do NOT replicate the SubredditSignals data pattern. Use a single dedicated Postgres per the entry above.
+**Why:** Investigated the three repos John referenced. SubredditSignals is a single **MySQL** monolith where four products (Narrative Nooks `nn_*`, Subreddit Signals `ss_*`, GrowthMindset `gms_*`, CreatorReach `cr_*`) coexist via **table-name prefixes** — namespace isolation, not sharding. Mochi and Narrative Nooks have no standalone code repos (NN's models live inside SubredditSignals). There is no reusable sharding pattern to copy; the desired "isolated product DB + own services" pattern lives in counsel-post instead.
+**Alternatives considered:** Prefix-namespacing HTC into a shared DB — rejected (data-boundary + isolation requirement).
+**Revisit when:** N/A — recorded to prevent re-investigating.
+
+## 2026-05-31 — System ownership via dedicated agents
+**Decision:** Each backend system is owned by a dedicated Claude Code subagent under `.claude/agents/`: `db-architect`, `auth-clerk`, `billing-stripe`, `email-resend`. They hold the conventions/contracts/guardrails and write the integration code when invoked. No auth/db/stripe implementation code is written yet — agents + architecture first.
+**Why:** Keeps each integration's rules in one place, enforces the "stay in lane" boundaries (db owns columns; auth/billing own their mirror writes + rules; email owns delivery), and lets future work be delegated cleanly.
+**Alternatives considered:** One monolithic backend agent — rejected; boundaries blur and guardrails get diluted.
+**Revisit when:** A fifth system appears (e.g. Stripe Connect payouts) or two agents keep stepping on each other.
+
+## 2026-05-31 — Provisioning posture: Vercel-native, migrate-later
+**Decision:** Provision the Phase 2 stack through the **Vercel Marketplace** where available (Neon, Clerk, Resend — auto-injected env vars + unified billing); wire Stripe directly. Favor Next.js primitives (Server Actions, route handlers, middleware) over bespoke infra. Treat the stack as a fast managed starting point we can migrate from later.
+**Why:** The locked stack already *is* the Vercel/Next.js-recommended path, so going native costs nothing and removes setup toil. Starting managed maximizes velocity; portability is preserved — Neon is plain Postgres, Stripe/Resend are standard/swappable, and only Clerk carries real switching cost (bounded by the local `User`-mirror design + a thin `auth-clerk` surface). Full table in `docs/architecture/PHASE-2-SYSTEMS.md`.
+**Alternatives considered:** Hand-provisioning each service outside the Marketplace (more toil, same result); adopting Vercel-proprietary primitives (Blob / Edge Config / Queues) up front — deferred until a real need to protect portability.
+**Revisit when:** A Vercel-proprietary primitive becomes genuinely needed, or migration off Clerk is triggered.
+
+## 2026-05-31 — Living-docs system for multi-dev / multi-agent work
+**Decision:** Adopt a docs-as-code "living document" system as we enter Phase 2 with more devs + AI agents: (1) **`AGENTS.md`** at root as the canonical, tool-agnostic instruction file (the open standard — read by Cursor / Codex / Copilot / Claude / etc.); `CLAUDE.md` reduced to `@AGENTS.md`. (2) **`docs/SYSTEM.md`** as the single living "where things live + status" map, using progressive disclosure (subsystems + entry points, not exhaustive paths). (3) **this decisions log** as the ADR log. (4) **`.github/pull_request_template.md`** + a living-doc protocol in AGENTS.md to enforce same-PR doc updates.
+**Why:** "We won't be the only dev/agents." Researched current best practice (agents.md open standard, ADRs, docs-as-code): the consensus is a canonical agent-readable entry file + one living source-of-truth map + append-only ADRs + co-located same-commit updates. AGENTS.md specifically serves non-Claude tools; progressive disclosure avoids the documented failure mode where stale path inventories poison agent context. Mirrors the counsel-post convention (`CLAUDE.md`→`@AGENTS.md` + `docs/SYSTEM.md`) for portfolio consistency.
+**Alternatives considered:** Keep everything in `CLAUDE.md` — rejected (Claude-only; fails other agents/devs). One giant doc — rejected (rots fast; mixes stable rules with volatile status). No enforcement — rejected (docs drift without a same-PR trigger).
+**Revisit when:** The repo becomes a monorepo (add nested per-package `AGENTS.md`), or doc-drift recurs despite the protocol (add automated drift detection in CI).
+**Sources:** agents.md (open standard); ADR guidance (adr.github.io, Microsoft/AWS Well-Architected); docs-as-code best practices.
