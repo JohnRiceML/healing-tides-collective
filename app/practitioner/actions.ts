@@ -33,6 +33,17 @@ function completenessOf(p: Record<string, unknown>): number {
   return Math.round((filled / COMPLETENESS_FIELDS.length) * 100);
 }
 
+// Normalize a practitioner-supplied website into a safe, link-able value: keep
+// http(s) as-is, assume https:// for a bare domain, and DROP any other scheme
+// (javascript:/data:/mailto:/…) so the public profile can never link to it.
+function safeWebsite(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(t)) return null; // some non-http scheme → drop
+  return `https://${t}`;
+}
+
 export async function saveProfile(input: ProfileInput) {
   // Re-derive the practitioner from the session — never trust a client-passed id.
   const result = await getOrCreatePractitioner();
@@ -41,7 +52,7 @@ export async function saveProfile(input: ProfileInput) {
   const data = {
     displayName: input.displayName.trim() || null,
     bio: input.bio.trim() || null,
-    website: input.website.trim() || null,
+    website: safeWebsite(input.website),
     values: input.values.trim() || null,
     modality: input.modality || null,
     region: input.region.trim() || null,
@@ -51,10 +62,14 @@ export async function saveProfile(input: ProfileInput) {
   };
 
   const completeness = completenessOf(data);
-  await db.practitioner.update({
-    where: { id: result.practitioner.id },
-    data: { ...data, completeness },
-  });
+  try {
+    await db.practitioner.update({
+      where: { id: result.practitioner.id },
+      data: { ...data, completeness },
+    });
+  } catch {
+    return { ok: false as const, error: "Couldn't save your changes — please try again." };
+  }
   revalidatePath("/practitioner");
   return { ok: true as const, completeness };
 }

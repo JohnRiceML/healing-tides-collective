@@ -36,6 +36,12 @@ async function uniqueSlug(base: string, selfId: string): Promise<string> {
   return `${base}-${selfId.slice(0, 6)}`;
 }
 
+// A Prisma unique-constraint violation — here, two practitioners racing onto the
+// same slug between the uniqueSlug check and the write.
+function isUniqueClash(e: unknown): boolean {
+  return Boolean(e && typeof e === "object" && (e as { code?: string }).code === "P2002");
+}
+
 /** Publish the signed-in practitioner's profile (DRAFT/HIDDEN → PUBLISHED). */
 export async function publishProfile() {
   const result = await getOrCreatePractitioner();
@@ -50,17 +56,35 @@ export async function publishProfile() {
   }
 
   // Keep an existing slug stable (it may already be shared/indexed); mint one once.
-  const slug = p.slug ?? (await uniqueSlug(slugify(p.displayName as string), p.id));
+  let slug = p.slug ?? (await uniqueSlug(slugify(p.displayName as string), p.id));
 
-  await db.practitioner.update({
-    where: { id: p.id },
-    data: { visibility: "PUBLISHED", slug },
-  });
-
-  revalidatePath("/practitioner");
-  revalidatePath("/practitioners");
-  revalidatePath(`/practitioners/${slug}`);
-  return { ok: true as const, slug };
+  // The uniqueSlug check + write isn't atomic: a concurrent publish could claim the
+  // same slug and trip the DB unique constraint. Mint a fresh slug and retry once.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await db.practitioner.update({
+        where: { id: p.id },
+        data: { visibility: "PUBLISHED", slug },
+      });
+      revalidatePath("/practitioner");
+      revalidatePath("/practitioners");
+      revalidatePath(`/practitioners/${slug}`);
+      return { ok: true as const, slug };
+    } catch (e) {
+      if (isUniqueClash(e) && attempt === 0 && !p.slug) {
+        slug = await uniqueSlug(slugify(p.displayName as string), p.id);
+        continue;
+      }
+      return {
+        ok: false as const,
+        error: "Something went wrong publishing your profile — please try again.",
+      };
+    }
+  }
+  return {
+    ok: false as const,
+    error: "Couldn't reserve a profile link — please try again.",
+  };
 }
 
 /** Take the profile back to DRAFT (off the public directory + slug page). */
@@ -69,10 +93,14 @@ export async function unpublishProfile() {
   if (!result) return { ok: false as const, error: "You're not signed in." };
   const p = result.practitioner;
 
-  await db.practitioner.update({
-    where: { id: p.id },
-    data: { visibility: "DRAFT" },
-  });
+  try {
+    await db.practitioner.update({
+      where: { id: p.id },
+      data: { visibility: "DRAFT" },
+    });
+  } catch {
+    return { ok: false as const, error: "Something went wrong — please try again." };
+  }
 
   revalidatePath("/practitioner");
   revalidatePath("/practitioners");
