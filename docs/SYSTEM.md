@@ -26,6 +26,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/studio` | Embedded Sanity Studio | Live |
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🚧 In build (`feat/practitioner-listing-mvp`) |
+| `/sign-in` | Returning-practitioner sign-in (Clerk) | 🚧 In build |
 | `/practitioner` | Practitioner **profile editor** — Clerk-gated; saves to Postgres (`saveProfile` action) + completeness | 🚧 In build |
 
 > **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory, no account) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). Planned MVP routes not yet built: `/practitioners` (directory), `/practitioners/[slug]` (SEO profile page), `/for-practitioners` (pitch). Seekers browse **anonymously**; accounts are typed by `User.role`. `/join` is practitioner-only.

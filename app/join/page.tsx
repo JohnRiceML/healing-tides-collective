@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 
 import { Card, Container } from "@/app/_components/ui";
+import { clerkAppearance } from "@/app/_components/clerk-appearance";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 
 export const metadata: Metadata = {
@@ -30,24 +31,6 @@ const BENEFITS: { title: string; body: string }[] = [
   },
 ];
 
-// Light brand styling for Clerk's widget so it sits inside our Card, not on top of it.
-const clerkAppearance = {
-  variables: {
-    colorPrimary: "#2f2f2f", // charcoal — matches our primary button
-    colorText: "#2f2f2f",
-    colorTextSecondary: "#8a8580", // ink-muted
-    colorBackground: "#ffffff",
-    borderRadius: "0.85rem",
-    fontFamily: "var(--font-sans)",
-  },
-  elements: {
-    rootBox: "w-full",
-    card: "bg-transparent shadow-none border-0 p-0 w-full",
-    header: "hidden",
-    footer: "bg-transparent",
-  },
-};
-
 export default function JoinPage() {
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
@@ -71,15 +54,15 @@ export default function JoinPage() {
           <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-10">
             <div className="mb-7">
               <h2 className="font-display text-2xl font-light leading-tight">Create your profile</h2>
-              <p className="mt-1 text-[14px] text-ink-muted">
-                Takes a minute — you can finish the details after.
+              <p className="mt-1 text-[14px] leading-[1.5] text-ink-muted">
+                A minute to start — you’ll add your photo, story, and specialties next.
               </p>
             </div>
 
             {clerkEnabled ? (
               <SignUp
                 routing="hash"
-                signInUrl="/join"
+                signInUrl="/sign-in"
                 fallbackRedirectUrl="/practitioner"
                 appearance={clerkAppearance}
               />
