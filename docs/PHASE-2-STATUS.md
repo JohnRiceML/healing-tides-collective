@@ -1,11 +1,11 @@
 # Phase 2 — Status & Roadmap
 
-> **Living tracker.** Phase 2 = the **Practitioner Listing MVP first** (no client PHI; must demo mid-June), then the matching engine (a *separate* brief, deferred). Update as work lands. **Last updated:** 2026-05-31.
+> **Living tracker.** Phase 2 = the **Practitioner Listing MVP first** (no client PHI; must demo mid-June), then the matching engine (a *separate* brief, deferred). Update as work lands. **Last updated:** 2026-06-01.
 >
 > Sources of truth: the [brief](briefs/practitioner-listing-mvp.md) · [EXPERIENCE-MAP](architecture/EXPERIENCE-MAP.md) · [PHASE-2-SYSTEMS](architecture/PHASE-2-SYSTEMS.md) · [SYSTEM](SYSTEM.md) · [UI-SYSTEM](design/UI-SYSTEM.md) · [decisions log](../planning/decisions-log.md).
 
 ## Where we are
-Foundations **and** the practitioner account + profile-editor flow are built and **live on production** (`www.healingtides.co`). What's left for the MVP: the public **directory** + **SEO profile pages**, **publish**, the **admin slice**, the **claim/email** flow, and **Nora's content**. The seeker/matching side is deferred to its own brief.
+Foundations, the practitioner account + profile-editor flow, **the publish flow, the public directory, and SEO profile pages** are built and **live on production** (`www.healingtides.co`). What's left for the MVP: the **admin slice**, the **claim/email** flow, **photo upload**, and **Nora's content**. The seeker/matching side is deferred to its own brief.
 
 ## ✅ Shipped (this session)
 
@@ -31,9 +31,9 @@ Foundations **and** the practitioner account + profile-editor flow are built and
 ## 🔜 Remaining for the listing MVP (path to the June demo)
 Roughly ordered toward the brief's success bar — *invite → claimed → published → visible*:
 - [ ] **Photo upload → Vercel Blob** (the one editor field still deferred)
-- [ ] **Publish flow** — `draft → published` + SEO slug generation
-- [ ] **Public directory `/practitioners`** — browse + config-driven filters + free-text search
-- [ ] **SEO profile pages `/practitioners/[slug]`** — metadata + JSON-LD + sitemap (the "found on Google" selling point)
+- [x] **Publish flow** — `draft → published` + collision-safe slug generation + the editor Publish/Unpublish control ✅
+- [x] **Public directory `/practitioners`** — browse + specialty/format filters + free-text search ✅
+- [x] **SEO profile pages `/practitioners/[slug]`** — `generateMetadata` + JSON-LD + `/sitemap.xml` (the "found on Google" page) ✅
 - [ ] **Admin slice** — practitioner list + status + completeness; edit / publish / feature; send invites; basic counts
 - [ ] **Claim flow** — import the ~40 waitlist contacts → tokenized pre-filled claim links → claim page
 - [ ] **Email (Resend)** — invite + follow-up + transactional (intro, application received); verify the `hello@healingtides.co` sending domain

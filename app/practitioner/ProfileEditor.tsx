@@ -6,14 +6,20 @@ import {
   Button,
   ChoiceChip,
   Field,
+  LinkButton,
   SectionHeader,
   TextArea,
   TextInput,
 } from "@/app/_components/ui";
-import type { Modality, Practitioner } from "@/lib/generated/prisma/client";
+import type {
+  Modality,
+  Practitioner,
+  ProfileVisibility,
+} from "@/lib/generated/prisma/client";
 
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
+import { publishProfile, unpublishProfile } from "./publish-actions";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
   const [displayName, setDisplayName] = useState(practitioner.displayName ?? "");
@@ -29,6 +35,38 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [completeness, setCompleteness] = useState(practitioner.completeness);
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
+
+  // Publish state — mirrors the save UX (a useTransition + an inline result).
+  const [visibility, setVisibility] = useState<ProfileVisibility>(practitioner.visibility);
+  const [slug, setSlug] = useState<string | null>(practitioner.slug);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishing, startPublish] = useTransition();
+  const isPublished = visibility === "PUBLISHED";
+
+  function onPublish() {
+    setPublishError(null);
+    startPublish(async () => {
+      const res = await publishProfile();
+      if (res.ok) {
+        setVisibility("PUBLISHED");
+        setSlug(res.slug);
+      } else {
+        setPublishError(res.error);
+      }
+    });
+  }
+
+  function onUnpublish() {
+    setPublishError(null);
+    startPublish(async () => {
+      const res = await unpublishProfile();
+      if (res.ok) {
+        setVisibility("DRAFT");
+      } else {
+        setPublishError(res.error);
+      }
+    });
+  }
 
   const dirty = () => setSaved(false);
   const toggleSpecialty = (id: string) => {
@@ -61,7 +99,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
       {/* completeness */}
       <div>
         <div className="flex items-baseline justify-between">
-          <span className="meta text-ink-muted">{practitioner.visibility.toLowerCase()}</span>
+          <span className="meta text-ink-muted">{visibility.toLowerCase()}</span>
           <span className="text-[13px] text-ink-soft">{completeness}% complete</span>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule/60">
@@ -135,9 +173,63 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           {pending ? "Saving…" : saved ? "Saved ✓" : "Save profile"}
         </Button>
         <span className="text-[13px] text-ink-muted">
-          Photo upload &amp; publishing coming next.
+          Photo upload coming next.
         </span>
       </div>
+
+      {/* Status + publish — additive, calm, trauma-informed. The publish actions
+          re-derive the practitioner from the session and enforce a name+bio bar. */}
+      <section
+        aria-labelledby="publish-heading"
+        className="rounded-3xl border border-rule/80 bg-white p-7 shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-32px_rgba(31,58,95,0.18)] md:p-8"
+      >
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className={`inline-block h-2 w-2 shrink-0 rounded-full ${
+              isPublished ? "bg-teal" : "bg-rule-strong/30"
+            }`}
+          />
+          <h2 id="publish-heading" className="font-display text-[20px] leading-tight text-charcoal">
+            {isPublished ? "Your profile is live" : "Your profile is a draft"}
+          </h2>
+        </div>
+        <p className="mt-3 text-[15px] leading-[1.6] text-ink-soft">
+          {isPublished
+            ? "People looking for care can find you. You can take it down any time — nothing is permanent."
+            : "Only you can see this right now. Publish when you're ready, at your own pace."}
+        </p>
+
+        {isPublished ? (
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+            {slug ? (
+              <LinkButton
+                href={`/practitioners/${slug}`}
+                target="_blank"
+                rel="noreferrer"
+                tone="secondary"
+              >
+                View your public page →
+              </LinkButton>
+            ) : null}
+            <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>
+              {publishing ? "Taking it down…" : "Take it down"}
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-6">
+            <Button type="button" onClick={onPublish} disabled={publishing}>
+              {publishing ? "Publishing…" : "Publish profile"}
+            </Button>
+          </div>
+        )}
+
+        {publishError ? (
+          <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">
+            {publishError}
+          </p>
+        ) : null}
+      </section>
     </form>
   );
 }

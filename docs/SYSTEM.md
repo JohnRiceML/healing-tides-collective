@@ -1,6 +1,6 @@
 # Healing Tides Collective — System Map
 
-**Last updated:** 2026-05-31
+**Last updated:** 2026-06-01
 
 > **This is a living document** — the canonical "where things live + current status" map. When the code moves, **update this in the same change.** When a doc and the code disagree, **the code wins — and this file gets fixed.** It lists load-bearing *entry points* and subsystems, **not every file** (exact paths drift and mislead — search the code for them). The rules that keep this alive are in [AGENTS.md](../AGENTS.md#the-living-doc-protocol--keep-docs-alive).
 
@@ -12,7 +12,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 |---|---|---|
 | **Phase 1** | Immersive landing + "Meet Nora" + Sanity journal | ✅ **Live** |
 | **Phase 2 (UI)** | Get Matched: seeker intake, practitioner apply, admin/matching, provider portal, resources | 🧩 **Clickable prototype** (no backend) |
-| **Practitioner Listing MVP** | Practitioner sign-up → profile → public directory (no PHI; ships first) | 🚧 **In build** on `feat/practitioner-listing-mvp` — [brief](briefs/practitioner-listing-mvp.md) |
+| **Practitioner Listing MVP** | Practitioner sign-up → profile → public directory (no PHI; ships first) | 🚧 **In build** on `feat/practitioner-listing-mvp` — sign-up, editor, **publish flow, public directory + SEO profile pages** now live on the branch; admin/claim/email next — [brief](briefs/practitioner-listing-mvp.md) |
 | **Database** | Prisma 7 → Neon Postgres | 🟡 **Scaffolded** (schema + client wired & type-checked; live migration pending creds) |
 | **Phase 2 (backend)** | Clerk · Stripe · Resend | 🟡 **Clerk wired** (env-gated, Google sign-up); Stripe/Resend decided, not wired — see [PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) |
 | **Phase 2 (scope)** | What we charge for, matching/email flows, data model | ⏳ **Pending the client call recap** (`notes/`) |
@@ -27,9 +27,12 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🚧 In build (`feat/practitioner-listing-mvp`) |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🚧 In build |
-| `/practitioner` | Practitioner **profile editor** — Clerk-gated; saves to Postgres (`saveProfile` action) + completeness | 🚧 In build |
+| `/practitioner` | Practitioner **profile editor** — Clerk-gated; saves to Postgres (`saveProfile` action) + completeness + **Publish/Unpublish** | 🚧 In build |
+| `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🚧 In build (`feat/…`) |
+| `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🚧 In build |
+| `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🚧 In build |
 
-> **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory, no account) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). Planned MVP routes not yet built: `/practitioners` (directory), `/practitioners/[slug]` (SEO profile page), `/for-practitioners` (pitch). Seekers browse **anonymously**; accounts are typed by `User.role`. `/join` is practitioner-only.
+> **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory, no account) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). `/practitioners` (directory) and `/practitioners/[slug]` (SEO profile page) are now **built**; the public read layer is `lib/practitioners.ts` (published-only — the single source of public reads), publish/unpublish live in `app/practitioner/publish-actions.ts`, and the canonical origin is `lib/site.ts` (`www`). Still planned: `/for-practitioners` (pitch). Seekers browse **anonymously**; accounts are typed by `User.role`. `/join` is practitioner-only.
 
 ## Subsystems & ownership
 **Frontend** — Next.js 16 App Router, React 19, Tailwind v4, Framer Motion. Entry: `app/` (landing `app/page.tsx`; prototype `app/prototype/`; shared helpers `app/_lib/`). **Owned by the style team** — tokens in `app/globals.css` (`@theme`), the build-the-UI system in [`docs/design/UI-SYSTEM.md`](design/UI-SYSTEM.md), the shared component library in `app/_components/ui.tsx` (Button / Card / Field / Container / ChoiceChip…; a shim keeps the prototype's old imports working). Agents: `design-system-steward` (lead) + `component-architect` / `page-builder` / `a11y-steward` / `motion-designer`.

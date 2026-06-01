@@ -4,6 +4,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SanityLive } from "@/sanity/lib/live";
 import { clerkEnabled } from "@/lib/clerk-enabled";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -25,14 +26,15 @@ const DESCRIPTION =
   "A modern front door to wellness — guided care matching across therapy, acupuncture, reiki, movement, and trauma-informed care.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Healing Tides Collective",
   description: DESCRIPTION,
   openGraph: {
     title: "Healing Tides Collective",
     description: DESCRIPTION,
-    url: "https://healingtides.co",
+    url: SITE_URL,
     siteName: "Healing Tides Collective",
-    images: [{ url: "https://healingtides.co/og.jpg", width: 1200, height: 630, alt: "Healing Tides Collective" }],
+    images: [{ url: `${SITE_URL}/og.jpg`, width: 1200, height: 630, alt: "Healing Tides Collective" }],
     type: "website",
     locale: "en_US",
   },
@@ -40,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Healing Tides Collective",
     description: DESCRIPTION,
-    images: ["https://healingtides.co/og.jpg"],
+    images: [`${SITE_URL}/og.jpg`],
   },
 };
 
