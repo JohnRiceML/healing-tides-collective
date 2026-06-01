@@ -52,13 +52,6 @@ export default function JoinPage() {
 
           {/* Sign-up */}
           <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-10">
-            <div className="mb-7">
-              <h2 className="font-display text-2xl font-light leading-tight">Create your profile</h2>
-              <p className="mt-1 text-[14px] leading-[1.5] text-ink-muted">
-                A minute to start — you’ll add your photo, story, and specialties next.
-              </p>
-            </div>
-
             {clerkEnabled ? (
               <SignUp
                 routing="hash"
