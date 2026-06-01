@@ -1,6 +1,6 @@
 # UI System — how to build pages & components
 
-> **The system to follow when creating any new page or component.** Pairs with the *visual* spec ([design-spec.md](../design-spec.md)) and the brand *voice* ([brand-guidelines.md](../brand-guidelines.md)). Owned by the style team (lead: `design-system-steward`). When this doc and the code disagree, **the code wins — fix this doc** (living-doc protocol in [AGENTS.md](../../AGENTS.md)).
+> **The practical "how to build a page/component" checklist.** The canonical brand + visual reference is **[STYLE-GUIDE.md](STYLE-GUIDE.md)** (tokens, color, type, components, voice, accessibility, governance). Owned by the style team (lead: `design-system-steward`). When this doc and the code disagree, **the code wins — fix this doc** (living-doc protocol in [AGENTS.md](../../AGENTS.md)).
 
 **Last updated:** 2026-05-31.
 
@@ -18,9 +18,7 @@
 6. **Calm, not hurried.** Motion is gentle (see below); copy is an exhale, not a sales line.
 
 ## Component library
-A real library already exists at **`app/prototype/_components/ui.tsx`**: `SectionHeader`, `Card`, `Button`/`LinkButton` (tones: `primary` / `secondary` / `ghost` / `danger`), `Field` + `TextInput`/`TextArea`/`Select`, `ChoiceChip`, `StepDots`, `StatusPill`, `Container` (`narrow` 720 / `default` 960 / `wide` 1280), `DLRow`.
-
-> ⚠️ **It's prototype-scoped today.** First task for `component-architect`: **promote it to a shared `app/_components/ui.tsx`** so every surface (incl. `/join`, `/practitioner`, the coming profile editor + directory + admin) imports the same components. Until then, follow these patterns — don't fork new button/input styles.
+The shared library lives at **`app/_components/ui.tsx`**: `SectionHeader`, `Card`, `Button`/`LinkButton` (tones: `primary` / `secondary` / `ghost` / `danger`), `Field` + `TextInput`/`TextArea`/`Select`, `ChoiceChip`, `StepDots`, `StatusPill`, `Container` (`narrow` 720 / `default` 960 / `wide` 1280), `DLRow`. Every surface (`/join`, `/practitioner`, `/practitioners`, `/admin`) imports from it — **don't fork new button/input styles.** Full catalog + usage in [STYLE-GUIDE.md §9](STYLE-GUIDE.md#9-components).
 
 **Reach for a component before writing Tailwind.** A form → `Field` + `TextInput`. A CTA → `Button`/`LinkButton`. A surface → `Card`. A centered column → `Container`.
 

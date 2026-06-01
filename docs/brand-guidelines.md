@@ -1,5 +1,7 @@
 # Brand Guidelines — Healing Tides Collective
 
+> ⚠️ **Folded into [docs/design/STYLE-GUIDE.md §2 — Voice & tone](design/STYLE-GUIDE.md#2-voice--tone)**, the canonical voice reference. Kept for history; the guide is authoritative.
+
 ## Name
 **Healing Tides Collective.** Working name; revisit after domain check (see `planning/setup-checklist.md`).
 

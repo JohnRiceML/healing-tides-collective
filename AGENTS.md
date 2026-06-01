@@ -51,7 +51,7 @@ Each backend system is owned by an agent in `.claude/agents/` — use them; don'
 - **`email-resend`** — Resend, templates, send helpers
 
 ## Frontend / UI work → the style team
-Building a page or component? Follow **[docs/design/UI-SYSTEM.md](docs/design/UI-SYSTEM.md)** (tokens not hardcoded values, the shared component library, the checklist) and delegate to the style team in `.claude/agents/`:
+Building a page or component? The canonical brand + visual reference is **[docs/design/STYLE-GUIDE.md](docs/design/STYLE-GUIDE.md)** (color, type, components, voice, accessibility); the practical build checklist is **[docs/design/UI-SYSTEM.md](docs/design/UI-SYSTEM.md)** (tokens-not-hardcoded, the component library, the checklist). Delegate to the style team in `.claude/agents/`:
 - **`design-system-steward`** (lead) — tokens (`@theme`), the design spec, brand feel, routing
 - **`component-architect`** — the shared component library; no hand-rolled/duplicated styles
 - **`page-builder`** — new routes (page shell, SEO/metadata, responsive, loading/empty/error states)

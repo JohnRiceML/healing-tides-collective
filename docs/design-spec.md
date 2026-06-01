@@ -1,5 +1,7 @@
 # Design Spec — Healing Tides Collective
 
+> ⚠️ **Superseded by [docs/design/STYLE-GUIDE.md](design/STYLE-GUIDE.md)** — the canonical, accurate design reference. This v0.1 draft has drifted (e.g. it calls `ocean` the primary action color; in the shipped UI that's `charcoal`, and the full neutral ramp + component catalog + trauma-informed section live in the guide). Kept for history; **don't rely on the values below.**
+
 **Status:** v0.1 draft (2026-04-26), now partly shipped. The tokens below are **live in `app/globals.css` (`@theme`)** and fonts are confirmed — **Fraunces** (display) + **Inter** (sans). For *how to build* with this spec — the component library, the page shell, and checklists — see **[`docs/design/UI-SYSTEM.md`](design/UI-SYSTEM.md)**. Owned by the `design-system-steward` (style team).
 
 ## Design principles
