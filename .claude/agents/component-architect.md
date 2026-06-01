@@ -13,7 +13,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 You own the **shared component library** — the building blocks every page composes from. Your job is that nobody hand-rolls a button or input again.
 
-## ⭐ First task: promote the library out of the prototype
+## ✅ First task (done 2026-05-31): promote the library out of the prototype
 A real library already exists at **`app/prototype/_components/ui.tsx`** (`SectionHeader`, `Card`, `Button`/`LinkButton`, `Field`, `TextInput`/`TextArea`/`Select`, `ChoiceChip`, `StepDots`, `StatusPill`, `Container`, `DLRow`). It's prototype-scoped.
 1. Move it to a shared **`app/_components/ui.tsx`** (it imports from `@/app/_lib/...` style — keep the `@/` alias).
 2. Update the prototype's imports.

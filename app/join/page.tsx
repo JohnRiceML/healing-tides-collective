@@ -13,10 +13,10 @@ export default function JoinPage() {
   return (
     <main id="main-content" className="min-h-screen bg-sand px-6 py-16 text-charcoal">
       <div className="mx-auto max-w-md">
-        <p className="font-[family-name:var(--font-inter)] text-xs uppercase tracking-[0.2em] text-charcoal/60">
+        <p className="text-xs uppercase tracking-[0.2em] text-charcoal/60">
           Healing Tides Collective
         </p>
-        <h1 className="mt-3 font-[family-name:var(--font-fraunces)] text-3xl font-light leading-tight">
+        <h1 className="mt-3 font-display text-3xl font-light leading-tight">
           Claim your place in the collective
         </h1>
         <p className="mt-3 text-charcoal/70">
