@@ -50,8 +50,9 @@ export default function JoinPage() {
             </p>
           </div>
 
-          {/* Sign-up */}
-          <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-10">
+          {/* Sign-up — self-start so the Card hugs the form instead of stretching
+              to fill the row-span-2 grid area (which left a big empty white void). */}
+          <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start lg:sticky lg:top-10">
             {clerkEnabled ? (
               <SignUp
                 routing="hash"

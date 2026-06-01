@@ -52,11 +52,45 @@ html::after {
   color: var(--color-sand);
 }
 
-/* Clerk widgets (/join, /sign-in): we render our own branded heading above the
-   widget, so hide Clerk's built-in header. A Tailwind `hidden` set via the
-   appearance prop loses to Clerk's own specificity, so hide it here reliably. */
+/* ============================================================
+   Clerk widgets (/join, /sign-in)
+   ------------------------------------------------------------
+   We wrap <SignUp>/<SignIn> in our own branded <Card> and render our own
+   page-level heading above it. Clerk's appearance `elements` classNames lose
+   to Clerk's own stylesheet specificity, so the structural overrides have to
+   live here with `!important`. Element keys map 1:1 to `.cl-<key>` classes
+   (e.g. appearance.elements.card → .cl-card). Inner-control styling (inputs,
+   buttons, the social button) is driven by `appearance.variables` inline CSS
+   vars in clerk-appearance.ts — those DO take effect; only the chrome below
+   needs taming here.
+   ============================================================ */
+
+/* Hide Clerk's built-in header — our page supplies the heading. */
 .cl-header {
   display: none !important;
+}
+
+/* Flatten Clerk's own card chrome so the form blends into OUR <Card>.
+   Without this we get a card-in-a-card (two nested white boxes). */
+.cl-cardBox,
+.cl-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* The footer carries "Secured by Clerk" + (on a dev instance) the
+   "Development mode" badge. Keep it — it's expected — but quiet it so it
+   reads as a calm hairline-separated footnote rather than loud widget chrome. */
+.cl-footer {
+  background: transparent !important;
+  box-shadow: none !important;
+  margin-top: 1.5rem; /* 24px — 8pt grid */
+  padding-top: 1.25rem; /* 20px */
+  border-top: 1px solid var(--color-rule);
 }
 
 /* ============================================================
