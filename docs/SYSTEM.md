@@ -32,7 +32,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🟢 Live (prod)¹ |
 | `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🟢 Live (prod)¹ |
 
-¹ Deployed to production from `feat/practitioner-listing-mvp` (CLI deploy); `main` trails the branch until it's merged.
+¹ Live in production. **`main` is the production branch** — Vercel auto-deploys `main` → Production, and the listing branch is merged into it. CI (`.github/workflows/ci.yml`) runs `tsc` + Vitest on every push / PR.
 
 > **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory, no account) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). `/practitioners` (directory) and `/practitioners/[slug]` (SEO profile page) are now **built**; the public read layer is `lib/practitioners.ts` (published-only — the single source of public reads), publish/unpublish live in `app/practitioner/publish-actions.ts`, and the canonical origin is `lib/site.ts` (`www`). Still planned: `/for-practitioners` (pitch). Seekers browse **anonymously**; accounts are typed by `User.role`. `/join` is practitioner-only.
 

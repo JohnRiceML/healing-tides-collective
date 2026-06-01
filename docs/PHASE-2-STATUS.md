@@ -49,7 +49,7 @@ Roughly ordered toward the brief's success bar — *invite → claimed → publi
 - [ ] **Rotate** the leaked Neon + Clerk creds (both were shared in chat)
 - [ ] Clerk **production instance** (real Google OAuth + verified domain) — replaces the dev/test instance and its "development mode" badge
 - [ ] Neon: bump to **Launch plan** (7-day PITR) + a scheduled `pg_dump`
-- [ ] **Merge `feat/practitioner-listing-mvp` → `main`** (prod is CLI-deployed from the branch; main is behind)
+- [x] **Merged `feat/practitioner-listing-mvp` → `main`** ✅ — `main` is the production branch (Vercel auto-deploys it → Production); **CI** (`tsc` + Vitest, `.github/workflows/ci.yml`) now gates every push / PR.
 - [ ] Neon **dev branch** so local testing never touches the prod/preview DB
 
 ## ⏳ Blocked on Nora's inputs (these block *content*, not the engine — brief §7)
