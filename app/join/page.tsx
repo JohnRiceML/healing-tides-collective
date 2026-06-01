@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 
-import { Card, Container } from "@/app/_components/ui";
+import { Container } from "@/app/_components/ui";
 import { clerkAppearance } from "@/app/_components/clerk-appearance";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 
@@ -50,9 +50,9 @@ export default function JoinPage() {
             </p>
           </div>
 
-          {/* Sign-up — self-start so the Card hugs the form instead of stretching
-              to fill the row-span-2 grid area (which left a big empty white void). */}
-          <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start lg:sticky lg:top-10">
+          {/* Sign-up — let Clerk render its own native, centered card (no wrapper,
+              no forced width). Fighting its layout is what broke the proportions. */}
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:justify-center lg:self-start lg:sticky lg:top-10">
             {clerkEnabled ? (
               <SignUp
                 routing="hash"
@@ -67,7 +67,7 @@ export default function JoinPage() {
                 the Clerk dashboard to turn it on.
               </p>
             )}
-          </Card>
+          </div>
 
           {/* Benefits */}
           <div className="lg:col-start-1 lg:row-start-2">

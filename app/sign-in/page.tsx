@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
 
-import { Card, Container } from "@/app/_components/ui";
+import { Container } from "@/app/_components/ui";
 import { clerkAppearance } from "@/app/_components/clerk-appearance";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 
@@ -23,7 +23,7 @@ export default function SignInPage() {
             Sign in to manage your profile.
           </p>
 
-          <Card className="mt-8">
+          <div className="mt-8">
             {clerkEnabled ? (
               <SignIn
                 routing="hash"
@@ -37,7 +37,7 @@ export default function SignInPage() {
                 <code className="rounded bg-charcoal/5 px-1">.env.local</code> to turn it on.
               </p>
             )}
-          </Card>
+          </div>
 
           <p className="mt-8 text-[14px] text-ink-muted">
             New here?{" "}
