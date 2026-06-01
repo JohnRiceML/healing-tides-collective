@@ -28,6 +28,10 @@ Foundations, the practitioner account + profile-editor flow, **the publish flow,
 - **`/sign-in`** — returning practitioners; Clerk double-header fixed. `d111a6a` `5f9288e`
 - **`/practitioner`** — profile **editor**: display name, region, website, modality, specialties, the "what healing means to me" values prompt, gender, insurance → saves to Postgres + live completeness. `1fe57f3`
 
+**Lock-down — hardening & tests**
+- **Server-action hardening** — practitioner `website` sanitized at save (drops `javascript:`/`data:`), slug-collision race handled (P2002 retry), graceful `{ ok:false }` DB-error returns. `fcbc76a`
+- **Vitest suite** — 43 tests across 7 files: the public read layer (PUBLISHED-only + no-PII selects), the publish/save actions (auth gate, slug-race, website sanitizer), and the pure utils; `npm test` is now part of the quality gate. ADR recorded. `2575462`
+
 ## 🔜 Remaining for the listing MVP (path to the June demo)
 Roughly ordered toward the brief's success bar — *invite → claimed → published → visible*:
 - [ ] **Photo upload → Vercel Blob** (the one editor field still deferred)

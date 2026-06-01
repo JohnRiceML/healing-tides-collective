@@ -13,7 +13,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | **Phase 1** | Immersive landing + "Meet Nora" + Sanity journal | ✅ **Live** |
 | **Phase 2 (UI)** | Get Matched: seeker intake, practitioner apply, admin/matching, provider portal, resources | 🧩 **Clickable prototype** (no backend) |
 | **Practitioner Listing MVP** | Practitioner sign-up → profile → public directory (no PHI; ships first) | 🚧 **In build** on `feat/practitioner-listing-mvp` — sign-up, editor, **publish flow, public directory + SEO profile pages** now live on the branch; admin/claim/email next — [brief](briefs/practitioner-listing-mvp.md) |
-| **Database** | Prisma 7 → Neon Postgres | 🟡 **Scaffolded** (schema + client wired & type-checked; live migration pending creds) |
+| **Database** | Prisma 7 → Neon Postgres | 🟢 **Wired** (`init` migration applied; the live practitioner listing reads + writes it) |
 | **Phase 2 (backend)** | Clerk · Stripe · Resend | 🟡 **Clerk wired** (env-gated, Google sign-up); Stripe/Resend decided, not wired — see [PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) |
 | **Phase 2 (scope)** | What we charge for, matching/email flows, data model | ⏳ **Pending the client call recap** (`notes/`) |
 
@@ -25,12 +25,14 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal | Live |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
-| `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🚧 In build (`feat/practitioner-listing-mvp`) |
-| `/sign-in` | Returning-practitioner sign-in (Clerk) | 🚧 In build |
-| `/practitioner` | Practitioner **profile editor** — Clerk-gated; saves to Postgres (`saveProfile` action) + completeness + **Publish/Unpublish** | 🚧 In build |
-| `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🚧 In build (`feat/…`) |
-| `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🚧 In build |
-| `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🚧 In build |
+| `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
+| `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |
+| `/practitioner` | Practitioner **profile editor** — Clerk-gated; saves to Postgres (`saveProfile` action) + completeness + **Publish/Unpublish** | 🟢 Live (prod)¹ |
+| `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🟢 Live (prod)¹ |
+| `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🟢 Live (prod)¹ |
+| `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🟢 Live (prod)¹ |
+
+¹ Deployed to production from `feat/practitioner-listing-mvp` (CLI deploy); `main` trails the branch until it's merged.
 
 > **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory, no account) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). `/practitioners` (directory) and `/practitioners/[slug]` (SEO profile page) are now **built**; the public read layer is `lib/practitioners.ts` (published-only — the single source of public reads), publish/unpublish live in `app/practitioner/publish-actions.ts`, and the canonical origin is `lib/site.ts` (`www`). Still planned: `/for-practitioners` (pitch). Seekers browse **anonymously**; accounts are typed by `User.role`. `/join` is practitioner-only.
 
@@ -39,7 +41,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 
 **CMS — Sanity (editorial only).** Entry: `sanity/` (client, queries, schema types: `post` / `author` / `category`) + the `/studio` route. Journal + page copy. **Not** for app/matching data.
 
-**Phase 2 backend (decided, not wired) — owned by [`.claude/agents/`](../.claude/agents):**
+**Phase 2 backend — owned by [`.claude/agents/`](../.claude/agents)** (Data + Auth **wired**; Billing + Email decided, not yet wired):
 
 | System | Owner agent | Target location (HTC: root `app/`, no `src/`) |
 |---|---|---|
@@ -50,7 +52,9 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 
 Reference implementation for all four: the sibling **counsel-post** repo (which uses a `src/` layout — translate `src/lib/x` → our `lib/x`).
 
-**DB layer — scaffolded 2026-05-31** (✅ `tsc` passes): `prisma/schema.prisma` (`User` + `Role`/`SubscriptionStatus` enums), `prisma.config.ts` (Prisma 7 CLI config — connection URLs live here, *not* in the schema), `lib/db.ts` (pg-adapter singleton on pooled `DATABASE_URL`), generated client → `lib/generated/prisma` (gitignored, `postinstall: prisma generate`). **Pending:** rotate the Neon password (exposed in chat during setup) → `vercel env pull .env.local` → `npm run db:migrate` to create the tables. **`Practitioner` + `ProfileView`** models added for the listing MVP (PII, not PHI); `Seeker`/`Match` still await the matching brief.
+**DB layer — wired** (✅ `tsc` + Vitest pass): `prisma/schema.prisma` (`User` + `Practitioner` + `ProfileView` + enums), `prisma.config.ts` (Prisma 7 CLI config — connection URLs live here, *not* in the schema), `lib/db.ts` (pg-adapter singleton on pooled `DATABASE_URL`), generated client → `lib/generated/prisma` (gitignored, `postinstall: prisma generate`). The `init` migration is **applied to Neon** and the live practitioner listing reads + writes it. The public read layer is `lib/practitioners.ts` (PUBLISHED-only, no-PII selects). **Pending:** rotate the Neon password (exposed in chat during setup) **before launch**; `Seeker`/`Match` await the matching brief.
+
+**Testing — Vitest** (`tests/`, run via `npm test`; part of the quality gate). Covers the security-critical core: the public read layer (`lib/practitioners.ts` — PUBLISHED-only + no-PII selects), the publish/save server actions (auth gate, slug-collision retry, website sanitization), and the pure utils (`lib/slug.ts` / `lib/url.ts` / `lib/completeness.ts`). UI / React Server Components aren't unit-tested yet — see the test-strategy ADR in [planning/decisions-log.md](../planning/decisions-log.md).
 
 **Auth — wired 2026-05-31** (env-gated; ✅ `tsc`): `lib/clerk-enabled.ts` (the gate boolean — db-free), `lib/auth.ts` (`getCurrentDbUser`, `getOrCreatePractitioner`), `proxy.ts` (Clerk proxy), `<ClerkProvider>` in `app/layout.tsx`. With no Clerk keys it all no-ops so the app still runs. Flow: `/join` (sign-up) → `/practitioner`. **Pending:** add Clerk keys to `.env.local` + enable Google in the Clerk dashboard.
 
