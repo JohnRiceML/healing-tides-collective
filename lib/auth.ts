@@ -61,3 +61,13 @@ export async function getOrCreatePractitioner(): Promise<
   }
   return { user, practitioner };
 }
+
+/**
+ * The signed-in user IF they have the ADMIN role, else null — the gate for admin
+ * surfaces (e.g. `/admin`). Call it in the server component and `notFound()` on
+ * null. Roles are granted out-of-band (set `User.role = ADMIN` via Prisma Studio).
+ */
+export async function requireAdmin(): Promise<User | null> {
+  const user = await getCurrentDbUser();
+  return user && user.role === "ADMIN" ? user : null;
+}
