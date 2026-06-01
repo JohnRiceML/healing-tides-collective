@@ -4,22 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
+import { slugify } from "@/lib/slug";
 
 // Minimum bar to go public: a name + something to read. Keeps empty shells out of
 // the directory. (The completeness % is a separate, softer nudge — not a gate.)
 function readyToPublish(p: { displayName: string | null; bio: string | null }) {
   return Boolean(p.displayName?.trim() && p.bio?.trim());
-}
-
-function slugify(input: string): string {
-  const base = input
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "") // strip accents
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return base || "practitioner";
 }
 
 // Collision-safe unique slug, ignoring the practitioner's own row.

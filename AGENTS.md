@@ -32,8 +32,10 @@ npm run sanity:typegen # regenerate sanity.types.ts from the Sanity schema
 
 ## Quality gate — run before calling work done
 ```bash
-npx tsc --noEmit
+npx tsc --noEmit   # types
+npm test           # Vitest suite — core logic (public read layer, publish/save actions, utils)
 ```
+Tests live in `tests/` (Vitest; `npm run test:watch` / `test:coverage`). **Add a test when you touch** the public read layer (`lib/practitioners.ts`), the publish/save server actions, or a pure util in `lib/`. UI / React Server Components aren't unit-tested yet.
 
 ## Conventions & boundaries
 - **Sanity = editorial only** (journal, page copy). **Prisma → Neon Postgres = app data** (seekers, practitioners, matching). Never put practitioner/seeker/matching data in Sanity.
