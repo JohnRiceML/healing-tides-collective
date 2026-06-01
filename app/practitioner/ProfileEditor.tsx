@@ -130,7 +130,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         </div>
       </div>
 
-      <div className="flex items-center gap-4 border-t border-rule/70 pt-7">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule/70 pt-7">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : saved ? "Saved ✓" : "Save profile"}
         </Button>

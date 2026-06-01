@@ -51,41 +51,24 @@ const clerkAppearance = {
 export default function JoinPage() {
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
-      <Container size="wide" className="py-16 md:py-24">
-        <div className="grid items-start gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
-          {/* Value — who this is for + why */}
-          <div className="lg:pt-6">
+      <Container size="wide" className="py-14 sm:py-16 md:py-24">
+        {/* Source order = mobile order: intro → sign-up → benefits.
+            On desktop, col/row placement makes it value-left / form-right. */}
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+          {/* Intro */}
+          <div className="lg:col-start-1 lg:row-start-1 lg:pt-6">
             <p className="meta text-ink-muted">For practitioners</p>
-            <h1 className="font-display mt-4 text-[clamp(36px,5vw,58px)] font-light leading-[1.05] tracking-[-0.02em]">
+            <h1 className="font-display mt-4 text-[clamp(32px,6vw,58px)] font-light leading-[1.06] tracking-[-0.02em]">
               Claim your place in the collective.
             </h1>
-            <p className="mt-5 max-w-md text-[17px] leading-[1.65] text-ink-soft">
+            <p className="mt-5 max-w-md text-[16px] leading-[1.65] text-ink-soft sm:text-[17px]">
               A real profile — your story, your specialties, your way of working — on a
               page people can actually find. Free to join.
-            </p>
-
-            <dl className="mt-10 space-y-6">
-              {BENEFITS.map((b) => (
-                <div key={b.title} className="flex gap-4">
-                  <span aria-hidden className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-teal" />
-                  <div>
-                    <dt className="text-[15px] font-medium text-charcoal">{b.title}</dt>
-                    <dd className="mt-0.5 text-[14px] leading-[1.55] text-ink-soft">{b.body}</dd>
-                  </div>
-                </div>
-              ))}
-            </dl>
-
-            <p className="mt-12 text-[14px] text-ink-muted">
-              Looking for care instead?{" "}
-              <Link href="/" className="link-underline font-medium text-charcoal">
-                find care
-              </Link>
             </p>
           </div>
 
           {/* Sign-up */}
-          <Card className="lg:sticky lg:top-10">
+          <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-10">
             <div className="mb-7">
               <h2 className="font-display text-2xl font-light leading-tight">Create your profile</h2>
               <p className="mt-1 text-[14px] text-ink-muted">
@@ -108,6 +91,28 @@ export default function JoinPage() {
               </p>
             )}
           </Card>
+
+          {/* Benefits */}
+          <div className="lg:col-start-1 lg:row-start-2">
+            <dl className="space-y-6">
+              {BENEFITS.map((b) => (
+                <div key={b.title} className="flex gap-4">
+                  <span aria-hidden className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-teal" />
+                  <div>
+                    <dt className="text-[15px] font-medium text-charcoal">{b.title}</dt>
+                    <dd className="mt-0.5 text-[14px] leading-[1.55] text-ink-soft">{b.body}</dd>
+                  </div>
+                </div>
+              ))}
+            </dl>
+
+            <p className="mt-10 text-[14px] text-ink-muted">
+              Looking for care instead?{" "}
+              <Link href="/" className="link-underline font-medium text-charcoal">
+                find care
+              </Link>
+            </p>
+          </div>
         </div>
       </Container>
     </main>
