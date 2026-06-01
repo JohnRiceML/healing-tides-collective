@@ -52,6 +52,13 @@ html::after {
   color: var(--color-sand);
 }
 
+/* Clerk widgets (/join, /sign-in): we render our own branded heading above the
+   widget, so hide Clerk's built-in header. A Tailwind `hidden` set via the
+   appearance prop loses to Clerk's own specificity, so hide it here reliably. */
+.cl-header {
+  display: none !important;
+}
+
 /* ============================================================
    Shared utility classes used across multiple design directions
    ============================================================ */
