@@ -38,7 +38,7 @@ Roughly ordered toward the brief's success bar — *invite → claimed → publi
 - [x] **Publish flow** — `draft → published` + collision-safe slug generation + the editor Publish/Unpublish control ✅
 - [x] **Public directory `/practitioners`** — browse + specialty/format filters + free-text search ✅
 - [x] **SEO profile pages `/practitioners/[slug]`** — `generateMetadata` + JSON-LD + `/sitemap.xml` (the "found on Google" page) ✅
-- [ ] **Admin slice** — practitioner list + status + completeness; edit / publish / feature; send invites; basic counts
+- [~] **Admin slice** — ✅ read-only list at `/admin` (status / completeness / views + summary counts, ADMIN-gated); ⏳ edit / publish / feature / send-invites await Nora's dashboard sketch.
 - [ ] **Claim flow** — import the ~40 waitlist contacts → tokenized pre-filled claim links → claim page
 - [ ] **Email (Resend)** — invite + follow-up + transactional (intro, application received); verify the `hello@healingtides.co` sending domain
 - [ ] **Landing fork** — add the "for practitioners" CTA on `/` + a `/for-practitioners` pitch page (Nora's June pitch)
@@ -46,6 +46,7 @@ Roughly ordered toward the brief's success bar — *invite → claimed → publi
 - [ ] **Instrumentation** — wire the `ProfileView` increment + view counts; completeness nudges
 
 ## 🔒 Pre-launch hardening (before real users / going public)
+> Step-by-step: **[RUNBOOK-prelaunch.md](RUNBOOK-prelaunch.md)** — creds rotation, Clerk production instance, Neon Launch + dev branch.
 - [ ] **Rotate** the leaked Neon + Clerk creds (both were shared in chat)
 - [ ] Clerk **production instance** (real Google OAuth + verified domain) — replaces the dev/test instance and its "development mode" badge
 - [ ] Neon: bump to **Launch plan** (7-day PITR) + a scheduled `pg_dump`
