@@ -8,6 +8,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 ## Read these first
 - **[docs/SYSTEM.md](docs/SYSTEM.md)** — the **living system map**: where things live + current status. The source of truth. *If this file and the code disagree, the code wins — fix the doc.*
 - **[docs/architecture/PHASE-2-SYSTEMS.md](docs/architecture/PHASE-2-SYSTEMS.md)** — the Phase 2 plan: locked stack, system ownership, env contract, open scope questions.
+- **[docs/PHASE-2-STATUS.md](docs/PHASE-2-STATUS.md)** — Phase 2 status & roadmap: what's shipped, what's left, what's blocked.
 - **[planning/decisions-log.md](planning/decisions-log.md)** — the ADR log: *why* things are the way they are (append-only).
 - **[docs/design/UI-SYSTEM.md](docs/design/UI-SYSTEM.md)** — how to build any page/component (tokens, the component library, the checklist). Read before touching UI.
 
