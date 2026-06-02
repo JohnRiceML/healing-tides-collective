@@ -8,8 +8,12 @@ import {
 } from "@/app/_lib/taxonomy";
 
 describe("taxonomy labels", () => {
-  it("resolves a known specialty id to its label", () => {
-    expect(specialtyLabel("anxiety_stress")).toBe("Anxiety & stress");
+  it("resolves a known category id to its label", () => {
+    expect(specialtyLabel("emotional_wellbeing")).toBe("Emotional Wellbeing");
+  });
+
+  it("resolves a subcategory id too", () => {
+    expect(specialtyLabel("anxiety_stress")).toBe("Anxiety & Stress");
   });
 
   it("falls back to the raw id for an unknown specialty", () => {

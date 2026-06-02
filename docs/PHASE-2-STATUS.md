@@ -42,7 +42,7 @@ Roughly ordered toward the brief's success bar — *invite → claimed → publi
 - [ ] **Claim flow** — import the ~40 waitlist contacts → tokenized pre-filled claim links → claim page
 - [ ] **Email (Resend)** — invite + follow-up + transactional (intro, application received); verify the `hello@healingtides.co` sending domain
 - [ ] **Landing fork** — add the "for practitioners" CTA on `/` + a `/for-practitioners` pitch page (Nora's June pitch)
-- [ ] **Config taxonomy** (admin-owned, Postgres) — replace the placeholder specialties; profile-field schema + filters as editable config
+- [~] **Config taxonomy** — ✅ Nora's real 11-category taxonomy wired (`app/_lib/taxonomy.ts`, see [product/taxonomy.md](product/taxonomy.md)); ⏳ making it admin-owned editable config (Postgres) is still future.
 - [ ] **Instrumentation** — wire the `ProfileView` increment + view counts; completeness nudges
 
 ## 🔒 Pre-launch hardening (before real users / going public)
@@ -53,12 +53,14 @@ Roughly ordered toward the brief's success bar — *invite → claimed → publi
 - [x] **Merged `feat/practitioner-listing-mvp` → `main`** ✅ — `main` is the production branch (Vercel auto-deploys it → Production); **CI** (`tsc` + Vitest, `.github/workflows/ci.yml`) now gates every push / PR.
 - [ ] Neon **dev branch** so local testing never touches the prod/preview DB
 
-## ⏳ Blocked on Nora's inputs (these block *content*, not the engine — brief §7)
-- [ ] Practitioner **profile question set / fields** (incl. the values prompt)
-- [ ] The real **category taxonomy** (~7 categories + sub-identities)
-- [ ] The **~40-contact waitlist** spreadsheet (import + claim links)
-- [ ] **Admin dashboard sketch**
-- [ ] Confirm free-only V1 (assumed yes) + a sketch of future paid tiers (to shape the dormant `tier`/`featured` hooks)
+## ✅ Received from Nora (2026-06) — captured in [docs/product/](product/)
+Her full spec landed (well beyond the ask) — see **[product/PRODUCT-SPEC.md](product/PRODUCT-SPEC.md)** + **[product/taxonomy.md](product/taxonomy.md)**:
+- [x] **Category taxonomy** — 11 categories → subcategories → topics; **wired** into `app/_lib/taxonomy.ts`.
+- [x] **Profile question set / fields** — the full "Join the Collective" form. *(Build: expand schema + editor.)*
+- [x] **Pricing** — Intro $10 / Premium $25 / Collective Practice $100, per-tier gates. *(Build: tier hooks + Stripe.)*
+- [x] **Admin founder dashboard** — detailed multi-section spec.
+- [x] **Waitlist** — marked DONE; spreadsheet (Name + Email [+ location/specialty/notes]) to follow.
+- 🎁 **Bonus:** the whole **seeker / matching journey**, **search/filters**, **verification badges**, **contact/booking**, and **geography** — all captured in PRODUCT-SPEC.md.
 
-## ⛔ Deferred — the matching engine (separate brief)
-The seeker side — guided "get matched" intake → matching → seeker accounts — is its **own brief**, gated on the PHI/HIPAA decision. Profiles are already stored in structured form so the matcher consumes them with **no re-intake**. Not part of this MVP.
+## ⛔ Deferred — the matching engine (now spec'd, still gated)
+The seeker side — guided intake → "feel seen" reflection → browse/curate → introduction → client dashboard — is now **fully spec'd by Nora** ([PRODUCT-SPEC.md §3–§7](product/PRODUCT-SPEC.md)), but remains its **own brief gated on the PHI/HIPAA decision** (free-text intake about health = sensitive). Practitioner profiles are already structured so the matcher consumes them with no re-intake.
