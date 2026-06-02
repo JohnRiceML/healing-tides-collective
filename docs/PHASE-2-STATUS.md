@@ -32,6 +32,11 @@ Foundations, the practitioner account + profile-editor flow, **the publish flow,
 - **Server-action hardening** — practitioner `website` sanitized at save (drops `javascript:`/`data:`), slug-collision race handled (P2002 retry), graceful `{ ok:false }` DB-error returns. `fcbc76a`
 - **Vitest suite** — 43 tests across 7 files: the public read layer (PUBLISHED-only + no-PII selects), the publish/save actions (auth gate, slug-race, website sanitizer), and the pure utils; `npm test` is now part of the quality gate. ADR recorded. `2575462`
 
+**Product build (Nora's spec, 2026-06)** — see [docs/product/](product/)
+- **Real taxonomy** — Nora's 11 categories → subcategories → topics wired (`app/_lib/taxonomy.ts`); the directory filter + editor use them instead of the 7 placeholders. `e5f150d`
+- **Rich profile fields** — the full "Join the Collective" form (Story / Background / Approach / Who You Support / Availability / Investment / Reflection), config-driven (`app/_lib/profile-fields.ts`), stored in the `fieldValues` JSON column (**no migration**): the editor captures + saves, the public profile renders them. `f3eb308`
+- **Design System & Style Guide** — canonical [docs/design/STYLE-GUIDE.md](design/STYLE-GUIDE.md). `a0c00c6`
+
 ## 🔜 Remaining for the listing MVP (path to the June demo)
 Roughly ordered toward the brief's success bar — *invite → claimed → published → visible*:
 - [ ] **Photo upload → Vercel Blob** (the one editor field still deferred)

@@ -27,11 +27,11 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |
-| `/practitioner` | Practitioner **profile editor** — Clerk-gated; saves to Postgres (`saveProfile` action) + completeness + **Publish/Unpublish** | 🟢 Live (prod)¹ |
+| `/practitioner` | Practitioner **profile editor** — Clerk-gated; the full rich form (Nora's "Join the Collective" fields, config-driven via `app/_lib/profile-fields.ts` → `fieldValues` JSON) → Postgres + completeness + **Publish/Unpublish** | 🟢 Live (prod)¹ |
 | `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🟢 Live (prod)¹ |
 | `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🟢 Live (prod)¹ |
 | `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🟢 Live (prod)¹ |
-| `/admin` | **Admin** practitioner list (read-only) — ADMIN-gated (`requireAdmin`) + noindex; status / completeness / views + counts | 🚧 Built — ADMIN-gated; not yet on prod |
+| `/admin` | **Admin** practitioner list (read-only) — ADMIN-gated (`requireAdmin`) + noindex; status / completeness / views + counts | 🟢 Live (prod)¹ |
 
 ¹ Live in production. **`main` is the production branch** — Vercel auto-deploys `main` → Production, and the listing branch is merged into it. CI (`.github/workflows/ci.yml`) runs `tsc` + Vitest on every push / PR.
 
