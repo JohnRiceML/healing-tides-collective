@@ -18,10 +18,11 @@ import type {
 } from "@/lib/generated/prisma/client";
 
 import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
+import type { ProfileExtract } from "@/app/_lib/profile-extract-schema";
 
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
-import { extractProfileFromText } from "./extract-actions";
+import { extractProfileFromText, extractProfileFromUrl } from "./extract-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
@@ -51,6 +52,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
   // AI "paste your bio → draft" assist — fills the form for review; never saves/publishes.
   const [paste, setPaste] = useState("");
+  const [url, setUrl] = useState("");
   const [extractMsg, setExtractMsg] = useState<string | null>(null);
   const [extracting, startExtract] = useTransition();
 
@@ -98,6 +100,37 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     });
   };
 
+  // Merge an AI extraction into the form — fills only EMPTY fields (never clobbers).
+  function applyExtract(d: ProfileExtract) {
+    const fillIfEmpty = (cur: string, set: (v: string) => void, val?: string) => {
+      if (val && val.trim() && !cur.trim()) set(val.trim());
+    };
+    fillIfEmpty(displayName, setDisplayName, d.displayName);
+    fillIfEmpty(bio, setBio, d.bio);
+    fillIfEmpty(values, setValues, d.values);
+    fillIfEmpty(region, setRegion, d.region);
+    fillIfEmpty(gender, setGender, d.gender);
+    if (d.insuranceAccepted?.length && !insurance.trim()) {
+      setInsurance(d.insuranceAccepted.join(", "));
+    }
+    if (d.fields) {
+      setFieldValues((prev) => {
+        const next = { ...prev };
+        for (const [id, val] of Object.entries(d.fields)) {
+          if (val == null) continue;
+          const stored = Array.isArray(val) ? val.join(", ") : String(val);
+          if (!stored.trim()) continue;
+          const cur = next[id];
+          const empty =
+            cur == null || (Array.isArray(cur) ? cur.length === 0 : String(cur).trim() === "");
+          if (empty) next[id] = stored;
+        }
+        return next;
+      });
+    }
+    setSaved(false);
+  }
+
   function onExtract() {
     setExtractMsg(null);
     startExtract(async () => {
@@ -106,35 +139,21 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         setExtractMsg(res.error);
         return;
       }
-      const d = res.data;
-      const fillIfEmpty = (cur: string, set: (v: string) => void, val?: string) => {
-        if (val && val.trim() && !cur.trim()) set(val.trim());
-      };
-      fillIfEmpty(displayName, setDisplayName, d.displayName);
-      fillIfEmpty(bio, setBio, d.bio);
-      fillIfEmpty(values, setValues, d.values);
-      fillIfEmpty(region, setRegion, d.region);
-      fillIfEmpty(gender, setGender, d.gender);
-      if (d.insuranceAccepted?.length && !insurance.trim()) {
-        setInsurance(d.insuranceAccepted.join(", "));
-      }
-      if (d.fields) {
-        setFieldValues((prev) => {
-          const next = { ...prev };
-          for (const [id, val] of Object.entries(d.fields)) {
-            if (val == null) continue;
-            const stored = Array.isArray(val) ? val.join(", ") : String(val);
-            if (!stored.trim()) continue;
-            const cur = next[id];
-            const empty =
-              cur == null || (Array.isArray(cur) ? cur.length === 0 : String(cur).trim() === "");
-            if (empty) next[id] = stored;
-          }
-          return next;
-        });
-      }
-      setSaved(false);
+      applyExtract(res.data);
       setExtractMsg("Drafted from your text — please review each field, then Save.");
+    });
+  }
+
+  function onExtractUrl() {
+    setExtractMsg(null);
+    startExtract(async () => {
+      const res = await extractProfileFromUrl(url);
+      if (!res.ok) {
+        setExtractMsg(res.error);
+        return;
+      }
+      applyExtract(res.data);
+      setExtractMsg("Drafted from your website — please review each field, then Save.");
     });
   }
 
@@ -194,26 +213,53 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
             +
           </span>
         </summary>
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
           <p className="text-[13px] leading-[1.55] text-ink-soft">
-            Paste your Psychology Today, website, or LinkedIn bio (or a CV). We&rsquo;ll draft the
-            fields for you — nothing is saved until you review and hit Save.
+            Have a profile elsewhere? Point us at it or paste the text — we&rsquo;ll draft your
+            fields. Nothing is saved until you review and hit Save.
           </p>
-          <TextArea
-            value={paste}
-            onChange={(e) => setPaste(e.target.value)}
-            placeholder="Paste anything about your practice here…"
-            className="mt-3 min-h-[120px]"
-          />
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Button type="button" onClick={onExtract} disabled={extracting || paste.trim().length < 40}>
-              {extracting ? "Reading your bio…" : "Draft my profile"}
+
+          {/* From a URL */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <TextInput
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://your-website.com"
+              className="sm:flex-1"
+            />
+            <Button
+              type="button"
+              tone="secondary"
+              onClick={onExtractUrl}
+              disabled={extracting || url.trim().length < 8}
+            >
+              {extracting ? "Reading…" : "Fetch from my site"}
             </Button>
-            {extractMsg ? (
-              <span role="status" className="text-[13px] leading-[1.5] text-ink-soft">
-                {extractMsg}
-              </span>
-            ) : null}
+          </div>
+          <p className="text-[12px] leading-[1.5] text-ink-muted">
+            Works best for your own website. Psychology Today &amp; LinkedIn usually block automated
+            visits — paste those instead.
+          </p>
+
+          {/* Or paste */}
+          <div className="border-t border-rule/60 pt-4">
+            <TextArea
+              value={paste}
+              onChange={(e) => setPaste(e.target.value)}
+              placeholder="…or paste your bio / Psychology Today text here"
+              className="min-h-[120px]"
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button type="button" onClick={onExtract} disabled={extracting || paste.trim().length < 40}>
+                {extracting ? "Reading your bio…" : "Draft from text"}
+              </Button>
+              {extractMsg ? (
+                <span role="status" className="text-[13px] leading-[1.5] text-ink-soft">
+                  {extractMsg}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       </details>
