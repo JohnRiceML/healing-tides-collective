@@ -4,6 +4,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SanityLive } from "@/sanity/lib/live";
 import { clerkEnabled } from "@/lib/clerk-enabled";
+import { AccountButton } from "@/app/_components/account-button";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -59,6 +60,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {clerkEnabled ? (
           <ClerkProvider>
             {children}
+            {/* Account menu — only for signed-in users (the persistent
+                "manage account / sign out" affordance). */}
+            <AccountButton />
             <SanityLive />
           </ClerkProvider>
         ) : (
