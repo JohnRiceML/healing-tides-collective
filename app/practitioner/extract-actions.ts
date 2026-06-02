@@ -33,7 +33,7 @@ async function runExtraction(text: string) {
       model: MODEL,
       schema: profileExtractSchema,
       system: SYSTEM,
-      prompt: input.slice(0, 8000),
+      prompt: input.slice(0, 12000),
     });
     return { ok: true as const, data: object };
   } catch {
@@ -145,4 +145,39 @@ export async function extractProfileFromUrl(rawUrl: string) {
   const page = await fetchPageText(rawUrl);
   if (!page.ok) return { ok: false as const, error: page.error };
   return runExtraction(page.text);
+}
+
+/**
+ * Draft a profile from MULTIPLE sources at once — a few links + pasted text, combined
+ * into one extraction. The onboarding "drop your links, we'll do the work" path.
+ * Returns which links couldn't be reached so the UI can nudge a paste.
+ */
+export async function extractProfileFromSources(input: { urls?: string[]; text?: string }) {
+  const result = await getOrCreatePractitioner();
+  if (!result) return { ok: false as const, error: "You're not signed in." };
+
+  const urls = (input.urls ?? []).map((u) => u.trim()).filter(Boolean).slice(0, 4);
+  const parts: string[] = [];
+  const failed: string[] = [];
+  for (const u of urls) {
+    const page = await fetchPageText(u);
+    if (page.ok) parts.push(page.text);
+    else failed.push(u);
+  }
+  const pasted = (input.text ?? "").trim();
+  if (pasted) parts.push(pasted);
+
+  const combined = parts.join("\n\n— — —\n\n");
+  if (combined.trim().length < 40) {
+    return {
+      ok: false as const,
+      error: failed.length
+        ? "Couldn't read those links — some sites (Psychology Today, LinkedIn) block automated visits. Try pasting the text instead."
+        : "Add a link or paste some text and we'll draft from it.",
+      failed,
+    };
+  }
+  const ext = await runExtraction(combined);
+  if (!ext.ok) return { ...ext, failed };
+  return { ok: true as const, data: ext.data, failed };
 }

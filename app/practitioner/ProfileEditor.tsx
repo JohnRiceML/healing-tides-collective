@@ -22,7 +22,7 @@ import type { ProfileExtract } from "@/app/_lib/profile-extract-schema";
 
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
-import { extractProfileFromText, extractProfileFromUrl } from "./extract-actions";
+import { extractProfileFromSources } from "./extract-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
@@ -52,9 +52,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
   // AI "paste your bio → draft" assist — fills the form for review; never saves/publishes.
   const [paste, setPaste] = useState("");
-  const [url, setUrl] = useState("");
+  const [links, setLinks] = useState("");
   const [extractMsg, setExtractMsg] = useState<string | null>(null);
   const [extracting, startExtract] = useTransition();
+  // New (post-signup) profiles get the import-first welcome, auto-expanded.
+  const isNew = practitioner.completeness === 0 && !practitioner.displayName;
+  const [importOpen, setImportOpen] = useState(isNew);
 
   function onPublish() {
     setPublishError(null);
@@ -131,29 +134,20 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     setSaved(false);
   }
 
-  function onExtract() {
+  function onBuild() {
     setExtractMsg(null);
     startExtract(async () => {
-      const res = await extractProfileFromText(paste);
+      const urls = links.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+      const res = await extractProfileFromSources({ urls, text: paste });
       if (!res.ok) {
         setExtractMsg(res.error);
         return;
       }
       applyExtract(res.data);
-      setExtractMsg("Drafted from your text — please review each field, then Save.");
-    });
-  }
-
-  function onExtractUrl() {
-    setExtractMsg(null);
-    startExtract(async () => {
-      const res = await extractProfileFromUrl(url);
-      if (!res.ok) {
-        setExtractMsg(res.error);
-        return;
-      }
-      applyExtract(res.data);
-      setExtractMsg("Drafted from your website — please review each field, then Save.");
+      const missed = res.failed?.length
+        ? ` (couldn't reach ${res.failed.length} link${res.failed.length > 1 ? "s" : ""} — paste those if needed)`
+        : "";
+      setExtractMsg("Drafted below — review each field, then Save." + missed);
     });
   }
 
@@ -200,11 +194,16 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         Everything else is optional — add it now, or anytime after you publish.
       </p>
 
-      {/* AI assist — paste a bio from anywhere, we draft the form (you review). */}
-      <details className="group rounded-3xl border border-rule bg-seafoam/20 p-5 md:p-6">
+      {/* Import-first onboarding — drop a link or two / paste a bio, we draft the form
+          (you review). Auto-expanded + welcoming for a brand-new (post-signup) profile. */}
+      <details
+        open={importOpen}
+        onToggle={(e) => setImportOpen(e.currentTarget.open)}
+        className="group rounded-3xl border border-rule bg-seafoam/20 p-5 md:p-6"
+      >
         <summary className="flex cursor-pointer list-none items-center gap-2 marker:hidden">
           <span className="font-display text-[18px] leading-tight text-charcoal">
-            Save time — paste a bio and we&rsquo;ll draft your profile
+            {isNew ? "Let's build your profile — the fast way" : "Save time — import from a link or a bio"}
           </span>
           <span
             aria-hidden
@@ -215,52 +214,55 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         </summary>
         <div className="mt-4 space-y-4">
           <p className="text-[13px] leading-[1.55] text-ink-soft">
-            Have a profile elsewhere? Point us at it or paste the text — we&rsquo;ll draft your
-            fields. Nothing is saved until you review and hit Save.
+            Drop a link or two — your website, your Psychology Today profile — and we&rsquo;ll draft
+            your profile for you. Or paste a bio. Nothing is saved until you review and hit Save.
           </p>
 
-          {/* From a URL */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <TextInput
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://your-website.com"
-              className="sm:flex-1"
+          <Field label="Your links" hint="One per line — website, Psychology Today, etc.">
+            <TextArea
+              value={links}
+              onChange={(e) => setLinks(e.target.value)}
+              placeholder={"https://your-website.com\nhttps://psychologytoday.com/…"}
+              className="min-h-[80px]"
             />
-            <Button
-              type="button"
-              tone="secondary"
-              onClick={onExtractUrl}
-              disabled={extracting || url.trim().length < 8}
-            >
-              {extracting ? "Reading…" : "Fetch from my site"}
-            </Button>
-          </div>
-          <p className="text-[12px] leading-[1.5] text-ink-muted">
-            Works best for your own website. Psychology Today &amp; LinkedIn usually block automated
-            visits — paste those instead.
-          </p>
+          </Field>
 
-          {/* Or paste */}
-          <div className="border-t border-rule/60 pt-4">
+          <Field label="…or paste a bio" optional>
             <TextArea
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
-              placeholder="…or paste your bio / Psychology Today text here"
-              className="min-h-[120px]"
+              placeholder="Paste your bio / Psychology Today text here"
+              className="min-h-[110px]"
             />
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Button type="button" onClick={onExtract} disabled={extracting || paste.trim().length < 40}>
-                {extracting ? "Reading your bio…" : "Draft from text"}
-              </Button>
-              {extractMsg ? (
-                <span role="status" className="text-[13px] leading-[1.5] text-ink-soft">
-                  {extractMsg}
-                </span>
-              ) : null}
-            </div>
+          </Field>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Button
+              type="button"
+              onClick={onBuild}
+              disabled={extracting || (!links.trim() && paste.trim().length < 40)}
+            >
+              {extracting ? "Building your profile…" : "Build my profile"}
+            </Button>
+            {isNew ? (
+              <button
+                type="button"
+                onClick={() => setImportOpen(false)}
+                className="text-[13px] text-ink-muted underline-offset-2 hover:underline"
+              >
+                I&rsquo;ll fill it in myself
+              </button>
+            ) : null}
+            {extractMsg ? (
+              <span role="status" className="text-[13px] leading-[1.5] text-ink-soft">
+                {extractMsg}
+              </span>
+            ) : null}
           </div>
+
+          <p className="text-[12px] leading-[1.5] text-ink-muted">
+            Psychology Today &amp; LinkedIn usually block automated visits — paste those instead.
+          </p>
         </div>
       </details>
 
