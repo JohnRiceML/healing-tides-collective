@@ -43,3 +43,13 @@ export const POST_BY_SLUG_QUERY = defineQuery(`
 export const POST_SLUGS_QUERY = defineQuery(`
   *[_type == "post" && defined(slug.current)]{ "slug": slug.current }
 `)
+
+// Published, live posts (matches the listing's `publishedAt < now()` filter) with a
+// lastModified date — for the sitemap, so each post is indexed individually.
+export const POST_SITEMAP_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current) && publishedAt < now()]
+    | order(publishedAt desc) {
+      "slug": slug.current,
+      "lastModified": coalesce(_updatedAt, publishedAt)
+    }
+`)
