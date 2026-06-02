@@ -129,6 +129,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         </div>
       </div>
 
+      {/* What's actually required — the form is lighter than it looks. */}
+      <p className="rounded-2xl border border-rule bg-white/70 px-5 py-4 text-[14px] leading-[1.6] text-ink-soft">
+        <span className="font-medium text-charcoal">You can go live with just your name and a short bio.</span>{" "}
+        Everything else is optional — add it now, or anytime after you publish.
+      </p>
+
       <div className="space-y-7">
         <Field label="Display name">
           <TextInput value={displayName} onChange={(e) => { setDisplayName(e.target.value); dirty(); }} placeholder="e.g. Nora Hollenkamp, LICSW" />
@@ -187,35 +193,47 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         </div>
       </div>
 
-      {/* Nora's rich profile sections — config-driven, stored in fieldValues. */}
+      {/* Nora's rich profile sections — collapsed by default so the form reads light.
+          Everything here is optional; add over time. */}
       {PROFILE_SECTIONS.map((section) => (
-        <div key={section.id} className="space-y-7 border-t border-rule/70 pt-8">
-          <h3 className="font-display text-[20px] leading-tight text-charcoal">{section.title}</h3>
-          {section.fields.map((field) => {
-            const val = fieldValues[field.id];
-            const str = typeof val === "string" ? val : "";
-            const arr = Array.isArray(val) ? val : [];
-            return (
-              <Field key={field.id} label={field.label} hint={field.hint}>
-                {field.type === "textarea" ? (
-                  <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
-                ) : field.type === "chips" && field.options ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {field.options.map((opt) =>
-                      field.single ? (
-                        <ChoiceChip key={opt.id} label={opt.label} selected={str === opt.id} onClick={() => setField(field.id, str === opt.id ? "" : opt.id)} />
-                      ) : (
-                        <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id)} />
-                      ),
-                    )}
-                  </div>
-                ) : (
-                  <TextInput value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
-                )}
-              </Field>
-            );
-          })}
-        </div>
+        <details key={section.id} className="group border-t border-rule/70">
+          <summary className="flex cursor-pointer list-none items-center gap-2 py-4 marker:hidden">
+            <span className="font-display text-[19px] leading-tight text-charcoal">{section.title}</span>
+            <span className="meta text-ink-muted">· optional</span>
+            <span
+              aria-hidden
+              className="ml-auto select-none text-[22px] leading-none text-ink-muted transition-transform duration-200 group-open:rotate-45"
+            >
+              +
+            </span>
+          </summary>
+          <div className="space-y-7 pb-2">
+            {section.fields.map((field) => {
+              const val = fieldValues[field.id];
+              const str = typeof val === "string" ? val : "";
+              const arr = Array.isArray(val) ? val : [];
+              return (
+                <Field key={field.id} label={field.label} hint={field.hint} optional>
+                  {field.type === "textarea" ? (
+                    <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                  ) : field.type === "chips" && field.options ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {field.options.map((opt) =>
+                        field.single ? (
+                          <ChoiceChip key={opt.id} label={opt.label} selected={str === opt.id} onClick={() => setField(field.id, str === opt.id ? "" : opt.id)} />
+                        ) : (
+                          <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id)} />
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <TextInput value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                  )}
+                </Field>
+              );
+            })}
+          </div>
+        </details>
       ))}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule/70 pt-7">
