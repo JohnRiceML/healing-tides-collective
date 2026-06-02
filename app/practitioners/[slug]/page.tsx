@@ -8,6 +8,7 @@ import {
   type PractitionerProfile,
 } from "@/lib/practitioners";
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
+import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
 import { SITE_URL } from "@/lib/site";
 
 /** First sentence (or a trimmed lead) of free text, for meta descriptions. */
@@ -21,6 +22,44 @@ function leadFrom(text: string, max = 160): string {
 function initialOf(name: string): string {
   const first = name.trim().charAt(0);
   return first ? first.toUpperCase() : "·";
+}
+
+/** Nora's rich profile fields (from the fieldValues JSON), grouped by section —
+ * only the filled ones render. */
+function RichProfile({ fieldValues }: { fieldValues: Record<string, string | string[]> }) {
+  const filled = (v: string | string[] | undefined) =>
+    Array.isArray(v) ? v.length > 0 : Boolean(v && v.trim());
+  const sections = PROFILE_SECTIONS.filter((s) =>
+    s.fields.some((f) => filled(fieldValues[f.id])),
+  );
+  if (sections.length === 0) return null;
+  return (
+    <>
+      {sections.map((section) => (
+        <section key={section.id} className="mt-12 border-t border-rule pt-10">
+          <h2 className="meta text-ink-muted">{section.title}</h2>
+          <dl className="mt-2">
+            {section.fields
+              .filter((field) => filled(fieldValues[field.id]))
+              .map((field) => {
+                const v = fieldValues[field.id];
+                const flat =
+                  field.type === "chips" && field.options
+                    ? (Array.isArray(v) ? v : [v as string]).map((id) => optionLabel(field.id, id)).join(" · ")
+                    : field.type === "tags"
+                      ? (Array.isArray(v) ? v : (v as string).split(",").map((s) => s.trim()).filter(Boolean)).join(" · ")
+                      : null;
+                return (
+                  <DLRow key={field.id} label={field.label}>
+                    {flat !== null ? flat : <span className="whitespace-pre-line">{v as string}</span>}
+                  </DLRow>
+                );
+              })}
+          </dl>
+        </section>
+      ))}
+    </>
+  );
 }
 
 export async function generateMetadata({
@@ -203,6 +242,9 @@ export default async function Page({
             </Card>
           </section>
         ) : null}
+
+        {/* ───── More about — Nora's rich fields ───── */}
+        <RichProfile fieldValues={(p.fieldValues ?? {}) as Record<string, string | string[]>} />
 
         {/* ───── Details: insurance, gender, website ───── */}
         {p.insuranceAccepted.length > 0 || p.gender || safeWebsite ? (

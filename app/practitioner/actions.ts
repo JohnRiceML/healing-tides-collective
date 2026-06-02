@@ -18,6 +18,8 @@ export type ProfileInput = {
   gender: string;
   specialties: string[];
   insuranceAccepted: string[];
+  /** Nora's rich "Join the Collective" fields — stored in the fieldValues JSON column. */
+  fieldValues?: Record<string, string | string[]>;
 };
 
 export async function saveProfile(input: ProfileInput) {
@@ -41,7 +43,11 @@ export async function saveProfile(input: ProfileInput) {
   try {
     await db.practitioner.update({
       where: { id: result.practitioner.id },
-      data: { ...data, completeness },
+      data: {
+        ...data,
+        completeness,
+        ...(input.fieldValues ? { fieldValues: input.fieldValues } : {}),
+      },
     });
   } catch {
     return { ok: false as const, error: "Couldn't save your changes — please try again." };

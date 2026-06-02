@@ -24,6 +24,7 @@ export type PractitionerProfile = PractitionerCard & {
   values: string | null;
   gender: string | null;
   insuranceAccepted: string[];
+  fieldValues: unknown;
   viewCount: number;
 };
 
@@ -95,6 +96,7 @@ export async function getPractitionerBySlug(
       values: true,
       gender: true,
       insuranceAccepted: true,
+      fieldValues: true,
       viewCount: true,
     },
   });

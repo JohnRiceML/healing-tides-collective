@@ -17,6 +17,8 @@ import type {
   ProfileVisibility,
 } from "@/lib/generated/prisma/client";
 
+import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
+
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
@@ -31,6 +33,9 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [modality, setModality] = useState<Modality | "">(practitioner.modality ?? "");
   const [specialties, setSpecialties] = useState<string[]>(practitioner.specialties ?? []);
   const [insurance, setInsurance] = useState((practitioner.insuranceAccepted ?? []).join(", "));
+  const [fieldValues, setFieldValues] = useState<Record<string, string | string[]>>(
+    (practitioner.fieldValues as unknown as Record<string, string | string[]> | null) ?? {},
+  );
 
   const [completeness, setCompleteness] = useState(practitioner.completeness);
   const [saved, setSaved] = useState(false);
@@ -74,12 +79,26 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     setSpecialties((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   };
 
+  // Rich (config-driven) fields → stored in fieldValues.
+  const setField = (id: string, value: string | string[]) => {
+    dirty();
+    setFieldValues((f) => ({ ...f, [id]: value }));
+  };
+  const toggleChip = (id: string, opt: string) => {
+    dirty();
+    setFieldValues((f) => {
+      const cur = Array.isArray(f[id]) ? (f[id] as string[]) : [];
+      return { ...f, [id]: cur.includes(opt) ? cur.filter((x) => x !== opt) : [...cur, opt] };
+    });
+  };
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     start(async () => {
       const res = await saveProfile({
         displayName, region, website, gender, bio, values, modality, specialties,
         insuranceAccepted: insurance.split(",").map((s) => s.trim()).filter(Boolean),
+        fieldValues,
       });
       if (res.ok) {
         setCompleteness(res.completeness);
@@ -137,7 +156,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           </div>
         </Field>
 
-        <Field label="Specialties" hint="Choose all that fit. (Placeholder list — your real categories come from Nora's taxonomy.)">
+        <Field label="Areas of focus" hint="Pick 3–8 categories that best reflect your work.">
           <div className="grid gap-3 sm:grid-cols-2">
             {SPECIALTY_OPTIONS.map((s) => (
               <ChoiceChip
@@ -167,6 +186,37 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           </Field>
         </div>
       </div>
+
+      {/* Nora's rich profile sections — config-driven, stored in fieldValues. */}
+      {PROFILE_SECTIONS.map((section) => (
+        <div key={section.id} className="space-y-7 border-t border-rule/70 pt-8">
+          <h3 className="font-display text-[20px] leading-tight text-charcoal">{section.title}</h3>
+          {section.fields.map((field) => {
+            const val = fieldValues[field.id];
+            const str = typeof val === "string" ? val : "";
+            const arr = Array.isArray(val) ? val : [];
+            return (
+              <Field key={field.id} label={field.label} hint={field.hint}>
+                {field.type === "textarea" ? (
+                  <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                ) : field.type === "chips" && field.options ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {field.options.map((opt) =>
+                      field.single ? (
+                        <ChoiceChip key={opt.id} label={opt.label} selected={str === opt.id} onClick={() => setField(field.id, str === opt.id ? "" : opt.id)} />
+                      ) : (
+                        <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id)} />
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <TextInput value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                )}
+              </Field>
+            );
+          })}
+        </div>
+      ))}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule/70 pt-7">
         <Button type="submit" disabled={pending}>

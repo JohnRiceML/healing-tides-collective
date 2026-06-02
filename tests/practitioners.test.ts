@@ -22,7 +22,6 @@ const PII_KEYS = [
   "subscriptionStatus",
   "completeness",
   "tier",
-  "fieldValues",
   "accountType",
 ];
 
