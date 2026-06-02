@@ -21,6 +21,7 @@ import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
 
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
+import { extractProfileFromText } from "./extract-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
@@ -47,6 +48,11 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishing, startPublish] = useTransition();
   const isPublished = visibility === "PUBLISHED";
+
+  // AI "paste your bio → draft" assist — fills the form for review; never saves/publishes.
+  const [paste, setPaste] = useState("");
+  const [extractMsg, setExtractMsg] = useState<string | null>(null);
+  const [extracting, startExtract] = useTransition();
 
   function onPublish() {
     setPublishError(null);
@@ -92,6 +98,46 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     });
   };
 
+  function onExtract() {
+    setExtractMsg(null);
+    startExtract(async () => {
+      const res = await extractProfileFromText(paste);
+      if (!res.ok) {
+        setExtractMsg(res.error);
+        return;
+      }
+      const d = res.data;
+      const fillIfEmpty = (cur: string, set: (v: string) => void, val?: string) => {
+        if (val && val.trim() && !cur.trim()) set(val.trim());
+      };
+      fillIfEmpty(displayName, setDisplayName, d.displayName);
+      fillIfEmpty(bio, setBio, d.bio);
+      fillIfEmpty(values, setValues, d.values);
+      fillIfEmpty(region, setRegion, d.region);
+      fillIfEmpty(gender, setGender, d.gender);
+      if (d.insuranceAccepted?.length && !insurance.trim()) {
+        setInsurance(d.insuranceAccepted.join(", "));
+      }
+      if (d.fields) {
+        setFieldValues((prev) => {
+          const next = { ...prev };
+          for (const [id, val] of Object.entries(d.fields)) {
+            if (val == null) continue;
+            const stored = Array.isArray(val) ? val.join(", ") : String(val);
+            if (!stored.trim()) continue;
+            const cur = next[id];
+            const empty =
+              cur == null || (Array.isArray(cur) ? cur.length === 0 : String(cur).trim() === "");
+            if (empty) next[id] = stored;
+          }
+          return next;
+        });
+      }
+      setSaved(false);
+      setExtractMsg("Drafted from your text — please review each field, then Save.");
+    });
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     start(async () => {
@@ -134,6 +180,43 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         <span className="font-medium text-charcoal">You can go live with just your name and a short bio.</span>{" "}
         Everything else is optional — add it now, or anytime after you publish.
       </p>
+
+      {/* AI assist — paste a bio from anywhere, we draft the form (you review). */}
+      <details className="group rounded-3xl border border-rule bg-seafoam/20 p-5 md:p-6">
+        <summary className="flex cursor-pointer list-none items-center gap-2 marker:hidden">
+          <span className="font-display text-[18px] leading-tight text-charcoal">
+            Save time — paste a bio and we&rsquo;ll draft your profile
+          </span>
+          <span
+            aria-hidden
+            className="ml-auto select-none text-[22px] leading-none text-ink-muted transition-transform duration-200 group-open:rotate-45"
+          >
+            +
+          </span>
+        </summary>
+        <div className="mt-4">
+          <p className="text-[13px] leading-[1.55] text-ink-soft">
+            Paste your Psychology Today, website, or LinkedIn bio (or a CV). We&rsquo;ll draft the
+            fields for you — nothing is saved until you review and hit Save.
+          </p>
+          <TextArea
+            value={paste}
+            onChange={(e) => setPaste(e.target.value)}
+            placeholder="Paste anything about your practice here…"
+            className="mt-3 min-h-[120px]"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Button type="button" onClick={onExtract} disabled={extracting || paste.trim().length < 40}>
+              {extracting ? "Reading your bio…" : "Draft my profile"}
+            </Button>
+            {extractMsg ? (
+              <span role="status" className="text-[13px] leading-[1.5] text-ink-soft">
+                {extractMsg}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </details>
 
       <div className="space-y-7">
         <Field label="Display name">

@@ -25,6 +25,7 @@
     "@prisma/client": "^7.8.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.24.0",
+    "ai": "^6.0.195",
     "dotenv": "^17.4.2",
     "framer-motion": "^12.38.0",
     "next": "^16.0.0",
@@ -35,7 +36,8 @@
     "react-dom": "^19.0.0",
     "sanity": "^5.24.0",
     "styled-components": "^6.4.1",
-    "svix": "^1.95.1"
+    "svix": "^1.95.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
