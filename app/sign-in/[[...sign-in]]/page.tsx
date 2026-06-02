@@ -23,10 +23,12 @@ export default function SignInPage() {
             Sign in to manage your profile.
           </p>
 
+          {/* Optional catch-all route ([[...sign-in]]) so Clerk can route its
+              multi-step flow with `path` routing. */}
           <div className="mt-8">
             {clerkEnabled ? (
               <SignIn
-                routing="hash"
+                path="/sign-in"
                 signUpUrl="/join"
                 fallbackRedirectUrl="/practitioner"
                 appearance={clerkAppearance}

@@ -50,12 +50,13 @@ export default function JoinPage() {
             </p>
           </div>
 
-          {/* Sign-up — let Clerk render its own native, centered card (no wrapper,
-              no forced width). Fighting its layout is what broke the proportions. */}
+          {/* Sign-up — Clerk's native card. This route is an optional catch-all
+              ([[...sign-up]]) so Clerk can route its multi-step flow (e.g. email
+              verification at /join/verify-email-address) with `path` routing. */}
           <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:justify-center lg:self-start lg:sticky lg:top-10">
             {clerkEnabled ? (
               <SignUp
-                routing="hash"
+                path="/join"
                 signInUrl="/sign-in"
                 fallbackRedirectUrl="/practitioner"
                 appearance={clerkAppearance}
