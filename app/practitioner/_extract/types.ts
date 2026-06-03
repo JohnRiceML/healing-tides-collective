@@ -39,6 +39,8 @@ export interface ImportResult {
   failedUrls: string[];
   extras: ImportExtra[];
   unmappedSpecialties: string[];
+  /** A headshot we found (e.g. a Psychology Today photo) the editor can adopt into Blob. */
+  suggestedPhotoUrl?: string;
 }
 
 export type ImportResponse =

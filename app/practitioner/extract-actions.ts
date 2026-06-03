@@ -255,6 +255,7 @@ export async function extractProfileFromSources(input: {
   const failedUrls: string[] = [];
   const extras: ImportExtra[] = [];
   const unmapped = new Set<string>();
+  let suggestedPhotoUrl: string | undefined;
 
   for (const url of urls) {
     const page = await fetchPage(url);
@@ -284,6 +285,7 @@ export async function extractProfileFromSources(input: {
     fillInto(merged, contribution.data);
     extras.push(...contribution.extras);
     contribution.unmapped.forEach((u) => unmapped.add(u));
+    if (!suggestedPhotoUrl && contribution.suggestedPhotoUrl) suggestedPhotoUrl = contribution.suggestedPhotoUrl;
     sources.push({
       id: url,
       host,
@@ -319,6 +321,7 @@ export async function extractProfileFromSources(input: {
     failedUrls,
     extras,
     unmappedSpecialties: [...unmapped],
+    suggestedPhotoUrl,
   };
 
   if (!hasAnyData(merged)) {

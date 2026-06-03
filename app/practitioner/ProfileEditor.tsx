@@ -25,6 +25,7 @@ import { saveProfile } from "./actions";
 import { extractProfileFromSources } from "./extract-actions";
 import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
 import { describeSource, type ImportData } from "./_extract/types";
+import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
@@ -57,6 +58,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [importView, setImportView] = useState<ImportView | null>(null);
   const [importCollapsed, setImportCollapsed] = useState(false);
   const [extracting, startExtract] = useTransition();
+
+  // Photo — saved on its own (to Vercel Blob), separate from the main Save button.
+  const [photoUrl, setPhotoUrl] = useState(practitioner.photoUrl ?? "");
+  const [importedPhotoUrl, setImportedPhotoUrl] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoBusy, startPhoto] = useTransition();
   // New (post-signup) profiles get the import-first welcome, auto-expanded.
   const isNew = practitioner.completeness === 0 && !practitioner.displayName;
   const [importOpen, setImportOpen] = useState(isNew);
@@ -216,6 +223,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
       const { result } = res;
       const n = countFills(result.data);
       applyExtract(result.data);
+      if (result.suggestedPhotoUrl && !photoUrl) setImportedPhotoUrl(result.suggestedPhotoUrl);
       setImportView({
         phase: n === 0 ? "nothing" : result.failedUrls.length ? "partial" : "done",
         sources: result.sources,
@@ -223,6 +231,46 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         extras: result.extras,
         unmapped: result.unmappedSpecialties,
       });
+    });
+  }
+
+  function onPhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file later
+    if (!file) return;
+    setPhotoError(null);
+    startPhoto(async () => {
+      const fd = new FormData();
+      fd.append("photo", file);
+      const res = await uploadProfilePhoto(fd);
+      if (res.ok) {
+        setPhotoUrl(res.photoUrl);
+        setImportedPhotoUrl(null);
+      } else {
+        setPhotoError(res.error);
+      }
+    });
+  }
+
+  function onAdoptPhoto() {
+    if (!importedPhotoUrl) return;
+    setPhotoError(null);
+    startPhoto(async () => {
+      const res = await adoptImportedPhoto(importedPhotoUrl);
+      if (res.ok) {
+        setPhotoUrl(res.photoUrl);
+        setImportedPhotoUrl(null);
+      } else {
+        setPhotoError(res.error);
+      }
+    });
+  }
+
+  function onRemovePhoto() {
+    setPhotoError(null);
+    startPhoto(async () => {
+      const res = await removeProfilePhoto();
+      if (res.ok) setPhotoUrl("");
     });
   }
 
@@ -351,6 +399,69 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
       </details>
 
       <div className="space-y-7">
+        <Field label="Your photo" optional>
+          <div className="flex items-center gap-5">
+            {photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoUrl} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
+            ) : (
+              <span
+                aria-hidden
+                className="font-display flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-sand-deep text-[26px] text-teal"
+              >
+                {(displayName.trim()[0] ?? "·").toUpperCase()}
+              </span>
+            )}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <label
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-charcoal/20 bg-white px-5 py-2.5 text-[14px] font-medium text-charcoal transition-colors hover:border-charcoal/40 hover:bg-sand-deep/50 ${
+                    photoBusy ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  {photoBusy ? "Working…" : photoUrl ? "Replace photo" : "Upload a photo"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                    className="sr-only"
+                    onChange={onPhotoFile}
+                    disabled={photoBusy}
+                  />
+                </label>
+                {photoUrl ? (
+                  <button
+                    type="button"
+                    onClick={onRemovePhoto}
+                    disabled={photoBusy}
+                    className="text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+              {importedPhotoUrl && !photoUrl ? (
+                <button
+                  type="button"
+                  onClick={onAdoptPhoto}
+                  disabled={photoBusy}
+                  className="text-left text-[13px] text-teal underline underline-offset-2 hover:text-ocean"
+                >
+                  Use the photo we found from your import →
+                </button>
+              ) : null}
+              {photoError ? (
+                <p role="alert" className="text-[13px] leading-[1.5] text-ocean">
+                  {photoError}
+                </p>
+              ) : (
+                <p className="text-[12px] leading-[1.5] text-ink-muted">
+                  A friendly headshot — JPG, PNG, or WebP, up to 6 MB. Saved as soon as you pick it.
+                </p>
+              )}
+            </div>
+          </div>
+        </Field>
+
         <Field label="Display name">
           <TextInput value={displayName} onChange={(e) => { setDisplayName(e.target.value); dirty(); }} placeholder="e.g. Nora Hollenkamp, LICSW" />
         </Field>
@@ -455,9 +566,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : saved ? "Saved ✓" : "Save profile"}
         </Button>
-        <span className="text-[13px] text-ink-muted">
-          Photo upload coming next.
-        </span>
+        <span className="text-[13px] text-ink-muted">Your photo saves on its own, above.</span>
       </div>
 
       {/* Status + publish — additive, calm, trauma-informed. The publish actions

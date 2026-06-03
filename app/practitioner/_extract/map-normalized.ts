@@ -15,6 +15,8 @@ export interface SourceContribution {
   extras: ImportExtra[];
   /** knowsAbout topics that matched no category. */
   unmapped: string[];
+  /** A remote headshot we found (not auto-applied — the editor offers to adopt it into Blob). */
+  suggestedPhotoUrl?: string;
 }
 
 function formatRegion(loc: NonNullable<NormalizedProfile["location"]>): string | undefined {
@@ -83,7 +85,6 @@ export function mapNormalized(n: NormalizedProfile, host: string): SourceContrib
     extras.push({ label: "License", value, source: host });
   }
   if (n.telephone) extras.push({ label: "Phone", value: n.telephone, source: host });
-  if (n.imageUrl) extras.push({ label: "Photo", value: "found — upload coming soon", source: host });
 
-  return { data, contributed, extras, unmapped };
+  return { data, contributed, extras, unmapped, suggestedPhotoUrl: n.imageUrl };
 }

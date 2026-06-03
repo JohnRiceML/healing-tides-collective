@@ -56,3 +56,4 @@ Thumbs.db
 
 # Prisma — generated client (regenerated via `postinstall: prisma generate`)
 /lib/generated/
+.env*
