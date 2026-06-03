@@ -28,8 +28,14 @@ export function SiteNav({ clerkEnabled }: { clerkEnabled: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // The landing keeps its own bespoke chrome.
-  if (pathname === "/") return null;
+  // Pages that carry their own bespoke chrome keep it: the landing, the Journal,
+  // and the "Meet Nora" about page.
+  const hidden =
+    pathname === "/" ||
+    pathname === "/about" ||
+    pathname === "/journal" ||
+    pathname.startsWith("/journal/");
+  if (hidden) return null;
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
