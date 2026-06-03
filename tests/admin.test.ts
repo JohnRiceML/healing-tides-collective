@@ -44,6 +44,32 @@ describe("requireAdmin — the /admin gate", () => {
     expect(await requireAdmin()).toBeNull();
     expect(findUnique).not.toHaveBeenCalled();
   });
+
+  it("grants admin via the ADMIN_EMAILS allowlist (case-insensitive, no DB role)", async () => {
+    vi.stubEnv("ADMIN_EMAILS", "founder@healingtides.co, John@Example.com");
+    auth.mockResolvedValue({ userId: "clerk_1" });
+    findUnique.mockResolvedValue({
+      id: "u1",
+      clerkUserId: "clerk_1",
+      role: "PRACTITIONER",
+      email: "john@example.com",
+    });
+    expect((await requireAdmin())?.id).toBe("u1");
+    vi.unstubAllEnvs();
+  });
+
+  it("does not grant admin for an email outside the allowlist", async () => {
+    vi.stubEnv("ADMIN_EMAILS", "someone@else.com");
+    auth.mockResolvedValue({ userId: "clerk_1" });
+    findUnique.mockResolvedValue({
+      id: "u1",
+      clerkUserId: "clerk_1",
+      role: "PRACTITIONER",
+      email: "john@example.com",
+    });
+    expect(await requireAdmin()).toBeNull();
+    vi.unstubAllEnvs();
+  });
 });
 
 describe("admin data", () => {

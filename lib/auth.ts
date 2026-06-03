@@ -62,12 +62,27 @@ export async function getOrCreatePractitioner(): Promise<
   return { user, practitioner };
 }
 
+/** Comma-separated email allowlist (env `ADMIN_EMAILS`). Grants admin WITHOUT a DB
+ *  write — the simplest way to bootstrap admins and to manage them when the DB isn't
+ *  conveniently writable. Emails come from Clerk (verified), so they're trustworthy. */
+function adminEmailAllowlist(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 /**
- * The signed-in user IF they have the ADMIN role, else null — the gate for admin
- * surfaces (e.g. `/admin`). Call it in the server component and `notFound()` on
- * null. Roles are granted out-of-band (set `User.role = ADMIN` via Prisma Studio).
+ * The signed-in user IF they're an admin, else null — the gate for admin surfaces
+ * (e.g. `/admin`). Call it in the server component and `notFound()` on null. A user is
+ * admin if their `User.role === ADMIN` OR their (Clerk-verified) email is in the
+ * `ADMIN_EMAILS` env allowlist.
  */
 export async function requireAdmin(): Promise<User | null> {
   const user = await getCurrentDbUser();
-  return user && user.role === "ADMIN" ? user : null;
+  if (!user) return null;
+  if (user.role === "ADMIN") return user;
+  const email = user.email?.trim().toLowerCase();
+  if (email && adminEmailAllowlist().includes(email)) return user;
+  return null;
 }
