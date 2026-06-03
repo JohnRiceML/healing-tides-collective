@@ -18,11 +18,12 @@ import type {
 } from "@/lib/generated/prisma/client";
 
 import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
-import type { ProfileExtract } from "@/app/_lib/profile-extract-schema";
 
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
 import { extractProfileFromSources } from "./extract-actions";
+import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
+import { describeSource, type ImportData } from "./_extract/types";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
@@ -50,10 +51,11 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [publishing, startPublish] = useTransition();
   const isPublished = visibility === "PUBLISHED";
 
-  // AI "paste your bio → draft" assist — fills the form for review; never saves/publishes.
+  // AI "drop your links / paste a bio → draft" assist — fills the form for review; never saves/publishes.
   const [paste, setPaste] = useState("");
   const [links, setLinks] = useState("");
-  const [extractMsg, setExtractMsg] = useState<string | null>(null);
+  const [importView, setImportView] = useState<ImportView | null>(null);
+  const [importCollapsed, setImportCollapsed] = useState(false);
   const [extracting, startExtract] = useTransition();
   // New (post-signup) profiles get the import-first welcome, auto-expanded.
   const isNew = practitioner.completeness === 0 && !practitioner.displayName;
@@ -103,8 +105,8 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     });
   };
 
-  // Merge an AI extraction into the form — fills only EMPTY fields (never clobbers).
-  function applyExtract(d: ProfileExtract) {
+  // Merge an extraction into the form — fills only EMPTY fields (never clobbers).
+  function applyExtract(d: ImportData) {
     const fillIfEmpty = (cur: string, set: (v: string) => void, val?: string) => {
       if (val && val.trim() && !cur.trim()) set(val.trim());
     };
@@ -113,8 +115,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     fillIfEmpty(values, setValues, d.values);
     fillIfEmpty(region, setRegion, d.region);
     fillIfEmpty(gender, setGender, d.gender);
+    fillIfEmpty(website, setWebsite, d.website);
     if (d.insuranceAccepted?.length && !insurance.trim()) {
       setInsurance(d.insuranceAccepted.join(", "));
+    }
+    if (d.specialties?.length && specialties.length === 0) {
+      setSpecialties(d.specialties);
     }
     if (d.fields) {
       setFieldValues((prev) => {
@@ -134,20 +140,66 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     setSaved(false);
   }
 
+  // How many currently-EMPTY fields this draft will fill (drives the bar's count).
+  function countFills(d: ImportData): number {
+    let n = 0;
+    const empty = (s: string) => !s.trim();
+    if (d.displayName?.trim() && empty(displayName)) n++;
+    if (d.bio?.trim() && empty(bio)) n++;
+    if (d.values?.trim() && empty(values)) n++;
+    if (d.region?.trim() && empty(region)) n++;
+    if (d.gender?.trim() && empty(gender)) n++;
+    if (d.website?.trim() && empty(website)) n++;
+    if (d.insuranceAccepted?.length && empty(insurance)) n++;
+    if (d.specialties?.length && specialties.length === 0) n++;
+    for (const [id, val] of Object.entries(d.fields ?? {})) {
+      const has = Array.isArray(val) ? val.length > 0 : String(val ?? "").trim() !== "";
+      if (!has) continue;
+      const cur = fieldValues[id];
+      const isEmpty = cur == null || (Array.isArray(cur) ? cur.length === 0 : String(cur).trim() === "");
+      if (isEmpty) n++;
+    }
+    return n;
+  }
+
   function onBuild() {
-    setExtractMsg(null);
+    const urls = links.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+    // Optimistic "reading" rows from what we're about to attempt.
+    const reading: ImportView["sources"] = [
+      ...urls.map((u) => {
+        let host = u;
+        try { host = new URL(u).hostname.toLowerCase(); } catch { /* keep raw */ }
+        return { id: u, host, ...describeSource(host), ok: false, usedStructured: false, contributed: [] };
+      }),
+      ...(paste.trim()
+        ? [{ id: "paste", host: "", ...describeSource(""), ok: false, usedStructured: false, contributed: [] }]
+        : []),
+    ];
+    setImportCollapsed(false);
+    setImportView({ phase: "reading", sources: reading, filledCount: 0, extras: [], unmapped: [] });
     startExtract(async () => {
-      const urls = links.split(/\n+/).map((s) => s.trim()).filter(Boolean);
       const res = await extractProfileFromSources({ urls, text: paste });
       if (!res.ok) {
-        setExtractMsg(res.error);
+        setImportView({
+          phase: "failed",
+          sources: res.result?.sources ?? reading,
+          filledCount: 0,
+          extras: res.result?.extras ?? [],
+          unmapped: res.result?.unmappedSpecialties ?? [],
+          error: res.error,
+        });
         return;
       }
-      applyExtract(res.data);
-      const missed = res.failed?.length
-        ? ` (couldn't reach ${res.failed.length} link${res.failed.length > 1 ? "s" : ""} — paste those if needed)`
-        : "";
-      setExtractMsg("Drafted below — review each field, then Save." + missed);
+      const { result } = res;
+      const n = countFills(result.data);
+      applyExtract(result.data);
+      setImportView({
+        phase: n === 0 ? "nothing" : result.failedUrls.length ? "partial" : "done",
+        sources: result.sources,
+        filledCount: n,
+        extras: result.extras,
+        unmapped: result.unmappedSpecialties,
+      });
     });
   }
 
@@ -167,7 +219,10 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-10">
+    <form
+      onSubmit={onSubmit}
+      className={`space-y-10 ${importView ? (importCollapsed ? "pb-24" : "pb-64") : ""}`}
+    >
       <SectionHeader
         eyebrow="Your profile"
         title="Build your profile"
@@ -229,6 +284,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
           <Field label="…or paste a bio" optional>
             <TextArea
+              id="import-paste"
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
               placeholder="Paste your bio / Psychology Today text here"
@@ -253,15 +309,11 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                 I&rsquo;ll fill it in myself
               </button>
             ) : null}
-            {extractMsg ? (
-              <span role="status" className="text-[13px] leading-[1.5] text-ink-soft">
-                {extractMsg}
-              </span>
-            ) : null}
           </div>
 
           <p className="text-[12px] leading-[1.5] text-ink-muted">
-            Psychology Today &amp; LinkedIn usually block automated visits — paste those instead.
+            Most links work — your website, your Psychology Today profile. LinkedIn blocks automated
+            visits, so paste that one instead.
           </p>
         </div>
       </details>
@@ -429,6 +481,19 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           </p>
         ) : null}
       </section>
+
+      {importView ? (
+        <ImportStatusBar
+          view={importView}
+          collapsed={importCollapsed}
+          onToggleCollapse={() => setImportCollapsed((c) => !c)}
+          onDismiss={() => setImportView(null)}
+          onPasteFocus={() => {
+            setImportOpen(true);
+            requestAnimationFrame(() => document.getElementById("import-paste")?.focus());
+          }}
+        />
+      ) : null}
     </form>
   );
 }
