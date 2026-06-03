@@ -43,11 +43,20 @@ function hashSeed(s: string): number {
   return h;
 }
 
-export function CoverArt({ seed, className }: { seed: string; className?: string }) {
+/** Deterministic palette + wave + gradient-id for a seed. Pure, so it's unit-tested.
+ *  Unsigned shifts/mods only — a signed `>>` here can go negative and index past the
+ *  arrays (undefined → crash) for ~half of all seeds. */
+export function pickCover(seed: string) {
   const h = hashSeed(seed || "tide");
-  const pal = PALETTES[h % PALETTES.length];
-  const wave = WAVES[(h >> 5) % WAVES.length];
-  const gid = `htc-${(h >>> 0).toString(36)}`;
+  return {
+    palette: PALETTES[h % PALETTES.length],
+    wave: WAVES[(h >>> 5) % WAVES.length],
+    gid: `htc-${h.toString(36)}`,
+  };
+}
+
+export function CoverArt({ seed, className }: { seed: string; className?: string }) {
+  const { palette: pal, wave, gid } = pickCover(seed);
 
   return (
     <svg
