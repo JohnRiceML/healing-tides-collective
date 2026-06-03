@@ -18,6 +18,7 @@ import type {
 } from "@/lib/generated/prisma/client";
 
 import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
+import { completenessOf } from "@/lib/completeness";
 
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
@@ -40,7 +41,6 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     (practitioner.fieldValues as unknown as Record<string, string | string[]> | null) ?? {},
   );
 
-  const [completeness, setCompleteness] = useState(practitioner.completeness);
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
 
@@ -60,6 +60,29 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   // New (post-signup) profiles get the import-first welcome, auto-expanded.
   const isNew = practitioner.completeness === 0 && !practitioner.displayName;
   const [importOpen, setImportOpen] = useState(isNew);
+
+  // Live "match strength" — recomputed from the form on every keystroke / import, so
+  // the bar fills as fields get addressed (not only on Save). These are the
+  // match-critical fields the future matcher consumes, so % here == matchability.
+  const insuranceList = insurance.split(",").map((s) => s.trim()).filter(Boolean);
+  const liveCompleteness = completenessOf({
+    displayName, bio, values, modality, region, gender,
+    specialties, insuranceAccepted: insuranceList, website,
+  });
+  // Empty match-critical fields in descending match impact — names the next best add.
+  const missingMatch = [
+    { filled: specialties.length > 0, label: "your areas of focus" },
+    { filled: !!region.trim(), label: "your location" },
+    { filled: Boolean(modality), label: "how you work" },
+    { filled: !!values.trim(), label: "what healing means to you" },
+    { filled: insuranceList.length > 0, label: "insurance" },
+    { filled: !!bio.trim(), label: "a short bio" },
+    { filled: !!gender.trim(), label: "your gender" },
+    { filled: !!displayName.trim(), label: "your name" },
+    { filled: !!website.trim(), label: "your website" },
+  ]
+    .filter((f) => !f.filled)
+    .map((f) => f.label);
 
   function onPublish() {
     setPublishError(null);
@@ -212,7 +235,6 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         fieldValues,
       });
       if (res.ok) {
-        setCompleteness(res.completeness);
         setSaved(true);
       }
     });
@@ -229,18 +251,28 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         body="This is what people will see. The “what healing means to me” note is the heart of it — write it the way you'd say it out loud."
       />
 
-      {/* completeness */}
+      {/* Match strength — the match-critical fields, computed LIVE so it fills as you
+          (or the importer) add detail. The fuller it is, the better we match clients. */}
       <div>
-        <div className="flex items-baseline justify-between">
-          <span className="meta text-ink-muted">{visibility.toLowerCase()}</span>
-          <span className="text-[13px] text-ink-soft">{completeness}% complete</span>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="meta text-ink-muted">{visibility.toLowerCase()} · match strength</span>
+          <span className="text-[13px] font-medium text-charcoal">{liveCompleteness}%</span>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule/60">
           <div
-            className="h-full rounded-full bg-teal transition-[width] duration-500"
-            style={{ width: `${completeness}%` }}
+            className="h-full rounded-full bg-teal transition-[width] duration-700 ease-out"
+            style={{ width: `${liveCompleteness}%` }}
           />
         </div>
+        <p className="mt-2 text-[13px] leading-[1.5] text-ink-soft">
+          {liveCompleteness >= 80
+            ? "Strong — people searching for someone like you will see a full picture."
+            : missingMatch.length
+              ? `The more complete your profile, the better we match you with the right clients. Add ${missingMatch
+                  .slice(0, 2)
+                  .join(" and ")} next.`
+              : "The more complete your profile, the better we match you with the right clients."}
+        </p>
       </div>
 
       {/* What's actually required — the form is lighter than it looks. */}
