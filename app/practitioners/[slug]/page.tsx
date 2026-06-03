@@ -10,6 +10,7 @@ import {
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
 import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
 import { SITE_URL } from "@/lib/site";
+import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { CoverArt } from "../_components/CoverArt";
 
 /** First sentence (or a trimmed lead) of free text, for meta descriptions. */
@@ -130,6 +131,16 @@ export default async function Page({
   const modality = modalityLabel(p.modality);
   const hasMeta = Boolean(p.region) || Boolean(modality);
 
+  // Self-reported credential letters (e.g. "MSW, LICSW") shown after the name — the
+  // ADMIN-verified "Licensed Professional" badge is a separate, granted signal (Push 2).
+  const fv = (p.fieldValues ?? null) as Record<string, unknown> | null;
+  const credentials =
+    typeof fv?.credentials === "string"
+      ? fv.credentials.trim()
+      : Array.isArray(fv?.credentials)
+        ? fv.credentials.filter(Boolean).join(", ")
+        : "";
+
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
       {/* Structured data — Person profile for per-profile SEO. */}
@@ -184,6 +195,9 @@ export default async function Page({
             <h1 className="font-display mt-3 text-[clamp(34px,6vw,56px)] leading-[1.02] tracking-[-0.02em] text-charcoal">
               {p.displayName}
             </h1>
+            {credentials ? (
+              <p className="mt-2 text-[15px] tracking-[0.01em] text-ink-soft">{credentials}</p>
+            ) : null}
             {hasMeta ? (
               <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-muted">
                 {p.region ? <span>{p.region}</span> : null}
@@ -195,6 +209,7 @@ export default async function Page({
                 {modality ? <span>{modality}</span> : null}
               </p>
             ) : null}
+            <VerificationBadges practitioner={{ createdAt: p.createdAt }} className="mt-4" />
           </div>
         </header>
 

@@ -16,6 +16,7 @@ export type PractitionerCard = {
   specialties: string[];
   photoUrl: string | null;
   featured: boolean;
+  createdAt: Date; // for the Founding Member badge
 };
 
 /** Full public profile (the slug page) = card + the long-form fields. */
@@ -43,6 +44,7 @@ const CARD_SELECT = {
   specialties: true,
   photoUrl: true,
   featured: true,
+  createdAt: true,
 } as const;
 
 /**

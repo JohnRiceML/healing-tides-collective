@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { PractitionerCard as PractitionerCardData } from "@/lib/practitioners";
 import { modalityLabel, specialtyLabel } from "@/app/_lib/taxonomy";
+import { VerificationBadges } from "@/app/_components/VerificationBadges";
 
 import { CoverArt } from "./CoverArt";
 
@@ -20,7 +21,7 @@ function initialOf(name: string): string {
  * in next/image's allowlist; a plain img is the safe, deploy-proof choice).
  */
 export function PractitionerCard({ practitioner }: { practitioner: PractitionerCardData }) {
-  const { slug, displayName, bio, region, modality, specialties, photoUrl, featured } =
+  const { slug, displayName, bio, region, modality, specialties, photoUrl, featured, createdAt } =
     practitioner;
 
   const meta = [region, modalityLabel(modality)].filter(Boolean).join(" · ");
@@ -67,6 +68,8 @@ export function PractitionerCard({ practitioner }: { practitioner: PractitionerC
           {displayName}
         </h2>
         {meta ? <p className="mt-1.5 text-[14px] leading-[1.5] text-ink-muted">{meta}</p> : null}
+
+        <VerificationBadges practitioner={{ createdAt }} size="sm" className="mt-2.5" />
 
         {bio ? (
           <p className="mt-3 line-clamp-2 text-[14px] leading-[1.6] text-ink-soft">{bio}</p>
