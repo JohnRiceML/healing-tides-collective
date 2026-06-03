@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { SanityLive } from "@/sanity/lib/live";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { AccountButton } from "@/app/_components/account-button";
+import { SiteNav } from "@/app/_components/site-nav";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -59,14 +60,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         {clerkEnabled ? (
           <ClerkProvider>
+            <SiteNav clerkEnabled />
             {children}
-            {/* Account menu — only for signed-in users (the persistent
-                "manage account / sign out" affordance). */}
+            {/* Landing-only account menu — SiteNav carries account access everywhere else. */}
             <AccountButton />
             <SanityLive />
           </ClerkProvider>
         ) : (
           <>
+            <SiteNav clerkEnabled={false} />
             {children}
             <SanityLive />
           </>
