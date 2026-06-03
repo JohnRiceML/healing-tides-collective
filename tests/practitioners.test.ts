@@ -34,6 +34,8 @@ const cardRow = (over = {}) => ({
   specialties: [],
   photoUrl: null,
   featured: false,
+  createdAt: new Date("2026-06-01T00:00:00.000Z"),
+  verificationBadges: [], // derived from fieldValues by the read layer
   ...over,
 });
 

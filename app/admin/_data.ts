@@ -4,6 +4,7 @@
 // privileged view, so it must never be imported by a public/unauthenticated surface.
 import { db } from "@/lib/db";
 import type { ProfileVisibility } from "@/lib/generated/prisma/client";
+import { grantedBadgesFrom } from "@/app/_lib/verification";
 
 export type AdminPractitionerRow = {
   id: string;
@@ -16,6 +17,7 @@ export type AdminPractitionerRow = {
   featured: boolean;
   updatedAt: Date;
   email: string | null;
+  verificationBadges: string[];
 };
 
 export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
@@ -31,10 +33,15 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       region: true,
       featured: true,
       updatedAt: true,
+      fieldValues: true,
       user: { select: { email: true } },
     },
   });
-  return rows.map(({ user, ...r }) => ({ ...r, email: user?.email ?? null }));
+  return rows.map(({ user, fieldValues, ...r }) => ({
+    ...r,
+    email: user?.email ?? null,
+    verificationBadges: grantedBadgesFrom(fieldValues),
+  }));
 }
 
 export type AdminStats = {

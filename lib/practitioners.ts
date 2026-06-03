@@ -5,6 +5,7 @@
 
 import { db } from "@/lib/db";
 import type { Modality } from "@/lib/generated/prisma/client";
+import { grantedBadgesFrom } from "@/app/_lib/verification";
 
 /** Public-safe fields for a directory card. No userId, no internal billing state. */
 export type PractitionerCard = {
@@ -17,6 +18,7 @@ export type PractitionerCard = {
   photoUrl: string | null;
   featured: boolean;
   createdAt: Date; // for the Founding Member badge
+  verificationBadges: string[]; // admin-granted badge ids (from the reserved fieldValues key)
 };
 
 /** Full public profile (the slug page) = card + the long-form fields. */
@@ -45,6 +47,7 @@ const CARD_SELECT = {
   photoUrl: true,
   featured: true,
   createdAt: true,
+  fieldValues: true, // read-only here — used to derive verificationBadges
 } as const;
 
 /**
@@ -79,10 +82,12 @@ export async function getPublishedPractitioners(
     take: 200,
   });
   // slug + displayName are non-null by the where-filter above; tighten the type.
-  return rows.map((r) => ({
+  // Strip raw fieldValues from the card payload — only the derived badges leave here.
+  return rows.map(({ fieldValues, ...r }) => ({
     ...r,
     slug: r.slug as string,
     displayName: r.displayName as string,
+    verificationBadges: grantedBadgesFrom(fieldValues),
   }));
 }
 
@@ -103,7 +108,12 @@ export async function getPractitionerBySlug(
     },
   });
   if (!r || !r.slug || !r.displayName) return null;
-  return { ...r, slug: r.slug, displayName: r.displayName };
+  return {
+    ...r,
+    slug: r.slug,
+    displayName: r.displayName,
+    verificationBadges: grantedBadgesFrom(r.fieldValues),
+  };
 }
 
 /** Every published slug — for the sitemap. */

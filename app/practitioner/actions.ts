@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
 import { completenessOf } from "@/lib/completeness";
+import { mergeFieldValues } from "@/app/_lib/verification";
 import { safeWebsite } from "@/lib/url";
-import type { Modality } from "@/lib/generated/prisma/client";
+import type { Modality, Prisma } from "@/lib/generated/prisma/client";
 
 export type ProfileInput = {
   displayName: string;
@@ -40,14 +41,20 @@ export async function saveProfile(input: ProfileInput) {
   };
 
   const completeness = completenessOf(data);
+  // Merge fieldValues so a practitioner save can't set or wipe reserved (`__`) keys
+  // like the admin-granted `__verified` badges. Omitting fieldValues leaves them as-is.
+  const fieldValuesUpdate = input.fieldValues
+    ? {
+        fieldValues: mergeFieldValues(
+          result.practitioner.fieldValues,
+          input.fieldValues,
+        ) as Prisma.InputJsonValue,
+      }
+    : {};
   try {
     await db.practitioner.update({
       where: { id: result.practitioner.id },
-      data: {
-        ...data,
-        completeness,
-        ...(input.fieldValues ? { fieldValues: input.fieldValues } : {}),
-      },
+      data: { ...data, completeness, ...fieldValuesUpdate },
     });
   } catch {
     return { ok: false as const, error: "Couldn't save your changes — please try again." };

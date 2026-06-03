@@ -6,6 +6,7 @@ import { Container } from "@/app/_components/ui";
 import { requireAdmin } from "@/lib/auth";
 
 import { getAdminPractitioners, getAdminStats } from "./_data";
+import { BadgeEditor } from "./BadgeEditor";
 
 export const metadata: Metadata = {
   title: "Admin — Healing Tides Collective",
@@ -58,7 +59,7 @@ export default async function AdminPage() {
           <p className="mt-12 text-[15px] text-ink-soft">No practitioners yet.</p>
         ) : (
           <div className="mt-10 overflow-x-auto rounded-2xl border border-rule bg-white">
-            <table className="w-full min-w-[720px] text-left text-[14px]">
+            <table className="w-full min-w-[920px] text-left text-[14px]">
               <thead className="border-b border-rule text-ink-muted">
                 <tr>
                   <th className="px-5 py-3 font-medium">Name</th>
@@ -66,6 +67,7 @@ export default async function AdminPage() {
                   <th className="px-5 py-3 font-medium">Complete</th>
                   <th className="px-5 py-3 font-medium">Views</th>
                   <th className="px-5 py-3 font-medium">Updated</th>
+                  <th className="px-5 py-3 font-medium">Verification</th>
                   <th className="px-5 py-3 font-medium" aria-label="actions" />
                 </tr>
               </thead>
@@ -98,6 +100,9 @@ export default async function AdminPage() {
                         {r.updatedAt.toISOString().slice(0, 10)}
                       </td>
                       <td className="px-5 py-3">
+                        <BadgeEditor practitionerId={r.id} current={r.verificationBadges} />
+                      </td>
+                      <td className="px-5 py-3">
                         {r.visibility === "PUBLISHED" && r.slug ? (
                           <Link
                             href={`/practitioners/${r.slug}`}
@@ -118,8 +123,9 @@ export default async function AdminPage() {
         )}
 
         <p className="mt-8 text-[13px] text-ink-muted">
-          Read-only for now — managing status, featuring, and invites comes next (pending Nora&rsquo;s
-          admin sketch).
+          Verification badges are editable here — toggle to grant or remove; changes show on the
+          public profile right away. Founding Member is automatic. Managing status, featuring, and
+          invites comes next.
         </p>
       </Container>
     </main>

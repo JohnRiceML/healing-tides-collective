@@ -32,22 +32,32 @@ Source of truth: `app/_lib/verification.ts` (`BADGES`, `BADGE_ORDER`, `derivedBa
 - Self-reported **credential letters** ("MSW, LICSW") shown after the name on profiles,
   sourced from `fieldValues.credentials` — clearly distinct from a granted badge.
 
-## Push 2 — admin-granted badges (needs one migration)
+## Push 2 — admin badge-granting (shipped, **no migration**)
 
-Blocked only on DB access (restore `.env.local` → `vercel env pull .env.local
---environment=production`, then `npm run db:migrate`). Plan:
+The Neon connection strings are marked "Sensitive" in Vercel, so they can't be pulled to
+run a migration without manual dashboard access. Rather than block on that, Push 2 ships
+the admin-granted badges with **zero schema change**, storing them under a reserved key in
+the existing `fieldValues` JSON:
 
-1. **Schema:** add `verificationBadges String[] @default([])` to `Practitioner`
-   (+ optional `verifiedAt DateTime?`, `verifiedNote String?`). Migration via
-   `npm run db:migrate`.
-2. **Read layer:** add `verificationBadges` to `CARD_SELECT` / profile select.
-   `badgesFor()` already merges `verificationBadges ∪ derived` — display needs no change.
-3. **Admin grant UI:** under `/admin` (gated by `requireAdmin`), a per-practitioner
-   badge editor + a `grantBadges` server action (writes the column; never client-trusted).
-4. **Credential declaration:** add the credential-type taxonomy (PRODUCT-SPEC §9 groups
-   A–F: licensed MH, medical/integrative, nutrition, movement/mind-body, recovery,
-   holistic) to the practitioner form (license #, state, expiry, document upload to
-   Blob) — the inputs the admin reviews before granting a badge.
+- **Storage:** `fieldValues.__verified = ["licensed_professional", …]`. Only the admin
+  action `setVerificationBadges` (`/admin/actions.ts`, `requireAdmin`-gated) writes it.
+- **Self-claim guard:** `mergeFieldValues` (used by the practitioner's `saveProfile`)
+  STRIPS any client attempt to set a `__`-prefixed key and PRESERVES the admin-set ones —
+  so a practitioner can edit their own fields but never grant or wipe `__verified`.
+- **Read:** `grantedBadgesFrom(fieldValues)` (read layer + admin data) → `verificationBadges`;
+  `badgesFor()` merges `verificationBadges ∪ derived`. Display unchanged from Push 1.
+- **Admin UI:** `/admin` has a per-practitioner toggle (`BadgeEditor`) for the six
+  grantable badges; changes revalidate the directory + profiles immediately.
 
-Because the new column is only _read_ once it exists, Push 1 ships safely ahead of the
-migration; Push 2 is additive.
+**To use it:** a user must have `User.role = ADMIN` (set out-of-band — needs DB access).
+
+### Optional graduation to a dedicated column
+
+If/when a migration is convenient (real Neon string in `.env.local` → `npm run db:migrate`),
+add `verificationBadges String[] @default([])` to `Practitioner` and have `grantedBadgesFrom`
+prefer the column, then the reserved key. Purely additive — no display or admin-UI change.
+
+### Still ahead (not in Push 2)
+
+Credential declaration form (PRODUCT-SPEC §9 groups A–F: license #, state, expiry, document
+upload to Blob) — the inputs the admin reviews before granting a badge.

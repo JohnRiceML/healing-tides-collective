@@ -113,8 +113,8 @@ export function derivedBadges(createdAt: Date | string | null | undefined): Badg
 }
 
 /**
- * The full ordered badge list for a practitioner: admin-granted (Push 2) ∪ derived,
- * de-duped, in display order. Safe to call with `granted` omitted today.
+ * The full ordered badge list for a practitioner: admin-granted ∪ derived, de-duped,
+ * in display order.
  */
 export function badgesFor(
   practitioner: { createdAt?: Date | string | null; verificationBadges?: string[] | null },
@@ -124,4 +124,48 @@ export function badgesFor(
     ...derivedBadges(practitioner.createdAt),
   ]);
   return BADGE_ORDER.filter((id) => set.has(id)).map((id) => BADGES[id]);
+}
+
+// ── Admin-granted storage (migration-free) ────────────────────────────────────
+// Verified badges are stored under a RESERVED key in the practitioner's fieldValues
+// JSON. Only an admin action writes it; the practitioner's own save can never set or
+// wipe a reserved (`__`-prefixed) key — see `mergeFieldValues`. This keeps the trust
+// guarantee (admin-only, not self-claimable) with no schema change; it can graduate
+// to a dedicated column later by reading the column first, then this key.
+
+export const RESERVED_BADGES_KEY = "__verified";
+
+/** The badges an admin can grant (everything except the derived Founding Member). */
+export const GRANTABLE_BADGES: BadgeId[] = BADGE_ORDER.filter((id) => BADGES[id].adminGranted);
+
+const GRANTABLE_SET = new Set<string>(GRANTABLE_BADGES);
+
+/** Read admin-granted badge ids out of a fieldValues blob, keeping only valid ones. */
+export function grantedBadgesFrom(fieldValues: unknown): BadgeId[] {
+  const raw = (fieldValues as Record<string, unknown> | null | undefined)?.[RESERVED_BADGES_KEY];
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((x): x is BadgeId => typeof x === "string" && GRANTABLE_SET.has(x));
+}
+
+/** Normalize an admin's badge selection to a clean, valid, de-duped grantable set. */
+export function sanitizeGrant(badges: unknown): BadgeId[] {
+  if (!Array.isArray(badges)) return [];
+  return GRANTABLE_BADGES.filter((id) => badges.includes(id));
+}
+
+/**
+ * Merge a practitioner-supplied fieldValues over the existing one, STRIPPING any
+ * client attempt to set reserved (`__`) keys and PRESERVING admin-set reserved keys.
+ * The practitioner can change their own fields but never touch `__verified`.
+ */
+export function mergeFieldValues(
+  existing: unknown,
+  incoming: Record<string, unknown>,
+): Record<string, unknown> {
+  const ex = (existing ?? {}) as Record<string, unknown>;
+  const reserved = Object.fromEntries(Object.entries(ex).filter(([k]) => k.startsWith("__")));
+  const sanitized = Object.fromEntries(
+    Object.entries(incoming ?? {}).filter(([k]) => !k.startsWith("__")),
+  );
+  return { ...sanitized, ...reserved };
 }

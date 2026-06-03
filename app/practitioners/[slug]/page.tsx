@@ -209,7 +209,10 @@ export default async function Page({
                 {modality ? <span>{modality}</span> : null}
               </p>
             ) : null}
-            <VerificationBadges practitioner={{ createdAt: p.createdAt }} className="mt-4" />
+            <VerificationBadges
+              practitioner={{ createdAt: p.createdAt, verificationBadges: p.verificationBadges }}
+              className="mt-4"
+            />
           </div>
         </header>
 
