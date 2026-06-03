@@ -10,6 +10,7 @@ import {
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
 import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
 import { SITE_URL } from "@/lib/site";
+import { CoverArt } from "../_components/CoverArt";
 
 /** First sentence (or a trimmed lead) of free text, for meta descriptions. */
 function leadFrom(text: string, max = 160): string {
@@ -149,8 +150,13 @@ export default async function Page({
           </Link>
         </nav>
 
-        {/* ───── Header: photo + name + quiet meta ───── */}
-        <header className="mt-10 flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-10">
+        {/* ───── Cover (their default "wide image") ───── */}
+        <div className="relative mt-8 h-44 overflow-hidden rounded-3xl border border-rule/50 sm:h-56">
+          <CoverArt seed={p.slug} className="h-full w-full" />
+        </div>
+
+        {/* ───── Header: portrait overlapping the cover + name + quiet meta ───── */}
+        <header className="-mt-14 flex flex-col items-start gap-6 px-1 sm:-mt-16 sm:flex-row sm:items-end sm:gap-8">
           {p.photoUrl ? (
             // photoUrl is a Vercel Blob URL — a host not whitelisted in
             // next.config's image remotePatterns — so a plain <img> is the
@@ -162,24 +168,24 @@ export default async function Page({
               width={144}
               height={144}
               loading="eager"
-              className="h-32 w-32 shrink-0 rounded-full border border-rule object-cover sm:h-36 sm:w-36"
+              className="h-28 w-28 shrink-0 rounded-full border-4 border-sand object-cover shadow-sm sm:h-36 sm:w-36"
             />
           ) : (
             <div
               aria-hidden
-              className="font-display flex h-32 w-32 shrink-0 select-none items-center justify-center rounded-full border border-rule bg-sand-deep text-[44px] leading-none text-ink-muted sm:h-36 sm:w-36"
+              className="font-display flex h-28 w-28 shrink-0 select-none items-center justify-center rounded-full border-4 border-sand bg-sand-deep text-[40px] leading-none text-teal shadow-sm sm:h-36 sm:w-36"
             >
               {initialOf(p.displayName)}
             </div>
           )}
 
-          <div>
+          <div className="pb-1">
             <p className="meta text-teal">Practitioner</p>
             <h1 className="font-display mt-3 text-[clamp(34px,6vw,56px)] leading-[1.02] tracking-[-0.02em] text-charcoal">
               {p.displayName}
             </h1>
             {hasMeta ? (
-              <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-muted">
+              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-muted">
                 {p.region ? <span>{p.region}</span> : null}
                 {p.region && modality ? (
                   <span aria-hidden className="text-rule-strong/30">

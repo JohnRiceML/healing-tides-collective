@@ -41,12 +41,12 @@ export default async function Page({
         <header className="max-w-2xl">
           <p className="meta text-ink-muted">The collective</p>
           <h1 className="font-display mt-4 text-[clamp(34px,5vw,52px)] font-light leading-[1.05] tracking-[-0.02em] text-charcoal">
-            Find a practitioner.
+            Meet the collective.
           </h1>
           <p className="mt-5 text-[17px] leading-[1.65] text-ink-soft">
-            A considered group of therapists and holistic practitioners — curated, not a
-            wall of names. Filter by focus or format to find someone whose way of working
-            fits you.
+            A small, considered circle of therapists and holistic practitioners — real
+            people, each with their own way of working. Take your time, read a few stories,
+            and reach out to whoever feels right.
           </p>
         </header>
 
@@ -60,10 +60,10 @@ export default async function Page({
           {practitioners.length > 0 ? (
             <>
               <p className="meta text-ink-muted">
-                {practitioners.length}{" "}
-                {practitioners.length === 1 ? "practitioner" : "practitioners"}
+                {practitioners.length} {practitioners.length === 1 ? "person" : "people"} in the
+                collective
               </p>
-              <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3">
                 {practitioners.map((p) => (
                   <li key={p.slug}>
                     <PractitionerCard practitioner={p} />
