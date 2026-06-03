@@ -44,8 +44,9 @@ export function PractitionerCard({ practitioner }: { practitioner: PractitionerC
       </div>
 
       <div className="flex flex-1 flex-col px-6 pb-6">
-        {/* Portrait, overlapping the cover */}
-        <div className="-mt-10">
+        {/* Portrait, overlapping the cover. `relative z-10` so it paints ABOVE the
+            cover (which is `relative` for its badge — positioned beats static). */}
+        <div className="relative z-10 -mt-10">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

@@ -166,8 +166,9 @@ export default async function Page({
           <CoverArt seed={p.slug} className="h-full w-full" />
         </div>
 
-        {/* ───── Header: portrait overlapping the cover + name + quiet meta ───── */}
-        <header className="-mt-14 flex flex-col items-start gap-6 px-1 sm:-mt-16 sm:flex-row sm:items-end sm:gap-8">
+        {/* ───── Header: portrait overlapping the cover + name + quiet meta ─────
+            `relative z-10` so the portrait paints ABOVE the (relative) cover. */}
+        <header className="relative z-10 -mt-14 flex flex-col items-start gap-6 px-1 sm:-mt-16 sm:flex-row sm:items-end sm:gap-8">
           {p.photoUrl ? (
             // photoUrl is a Vercel Blob URL — a host not whitelisted in
             // next.config's image remotePatterns — so a plain <img> is the
