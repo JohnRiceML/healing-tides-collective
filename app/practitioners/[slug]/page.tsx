@@ -12,6 +12,7 @@ import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
 import { SITE_URL } from "@/lib/site";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { CoverArt } from "../_components/CoverArt";
+import { ViewBeacon } from "./ViewBeacon";
 
 /** First sentence (or a trimmed lead) of free text, for meta descriptions. */
 function leadFrom(text: string, max = 160): string {
@@ -143,6 +144,9 @@ export default async function Page({
 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
+      {/* Records one view on mount (skips the owner's own visits). */}
+      <ViewBeacon slug={p.slug} />
+
       {/* Structured data — Person profile for per-profile SEO. */}
       <script
         type="application/ld+json"
@@ -155,7 +159,7 @@ export default async function Page({
         <nav aria-label="Breadcrumb">
           <Link
             href="/practitioners"
-            className="meta inline-flex items-center gap-2 text-ink-muted transition-colors hover:text-charcoal"
+            className="meta inline-flex items-center gap-2 rounded-full text-ink-muted transition-colors hover:text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
           >
             ← All practitioners
           </Link>
@@ -200,7 +204,7 @@ export default async function Page({
             <p className="mt-2 text-[15px] tracking-[0.01em] text-ink-soft">{credentials}</p>
           ) : null}
           {hasMeta ? (
-            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-muted">
+            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-soft">
               {p.region ? <span>{p.region}</span> : null}
               {p.region && modality ? (
                 <span aria-hidden className="text-rule-strong/30">
@@ -286,7 +290,7 @@ export default async function Page({
                     href={safeWebsite}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="link-underline font-medium text-charcoal"
+                    className="link-underline rounded-full font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
                   >
                     {safeWebsite.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                   </a>

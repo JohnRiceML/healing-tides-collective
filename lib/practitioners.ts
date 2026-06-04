@@ -35,7 +35,44 @@ export type DirectoryFilters = {
   specialty?: string; // a SPECIALTY_OPTIONS id
   modality?: string; // a Modality enum value
   q?: string; // free-text search
+  gender?: string; // free-text, matched case-insensitively (contains)
+  acceptingNew?: boolean; // availability_state === "accepting" (fieldValues JSON path)
 };
+
+/**
+ * Build the Prisma `where` for the public directory from a set of filters.
+ * Pure (no DB) so it's unit-testable. Always pins the "published, named, slugged"
+ * base; every user-supplied filter is additive and omitted when absent.
+ *
+ * Note (insurance): `insuranceAccepted` is a free-text `String[]`, so there's no
+ * reliable option list to match against — an exact `has` filter would silently
+ * return nothing for almost every query. We deliberately DON'T expose an insurance
+ * filter until those values are normalized to a controlled vocabulary.
+ */
+export function buildPractitionerWhere(filters: DirectoryFilters = {}) {
+  const { specialty, modality, q, gender, acceptingNew } = filters;
+  return {
+    visibility: "PUBLISHED" as const,
+    slug: { not: null },
+    displayName: { not: null },
+    ...(specialty ? { specialties: { has: specialty } } : {}),
+    ...(modality ? { modality: modality as Modality } : {}),
+    ...(gender ? { gender: { contains: gender, mode: "insensitive" as const } } : {}),
+    ...(acceptingNew
+      ? { fieldValues: { path: ["availability_state"], equals: "accepting" } }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            { displayName: { contains: q, mode: "insensitive" as const } },
+            { bio: { contains: q, mode: "insensitive" as const } },
+            { region: { contains: q, mode: "insensitive" as const } },
+            { values: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+}
 
 const CARD_SELECT = {
   slug: true,
@@ -58,25 +95,8 @@ const CARD_SELECT = {
 export async function getPublishedPractitioners(
   filters: DirectoryFilters = {},
 ): Promise<PractitionerCard[]> {
-  const { specialty, modality, q } = filters;
   const rows = await db.practitioner.findMany({
-    where: {
-      visibility: "PUBLISHED",
-      slug: { not: null },
-      displayName: { not: null },
-      ...(specialty ? { specialties: { has: specialty } } : {}),
-      ...(modality ? { modality: modality as Modality } : {}),
-      ...(q
-        ? {
-            OR: [
-              { displayName: { contains: q, mode: "insensitive" } },
-              { bio: { contains: q, mode: "insensitive" } },
-              { region: { contains: q, mode: "insensitive" } },
-              { values: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
+    where: buildPractitionerWhere(filters),
     select: CARD_SELECT,
     orderBy: [{ featured: "desc" }, { completeness: "desc" }, { updatedAt: "desc" }],
     take: 200,

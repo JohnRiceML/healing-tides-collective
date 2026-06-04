@@ -306,7 +306,10 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           <span className="meta text-ink-muted">{visibility.toLowerCase()} · match strength</span>
           <span className="text-[13px] font-medium text-charcoal">{liveCompleteness}%</span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule/60">
+        <div
+          aria-hidden
+          className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule/60"
+        >
           <div
             className="h-full rounded-full bg-teal transition-[width] duration-700 ease-out"
             style={{ width: `${liveCompleteness}%` }}
@@ -321,6 +324,13 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                   .join(" and ")} next.`
               : "The more complete your profile, the better we match you with the right clients."}
         </p>
+        {practitioner.viewCount > 0 ? (
+          <p className="mt-3 text-[13px] leading-[1.5] text-ink-muted">
+            {practitioner.viewCount === 1
+              ? "1 person has viewed your profile."
+              : `${practitioner.viewCount} people have viewed your profile.`}
+          </p>
+        ) : null}
       </div>
 
       {/* What's actually required — the form is lighter than it looks. */}
@@ -336,7 +346,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
         onToggle={(e) => setImportOpen(e.currentTarget.open)}
         className="group rounded-3xl border border-rule bg-seafoam/20 p-5 md:p-6"
       >
-        <summary className="flex cursor-pointer list-none items-center gap-2 marker:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-seafoam/20">
           <span className="font-display text-[18px] leading-tight text-charcoal">
             {isNew ? "Let's build your profile — the fast way" : "Save time — import from a link or a bio"}
           </span>
@@ -384,7 +394,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
               <button
                 type="button"
                 onClick={() => setImportOpen(false)}
-                className="text-[13px] text-ink-muted underline-offset-2 hover:underline"
+                className="rounded-full px-1 text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
               >
                 I&rsquo;ll fill it in myself
               </button>
@@ -415,7 +425,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-3">
                 <label
-                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-charcoal/20 bg-white px-5 py-2.5 text-[14px] font-medium text-charcoal transition-colors hover:border-charcoal/40 hover:bg-sand-deep/50 ${
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-charcoal/20 bg-white px-5 py-2.5 text-[14px] font-medium text-charcoal transition-colors hover:border-charcoal/40 hover:bg-sand-deep/50 focus-within:outline-none focus-within:ring-2 focus-within:ring-charcoal/20 focus-within:ring-offset-2 focus-within:ring-offset-sand ${
                     photoBusy ? "pointer-events-none opacity-50" : ""
                   }`}
                 >
@@ -433,7 +443,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                     type="button"
                     onClick={onRemovePhoto}
                     disabled={photoBusy}
-                    className="text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline"
+                    className="rounded-full px-1 text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
                   >
                     Remove
                   </button>
@@ -444,7 +454,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                   type="button"
                   onClick={onAdoptPhoto}
                   disabled={photoBusy}
-                  className="text-left text-[13px] text-teal underline underline-offset-2 hover:text-ocean"
+                  className="rounded-full px-1 text-left text-[13px] text-teal underline underline-offset-2 hover:text-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
                 >
                   Use the photo we found from your import →
                 </button>
@@ -523,7 +533,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           Everything here is optional; add over time. */}
       {PROFILE_SECTIONS.map((section) => (
         <details key={section.id} className="group border-t border-rule/70">
-          <summary className="flex cursor-pointer list-none items-center gap-2 py-4 marker:hidden">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl py-4 marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand">
             <span className="font-display text-[19px] leading-tight text-charcoal">{section.title}</span>
             <span className="meta text-ink-muted">· optional</span>
             <span

@@ -5,6 +5,8 @@ export type ActiveFilters = {
   specialty?: string;
   modality?: string;
   q?: string;
+  gender?: string;
+  acceptingNew?: boolean;
 };
 
 /**
@@ -14,8 +16,8 @@ export type ActiveFilters = {
  * reset link clears everything when any filter is set.
  */
 export function DirectoryFilters({ active }: { active: ActiveFilters }) {
-  const { specialty = "", modality = "", q = "" } = active;
-  const hasActive = Boolean(specialty || modality || q);
+  const { specialty = "", modality = "", q = "", gender = "", acceptingNew = false } = active;
+  const hasActive = Boolean(specialty || modality || q || gender || acceptingNew);
 
   return (
     <form
@@ -57,17 +59,39 @@ export function DirectoryFilters({ active }: { active: ActiveFilters }) {
             ))}
           </Select>
         </Field>
+
+        <Field label="Gender">
+          <TextInput
+            type="text"
+            name="gender"
+            defaultValue={gender}
+            placeholder="Any gender"
+            aria-label="Filter by practitioner gender"
+          />
+        </Field>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button type="submit" tone="primary">
-          apply
-        </Button>
-        {hasActive ? (
-          <LinkButton href="/practitioners" tone="ghost">
-            clear filters
-          </LinkButton>
-        ) : null}
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-4">
+        <label className="flex cursor-pointer items-center gap-3 text-[15px] text-charcoal">
+          <input
+            type="checkbox"
+            name="accepting"
+            defaultChecked={acceptingNew}
+            className="h-[18px] w-[18px] shrink-0 rounded-[6px] border-rule text-charcoal accent-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
+          />
+          Accepting new clients
+        </label>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" tone="primary">
+            apply
+          </Button>
+          {hasActive ? (
+            <LinkButton href="/practitioners" tone="ghost">
+              clear filters
+            </LinkButton>
+          ) : null}
+        </div>
       </div>
     </form>
   );

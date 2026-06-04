@@ -44,7 +44,8 @@ export function SiteNav({ clerkEnabled }: { clerkEnabled: boolean }) {
       <nav className="mx-auto flex h-16 max-w-[1280px] items-center gap-6 px-6 md:px-10">
         <Link
           href="/"
-          className="font-display text-[18px] leading-none tracking-[-0.01em] text-charcoal transition-opacity hover:opacity-70"
+          aria-label="Healing Tides — home"
+          className="rounded-full font-display text-[18px] leading-none tracking-[-0.01em] text-charcoal transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
           onClick={() => setOpen(false)}
         >
           Healing Tides
@@ -56,8 +57,9 @@ export function SiteNav({ clerkEnabled }: { clerkEnabled: boolean }) {
             <Link
               key={l.href}
               href={l.href}
-              className={`rounded-full px-3 py-2 text-[14px] transition-colors ${
-                isActive(l.href) ? "text-charcoal" : "text-ink-soft hover:text-charcoal"
+              aria-current={isActive(l.href) ? "page" : undefined}
+              className={`rounded-full px-3 py-2 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand ${
+                isActive(l.href) ? "font-medium text-charcoal" : "text-ink-soft hover:text-charcoal"
               }`}
             >
               {l.label}
@@ -92,9 +94,10 @@ export function SiteNav({ clerkEnabled }: { clerkEnabled: boolean }) {
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className={`rounded-2xl px-4 py-3 text-[15px] transition-colors ${
+                aria-current={isActive(l.href) ? "page" : undefined}
+                className={`rounded-2xl px-4 py-3 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand ${
                   isActive(l.href)
-                    ? "bg-seafoam/30 text-charcoal"
+                    ? "bg-seafoam/30 font-medium text-charcoal"
                     : "text-ink-soft hover:bg-sand-deep/50 hover:text-charcoal"
                 }`}
               >
@@ -126,7 +129,11 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
     if (mobile) {
       return (
         <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <Link href="/practitioner" onClick={onNavigate} className="text-[15px] font-medium text-charcoal">
+          <Link
+            href="/practitioner"
+            onClick={onNavigate}
+            className="rounded-full text-[15px] font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
+          >
             Your profile
           </Link>
           <UserButton appearance={clerkAppearance} />
@@ -137,7 +144,7 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
       <>
         <Link
           href="/practitioner"
-          className="rounded-full px-3 py-2 text-[14px] font-medium text-charcoal transition-colors hover:bg-sand-deep/50"
+          className="rounded-full px-3 py-2 text-[14px] font-medium text-charcoal transition-colors hover:bg-sand-deep/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
         >
           Your profile
         </Link>
@@ -150,13 +157,17 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
   if (mobile) {
     return (
       <div className="flex flex-col gap-2 px-1 pt-1">
-        <Link href="/sign-in" onClick={onNavigate} className="rounded-2xl px-4 py-3 text-[15px] text-ink-soft hover:text-charcoal">
+        <Link
+          href="/sign-in"
+          onClick={onNavigate}
+          className="rounded-2xl px-4 py-3 text-[15px] text-ink-soft transition-colors hover:text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
+        >
           Sign in
         </Link>
         <Link
           href="/join"
           onClick={onNavigate}
-          className="rounded-full bg-charcoal px-5 py-3 text-center text-[15px] font-medium text-sand hover:bg-charcoal/90"
+          className="rounded-full bg-charcoal px-5 py-3 text-center text-[15px] font-medium text-sand transition-colors hover:bg-charcoal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/40 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
         >
           List your practice
         </Link>
@@ -165,12 +176,15 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
   }
   return (
     <>
-      <Link href="/sign-in" className="text-[14px] text-ink-soft transition-colors hover:text-charcoal">
+      <Link
+        href="/sign-in"
+        className="rounded-full px-1 text-[14px] text-ink-soft transition-colors hover:text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
+      >
         Sign in
       </Link>
       <Link
         href="/join"
-        className="rounded-full bg-charcoal px-5 py-2.5 text-[14px] font-medium text-sand transition-colors hover:bg-charcoal/90"
+        className="rounded-full bg-charcoal px-5 py-2.5 text-[14px] font-medium text-sand transition-colors hover:bg-charcoal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/40 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
       >
         List your practice
       </Link>

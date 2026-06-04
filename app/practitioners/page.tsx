@@ -24,15 +24,30 @@ function clean(value: string | undefined): string | undefined {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ specialty?: string; modality?: string; q?: string }>;
+  searchParams: Promise<{
+    specialty?: string;
+    modality?: string;
+    q?: string;
+    gender?: string;
+    accepting?: string;
+  }>;
 }) {
   const params = await searchParams;
   const specialty = clean(params.specialty);
   const modality = clean(params.modality);
   const q = clean(params.q);
+  const gender = clean(params.gender);
+  // Checkbox: present (any truthy value, e.g. "on") means "only accepting new clients".
+  const acceptingNew = Boolean(clean(params.accepting));
 
-  const hasFilters = Boolean(specialty || modality || q);
-  const practitioners = await getPublishedPractitioners({ specialty, modality, q });
+  const hasFilters = Boolean(specialty || modality || q || gender || acceptingNew);
+  const practitioners = await getPublishedPractitioners({
+    specialty,
+    modality,
+    q,
+    gender,
+    acceptingNew,
+  });
 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
@@ -52,7 +67,7 @@ export default async function Page({
 
         {/* Filters */}
         <div className="mt-10 md:mt-12">
-          <DirectoryFilters active={{ specialty, modality, q }} />
+          <DirectoryFilters active={{ specialty, modality, q, gender, acceptingNew }} />
         </div>
 
         {/* Results */}
@@ -78,7 +93,7 @@ export default async function Page({
               action={
                 <Link
                   href="/practitioners"
-                  className="link-underline mt-6 inline-block text-[15px] font-medium text-charcoal"
+                  className="link-underline mt-6 inline-block rounded-full text-[15px] font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
                 >
                   clear filters
                 </Link>

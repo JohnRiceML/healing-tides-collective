@@ -785,6 +785,12 @@ export default function ImmersiveScrollDesign() {
                   >
                     Journal
                   </Link>
+                  <Link
+                    href="/for-practitioners"
+                    className="meta text-sand/60 transition-colors hover:text-sand"
+                  >
+                    For practitioners
+                  </Link>
                   <p className="meta text-sand/60">© 2026 / Care, matched. By a person.</p>
                 </div>
               </div>

@@ -8,6 +8,7 @@ const { findMany, findFirst } = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => ({ db: { practitioner: { findMany, findFirst } } }));
 
 import {
+  buildPractitionerWhere,
   getPublishedPractitioners,
   getPractitionerBySlug,
   getPublishedSlugs,
@@ -99,6 +100,61 @@ describe("getPublishedPractitioners", () => {
     findMany.mockResolvedValue([cardRow({ slug: "x", displayName: "X" })]);
     const cards = await getPublishedPractitioners();
     expect(cards).toEqual([cardRow({ slug: "x", displayName: "X" })]);
+  });
+});
+
+describe("buildPractitionerWhere", () => {
+  it("always pins the published + slug + name base", () => {
+    const where = buildPractitionerWhere();
+    expect(where.visibility).toBe("PUBLISHED");
+    expect(where.slug).toEqual({ not: null });
+    expect(where.displayName).toEqual({ not: null });
+  });
+
+  it("omits every optional filter when nothing is provided", () => {
+    const where = buildPractitionerWhere();
+    expect(where).not.toHaveProperty("specialties");
+    expect(where).not.toHaveProperty("modality");
+    expect(where).not.toHaveProperty("gender");
+    expect(where).not.toHaveProperty("fieldValues");
+    expect(where).not.toHaveProperty("OR");
+  });
+
+  it("matches gender case-insensitively via contains", () => {
+    const where = buildPractitionerWhere({ gender: "non-binary" });
+    expect(where.gender).toEqual({ contains: "non-binary", mode: "insensitive" });
+  });
+
+  it("filters accepting-new clients via the fieldValues JSON path", () => {
+    const where = buildPractitionerWhere({ acceptingNew: true });
+    expect(where.fieldValues).toEqual({ path: ["availability_state"], equals: "accepting" });
+  });
+
+  it("does not add the availability filter when acceptingNew is false", () => {
+    expect(buildPractitionerWhere({ acceptingNew: false })).not.toHaveProperty("fieldValues");
+  });
+
+  it("composes all filters together", () => {
+    const where = buildPractitionerWhere({
+      specialty: "grief_loss",
+      modality: "VIRTUAL",
+      q: "calm",
+      gender: "female",
+      acceptingNew: true,
+    });
+    expect(where.specialties).toEqual({ has: "grief_loss" });
+    expect(where.modality).toBe("VIRTUAL");
+    expect(where.gender).toEqual({ contains: "female", mode: "insensitive" });
+    expect(where.fieldValues).toEqual({ path: ["availability_state"], equals: "accepting" });
+    expect(Array.isArray(where.OR)).toBe(true);
+  });
+
+  it("passes the same where into the live findMany query", async () => {
+    findMany.mockResolvedValue([]);
+    await getPublishedPractitioners({ gender: "male", acceptingNew: true });
+    const where = findMany.mock.calls[0][0].where;
+    expect(where.gender).toEqual({ contains: "male", mode: "insensitive" });
+    expect(where.fieldValues).toEqual({ path: ["availability_state"], equals: "accepting" });
   });
 });
 
