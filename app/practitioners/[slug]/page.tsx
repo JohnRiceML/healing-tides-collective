@@ -162,59 +162,58 @@ export default async function Page({
         </nav>
 
         {/* ───── Cover (their default "wide image") ───── */}
-        <div className="relative mt-8 h-44 overflow-hidden rounded-3xl border border-rule/50 sm:h-56">
+        <div className="relative mt-8 h-40 overflow-hidden rounded-3xl border border-rule/50 sm:h-52">
           <CoverArt seed={p.slug} className="h-full w-full" />
         </div>
 
-        {/* ───── Header: portrait overlapping the cover + name + quiet meta ─────
-            `relative z-10` so the portrait paints ABOVE the (relative) cover. */}
-        <header className="relative z-10 -mt-14 flex flex-col items-start gap-6 px-1 sm:-mt-16 sm:flex-row sm:items-end sm:gap-8">
+        {/* Portrait overlaps the cover (`relative z-10` to paint above it); the name
+            block then sits BELOW the cover so nothing rides up over the banner. */}
+        <div className="relative z-10 -mt-12 px-1 sm:-mt-14">
           {p.photoUrl ? (
-            // photoUrl is a Vercel Blob URL — a host not whitelisted in
-            // next.config's image remotePatterns — so a plain <img> is the
-            // safe, deploy-proof choice for user-uploaded photos.
+            // photoUrl is a Vercel Blob URL — a host not whitelisted in next.config's
+            // image remotePatterns — so a plain <img> is the safe, deploy-proof choice.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={p.photoUrl}
               alt={`Portrait of ${p.displayName}`}
-              width={144}
-              height={144}
+              width={128}
+              height={128}
               loading="eager"
-              className="h-28 w-28 shrink-0 rounded-full border-4 border-sand object-cover shadow-sm sm:h-36 sm:w-36"
+              className="h-24 w-24 rounded-full border-4 border-sand object-cover shadow-sm sm:h-28 sm:w-28"
             />
           ) : (
             <div
               aria-hidden
-              className="font-display flex h-28 w-28 shrink-0 select-none items-center justify-center rounded-full border-4 border-sand bg-sand-deep text-[40px] leading-none text-teal shadow-sm sm:h-36 sm:w-36"
+              className="font-display flex h-24 w-24 select-none items-center justify-center rounded-full border-4 border-sand bg-sand-deep text-[34px] leading-none text-teal shadow-sm sm:h-28 sm:w-28"
             >
               {initialOf(p.displayName)}
             </div>
           )}
+        </div>
 
-          <div className="pb-1">
-            <p className="meta text-teal">Practitioner</p>
-            <h1 className="font-display mt-3 text-[clamp(34px,6vw,56px)] leading-[1.02] tracking-[-0.02em] text-charcoal">
-              {p.displayName}
-            </h1>
-            {credentials ? (
-              <p className="mt-2 text-[15px] tracking-[0.01em] text-ink-soft">{credentials}</p>
-            ) : null}
-            {hasMeta ? (
-              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-muted">
-                {p.region ? <span>{p.region}</span> : null}
-                {p.region && modality ? (
-                  <span aria-hidden className="text-rule-strong/30">
-                    ·
-                  </span>
-                ) : null}
-                {modality ? <span>{modality}</span> : null}
-              </p>
-            ) : null}
-            <VerificationBadges
-              practitioner={{ createdAt: p.createdAt, verificationBadges: p.verificationBadges }}
-              className="mt-4"
-            />
-          </div>
+        <header className="mt-5 px-1">
+          <p className="meta text-teal">Practitioner</p>
+          <h1 className="font-display mt-3 text-[clamp(30px,5vw,48px)] leading-[1.05] tracking-[-0.02em] text-charcoal">
+            {p.displayName}
+          </h1>
+          {credentials ? (
+            <p className="mt-2 text-[15px] tracking-[0.01em] text-ink-soft">{credentials}</p>
+          ) : null}
+          {hasMeta ? (
+            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink-muted">
+              {p.region ? <span>{p.region}</span> : null}
+              {p.region && modality ? (
+                <span aria-hidden className="text-rule-strong/30">
+                  ·
+                </span>
+              ) : null}
+              {modality ? <span>{modality}</span> : null}
+            </p>
+          ) : null}
+          <VerificationBadges
+            practitioner={{ createdAt: p.createdAt, verificationBadges: p.verificationBadges }}
+            className="mt-4"
+          />
         </header>
 
         {/* ───── Specialties ───── */}
