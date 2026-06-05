@@ -51,14 +51,18 @@ function Shield({ className = "" }: { className?: string }) {
 export default function JoinPage() {
   return (
     <main id="main-content" className="relative min-h-screen overflow-hidden bg-sand text-charcoal">
-      {/* Soft tide wash, bottom-left — calm, on-brand atmosphere behind the pitch. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 -left-48 h-[560px] w-[720px] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(closest-side, rgba(214,237,232,0.7), rgba(168,191,163,0.18), transparent)" }}
-      />
+      {/* Coastal cliffs + ocean, bottom-left — soft, faded, bleeding off the edges,
+          behind the content. */}
+      <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 z-0 w-[min(50%,640px)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/join-cove.png"
+          alt=""
+          className="h-auto w-full select-none opacity-[0.55] [mask-image:linear-gradient(to_top_right,rgba(0,0,0,0.95),rgba(0,0,0,0.4)_45%,transparent_78%)]"
+        />
+      </div>
 
-      <Container size="wide" className="relative py-12 sm:py-16 md:py-20">
+      <Container size="wide" className="relative z-10 py-12 sm:py-16 md:py-20">
         <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_minmax(0,460px)] lg:gap-16">
           {/* ───── Left: the pitch + "what happens" ───── */}
           <div className="lg:pt-6">
