@@ -1,23 +1,74 @@
+import { type ReactNode } from "react";
+
 import { Button, Field, LinkButton, Select, TextInput } from "@/app/_components/ui";
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "@/app/_lib/taxonomy";
 
 export type ActiveFilters = {
   specialty?: string;
   modality?: string;
+  region?: string;
   q?: string;
-  gender?: string;
   acceptingNew?: boolean;
 };
 
+function Leaf({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <path
+        d="M4 20C4 12 9 5 20 4c0 11-7 16-15 16-1 0-1-3-1-3z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M8 16c2-3 5-6 9-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SearchIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className={className}>
+      <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** A <Select> with the chevron our `appearance-none` selects otherwise lack. */
+function Dropdown({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      {children}
+      <svg
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden
+        className="pointer-events-none absolute right-4 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted"
+      >
+        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
 /**
- * Server-rendered filter bar. A plain GET form navigates to /practitioners with
- * query params, so the page stays a Server Component with no client JS. The
- * selects/input default to the currently-active params; "Apply" submits, and a
- * reset link clears everything when any filter is set.
+ * Server-rendered filter bar (the mockup's card). A plain GET form navigates to
+ * /practitioners with query params, so the page stays a Server Component with no
+ * client JS. Selects/inputs default to the active params; the current sort rides
+ * along in a hidden field so filtering doesn't reset it.
  */
-export function DirectoryFilters({ active }: { active: ActiveFilters }) {
-  const { specialty = "", modality = "", q = "", gender = "", acceptingNew = false } = active;
-  const hasActive = Boolean(specialty || modality || q || gender || acceptingNew);
+export function DirectoryFilters({
+  active,
+  regions,
+  sort,
+}: {
+  active: ActiveFilters;
+  regions: string[];
+  sort: string;
+}) {
+  const { specialty = "", modality = "", region = "", q = "", acceptingNew = false } = active;
+  const hasActive = Boolean(specialty || modality || region || q || acceptingNew);
 
   return (
     <form
@@ -25,73 +76,91 @@ export function DirectoryFilters({ active }: { active: ActiveFilters }) {
       action="/practitioners"
       role="search"
       aria-label="Filter practitioners"
-      className="rounded-3xl border border-rule/80 bg-white/60 p-5 md:p-6"
+      className="rounded-3xl border border-rule/80 bg-white p-5 shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-34px_rgba(31,58,95,0.2)] md:p-6"
     >
-      <div className="grid gap-5 md:grid-cols-[1.4fr_1fr_1fr] md:gap-5">
+      {/* keep the active sort when applying filters */}
+      {sort && sort !== "recommended" ? <input type="hidden" name="sort" value={sort} /> : null}
+
+      <p className="flex items-center gap-2 text-[13px] leading-[1.5] text-ink-muted">
+        <Leaf className="h-4 w-4 shrink-0 text-sage" />
+        Curated profiles. No endless directory scrolling.
+      </p>
+
+      <div className="mt-5 grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
         <Field label="Search">
-          <TextInput
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Name, focus, or region"
-            aria-label="Search practitioners by name, focus, or region"
-          />
+          <div className="relative">
+            <TextInput
+              type="search"
+              name="q"
+              defaultValue={q}
+              placeholder="Name, specialty, or location"
+              aria-label="Search practitioners by name, specialty, or location"
+              className="pr-11"
+            />
+            <SearchIcon className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          </div>
         </Field>
 
         <Field label="Specialty">
-          <Select name="specialty" defaultValue={specialty} aria-label="Filter by specialty">
-            <option value="">Any specialty</option>
-            {SPECIALTY_OPTIONS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </Select>
+          <Dropdown>
+            <Select name="specialty" defaultValue={specialty} aria-label="Filter by specialty">
+              <option value="">Any specialty</option>
+              {SPECIALTY_OPTIONS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </Dropdown>
         </Field>
 
         <Field label="Format">
-          <Select name="modality" defaultValue={modality} aria-label="Filter by format">
-            <option value="">Any format</option>
-            {MODALITY_OPTIONS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-              </option>
-            ))}
-          </Select>
+          <Dropdown>
+            <Select name="modality" defaultValue={modality} aria-label="Filter by format">
+              <option value="">Any format</option>
+              {MODALITY_OPTIONS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </Dropdown>
         </Field>
 
-        <Field label="Gender">
-          <TextInput
-            type="text"
-            name="gender"
-            defaultValue={gender}
-            placeholder="Any gender"
-            aria-label="Filter by practitioner gender"
-          />
+        <Field label="Location">
+          <Dropdown>
+            <Select name="region" defaultValue={region} aria-label="Filter by location">
+              <option value="">Any location</option>
+              {regions.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </Select>
+          </Dropdown>
         </Field>
-      </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-4">
-        <label className="flex cursor-pointer items-center gap-3 text-[15px] text-charcoal">
+        {/* Accepting toggle — aligned to the input row on wide screens */}
+        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-charcoal lg:whitespace-nowrap lg:pb-3.5">
           <input
             type="checkbox"
             name="accepting"
             defaultChecked={acceptingNew}
-            className="h-[18px] w-[18px] shrink-0 rounded-[6px] border-rule text-charcoal accent-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
+            className="h-[18px] w-[18px] shrink-0 rounded-[6px] border-rule text-charcoal accent-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           />
           Accepting new clients
         </label>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" tone="primary">
-            apply
-          </Button>
-          {hasActive ? (
-            <LinkButton href="/practitioners" tone="ghost">
-              clear filters
-            </LinkButton>
-          ) : null}
-        </div>
+      <div className="mt-6 flex items-center justify-end gap-3 border-t border-rule/70 pt-5">
+        {hasActive ? (
+          <LinkButton href="/practitioners" tone="ghost">
+            Clear filters
+          </LinkButton>
+        ) : null}
+        <Button type="submit" tone="primary">
+          Apply
+        </Button>
       </div>
     </form>
   );

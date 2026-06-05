@@ -4,8 +4,30 @@
 // place. Read-only; never writes. Mutations live in app/practitioner/*-actions.ts.
 
 import { db } from "@/lib/db";
-import type { Modality } from "@/lib/generated/prisma/client";
+import type { Modality, Prisma } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
+
+/** Read a trimmed string out of a fieldValues blob, or null. */
+function fieldString(fieldValues: unknown, key: string): string | null {
+  const v = (fieldValues as Record<string, unknown> | null | undefined)?.[key];
+  if (typeof v === "string" && v.trim()) return v.trim();
+  // chips fields can store the value as a single-element array
+  if (Array.isArray(v) && typeof v[0] === "string" && v[0].trim()) return v[0].trim();
+  return null;
+}
+
+/** How the directory is ordered. "recommended" is the default editorial order. */
+export type SortKey = "recommended" | "newest" | "name";
+
+export function normalizeSort(value: string | undefined): SortKey {
+  return value === "newest" || value === "name" ? value : "recommended";
+}
+
+const ORDER_BY: Record<SortKey, Prisma.PractitionerOrderByWithRelationInput[]> = {
+  recommended: [{ featured: "desc" }, { completeness: "desc" }, { updatedAt: "desc" }],
+  newest: [{ createdAt: "desc" }],
+  name: [{ displayName: "asc" }],
+};
 
 /** Public-safe fields for a directory card. No userId, no internal billing state. */
 export type PractitionerCard = {
@@ -14,9 +36,11 @@ export type PractitionerCard = {
   bio: string | null;
   region: string | null;
   modality: Modality | null;
+  title: string | null; // professional title / role, shown as the card eyebrow
   specialties: string[];
   photoUrl: string | null;
   featured: boolean;
+  acceptingNew: boolean; // availability_state === "accepting" → "Accepting new clients" badge
   createdAt: Date; // for the Founding Member badge
   verificationBadges: string[]; // admin-granted badge ids (from the reserved fieldValues key)
 };
@@ -34,8 +58,9 @@ export type PractitionerProfile = PractitionerCard & {
 export type DirectoryFilters = {
   specialty?: string; // a SPECIALTY_OPTIONS id
   modality?: string; // a Modality enum value
+  region?: string; // an exact region string (from the Location dropdown / getDistinctRegions)
   q?: string; // free-text search
-  gender?: string; // free-text, matched case-insensitively (contains)
+  gender?: string; // free-text, matched case-insensitively (contains) — backend-only, not in the UI
   acceptingNew?: boolean; // availability_state === "accepting" (fieldValues JSON path)
 };
 
@@ -50,13 +75,14 @@ export type DirectoryFilters = {
  * filter until those values are normalized to a controlled vocabulary.
  */
 export function buildPractitionerWhere(filters: DirectoryFilters = {}) {
-  const { specialty, modality, q, gender, acceptingNew } = filters;
+  const { specialty, modality, region, q, gender, acceptingNew } = filters;
   return {
     visibility: "PUBLISHED" as const,
     slug: { not: null },
     displayName: { not: null },
     ...(specialty ? { specialties: { has: specialty } } : {}),
     ...(modality ? { modality: modality as Modality } : {}),
+    ...(region ? { region: { equals: region } } : {}),
     ...(gender ? { gender: { contains: gender, mode: "insensitive" as const } } : {}),
     ...(acceptingNew
       ? { fieldValues: { path: ["availability_state"], equals: "accepting" } }
@@ -94,21 +120,41 @@ const CARD_SELECT = {
  */
 export async function getPublishedPractitioners(
   filters: DirectoryFilters = {},
+  sort: SortKey = "recommended",
 ): Promise<PractitionerCard[]> {
   const rows = await db.practitioner.findMany({
     where: buildPractitionerWhere(filters),
     select: CARD_SELECT,
-    orderBy: [{ featured: "desc" }, { completeness: "desc" }, { updatedAt: "desc" }],
+    orderBy: ORDER_BY[sort],
     take: 200,
   });
   // slug + displayName are non-null by the where-filter above; tighten the type.
-  // Strip raw fieldValues from the card payload — only the derived badges leave here.
+  // Strip raw fieldValues from the card payload — only derived bits leave here.
   return rows.map(({ fieldValues, ...r }) => ({
     ...r,
     slug: r.slug as string,
     displayName: r.displayName as string,
+    title: fieldString(fieldValues, "title"),
+    acceptingNew: fieldString(fieldValues, "availability_state") === "accepting",
     verificationBadges: grantedBadgesFrom(fieldValues),
   }));
+}
+
+/** Distinct regions across published profiles — populates the Location filter. */
+export async function getDistinctRegions(): Promise<string[]> {
+  const rows = await db.practitioner.findMany({
+    where: {
+      visibility: "PUBLISHED",
+      slug: { not: null },
+      displayName: { not: null },
+      region: { not: null },
+    },
+    select: { region: true },
+    distinct: ["region"],
+    orderBy: { region: "asc" },
+    take: 200,
+  });
+  return rows.map((r) => r.region as string).filter(Boolean);
 }
 
 /** A single PUBLISHED profile by slug, or null (404) if missing/unpublished. */
@@ -132,6 +178,8 @@ export async function getPractitionerBySlug(
     ...r,
     slug: r.slug,
     displayName: r.displayName,
+    title: fieldString(r.fieldValues, "title"),
+    acceptingNew: fieldString(r.fieldValues, "availability_state") === "accepting",
     verificationBadges: grantedBadgesFrom(r.fieldValues),
   };
 }

@@ -32,9 +32,11 @@ const cardRow = (over = {}) => ({
   bio: null,
   region: null,
   modality: null,
+  title: null, // derived from fieldValues.title by the read layer
   specialties: [],
   photoUrl: null,
   featured: false,
+  acceptingNew: false, // derived from fieldValues.availability_state
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
   verificationBadges: [], // derived from fieldValues by the read layer
   ...over,
@@ -101,6 +103,32 @@ describe("getPublishedPractitioners", () => {
     const cards = await getPublishedPractitioners();
     expect(cards).toEqual([cardRow({ slug: "x", displayName: "X" })]);
   });
+
+  it("derives the role (title) + accepting status from fieldValues", async () => {
+    findMany.mockResolvedValue([
+      cardRow({ fieldValues: { title: "  Acupuncturist ", availability_state: "accepting" } }),
+    ]);
+    const [card] = await getPublishedPractitioners();
+    expect(card.title).toBe("Acupuncturist");
+    expect(card.acceptingNew).toBe(true);
+    expect(card).not.toHaveProperty("fieldValues"); // raw blob never leaves the read layer
+  });
+
+  it("treats non-accepting availability as not-accepting", async () => {
+    findMany.mockResolvedValue([cardRow({ fieldValues: { availability_state: "waitlist" } })]);
+    const [card] = await getPublishedPractitioners();
+    expect(card.acceptingNew).toBe(false);
+    expect(card.title).toBeNull();
+  });
+
+  it("orders by the requested sort key", async () => {
+    findMany.mockResolvedValue([]);
+    await getPublishedPractitioners({}, "newest");
+    expect(findMany.mock.calls[0][0].orderBy).toEqual([{ createdAt: "desc" }]);
+    findMany.mockClear();
+    await getPublishedPractitioners({}, "name");
+    expect(findMany.mock.calls[0][0].orderBy).toEqual([{ displayName: "asc" }]);
+  });
 });
 
 describe("buildPractitionerWhere", () => {
@@ -123,6 +151,15 @@ describe("buildPractitionerWhere", () => {
   it("matches gender case-insensitively via contains", () => {
     const where = buildPractitionerWhere({ gender: "non-binary" });
     expect(where.gender).toEqual({ contains: "non-binary", mode: "insensitive" });
+  });
+
+  it("matches an exact region when provided (from the Location dropdown)", () => {
+    const where = buildPractitionerWhere({ region: "Saint Paul, Minnesota" });
+    expect(where.region).toEqual({ equals: "Saint Paul, Minnesota" });
+  });
+
+  it("omits the region filter when not provided", () => {
+    expect(buildPractitionerWhere({})).not.toHaveProperty("region");
   });
 
   it("filters accepting-new clients via the fieldValues JSON path", () => {

@@ -78,6 +78,9 @@ export function CoverArt({ seed, className }: { seed: string; className?: string
         </radialGradient>
       </defs>
       <rect width="800" height="300" fill={`url(#${gid}-g)`} />
+      {/* Sand wash — softens the band toward a pale, watercolor feel (matches the
+          directory mockup; keeps the brand calm rather than saturated). */}
+      <rect width="800" height="300" fill="#f7f5f2" opacity="0.2" />
       <rect width="800" height="300" fill={`url(#${gid}-glow)`} />
       {wave.light.map((d, i) => (
         <path key={i} d={d} fill="#ffffff" opacity={0.08 + i * 0.06} />
