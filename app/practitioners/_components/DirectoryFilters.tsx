@@ -86,7 +86,7 @@ export function DirectoryFilters({
         Curated profiles. No endless directory scrolling.
       </p>
 
-      <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
+      <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
         <Field label="Search">
           <div className="relative">
             <TextInput
@@ -140,8 +140,11 @@ export function DirectoryFilters({
           </Dropdown>
         </Field>
 
-        {/* Accepting toggle — aligned to the input row on wide screens */}
-        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-charcoal lg:whitespace-nowrap lg:pb-3.5">
+      </div>
+
+      {/* Action row — the accepting toggle anchors the left so Apply isn't stranded. */}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-t border-rule/70 pt-4">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-charcoal">
           <input
             type="checkbox"
             name="accepting"
@@ -150,17 +153,17 @@ export function DirectoryFilters({
           />
           Accepting new clients
         </label>
-      </div>
 
-      <div className="mt-5 flex items-center justify-end gap-3 border-t border-rule/70 pt-4">
-        {hasActive ? (
-          <LinkButton href="/practitioners" tone="ghost">
-            Clear filters
-          </LinkButton>
-        ) : null}
-        <Button type="submit" tone="primary">
-          Apply
-        </Button>
+        <div className="flex items-center gap-1">
+          {hasActive ? (
+            <LinkButton href="/practitioners" tone="ghost">
+              Clear filters
+            </LinkButton>
+          ) : null}
+          <Button type="submit" tone="primary">
+            Apply
+          </Button>
+        </div>
       </div>
     </form>
   );
