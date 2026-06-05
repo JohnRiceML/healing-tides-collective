@@ -3,93 +3,152 @@ import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 
 import { Container } from "@/app/_components/ui";
-import { clerkAppearance } from "@/app/_components/clerk-appearance";
+import { joinClerkAppearance } from "@/app/_components/clerk-appearance";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 
 export const metadata: Metadata = {
-  title: "Join as a practitioner — Healing Tides Collective",
+  title: "Start your practitioner profile — Healing Tides Collective",
   description:
-    "Claim your place in the collective — a real, findable profile for your practice. Free to join.",
+    "Create a free account to begin building your Healing Tides practitioner profile. Save your progress, preview your page, and submit for review when you're ready.",
 };
 
-const BENEFITS: { title: string; body: string }[] = [
-  {
-    title: "Your own page",
-    body: "Photo, bio, and the way you actually work — not a row in a directory.",
-  },
-  {
-    title: "Found on Google",
-    body: "Every profile is its own page, built to be found by the people looking for you.",
-  },
-  {
-    title: "Curated, not crowded",
-    body: "A considered collective — not a wall of ten thousand names.",
-  },
-  {
-    title: "Free to list",
-    body: "No cost to join while we grow.",
-  },
+const STEPS: { title: string; body: string }[] = [
+  { title: "Create your account", body: "Save your place and start your profile." },
+  { title: "Build your profile", body: "Add your story, specialties, location, and approach." },
+  { title: "Preview before going live", body: "See your page before seekers can find it." },
+  { title: "Submit for review", body: "Profiles are reviewed before joining the collective." },
 ];
+
+function Leaf({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <path
+        d="M4 20C4 12 9 5 20 4c0 11-7 16-15 16-1 0-1-3-1-3z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M8 16c2-3 5-6 9-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Shield({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <path
+        d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function JoinPage() {
   return (
-    <main id="main-content" className="min-h-screen bg-sand text-charcoal">
-      <Container size="wide" className="py-14 sm:py-16 md:py-24">
-        {/* Source order = mobile order: intro → sign-up → benefits.
-            On desktop, col/row placement makes it value-left / form-right. */}
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
-          {/* Intro */}
-          <div className="lg:col-start-1 lg:row-start-1 lg:pt-6">
-            <p className="meta text-ink-muted">For practitioners</p>
-            <h1 className="font-display mt-4 text-[clamp(32px,6vw,58px)] font-light leading-[1.06] tracking-[-0.02em]">
-              Claim your place in the collective.
+    <main id="main-content" className="relative min-h-screen overflow-hidden bg-sand text-charcoal">
+      {/* Soft tide wash, bottom-left — calm, on-brand atmosphere behind the pitch. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 -left-48 h-[560px] w-[720px] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(closest-side, rgba(214,237,232,0.7), rgba(168,191,163,0.18), transparent)" }}
+      />
+
+      <Container size="wide" className="relative py-12 sm:py-16 md:py-20">
+        <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_minmax(0,460px)] lg:gap-16">
+          {/* ───── Left: the pitch + "what happens" ───── */}
+          <div className="lg:pt-6">
+            <p className="meta text-teal">For practitioners</p>
+            <h1 className="font-display mt-5 text-[clamp(38px,6vw,64px)] font-light leading-[1.02] tracking-[-0.025em] text-charcoal">
+              Start your practitioner profile.
             </h1>
-            <p className="mt-5 max-w-md text-[16px] leading-[1.65] text-ink-soft sm:text-[17px]">
-              A real profile — your story, your specialties, your way of working — on a
-              page people can actually find. Free to join.
+            <p className="mt-6 max-w-md text-[16px] leading-[1.7] text-ink-soft sm:text-[17px]">
+              Create a free account to begin building your Healing Tides profile. You can save your
+              progress, preview your page, and submit for review when you&rsquo;re ready.
+            </p>
+
+            <p className="meta mt-12 text-ink-muted">What happens after you sign up</p>
+            <ol className="relative mt-6 max-w-md">
+              {/* the connecting line behind the numbers */}
+              <span aria-hidden className="absolute bottom-8 left-4 top-4 w-px bg-rule" />
+              {STEPS.map((s, i) => (
+                <li key={s.title} className="relative flex gap-4 pb-7 last:pb-0">
+                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-seafoam/60 text-[13px] font-medium text-ocean">
+                    {i + 1}
+                  </span>
+                  <div className="pt-1">
+                    <p className="text-[15px] font-medium leading-tight text-charcoal">{s.title}</p>
+                    <p className="mt-1 text-[14px] leading-[1.55] text-ink-soft">{s.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <p className="mt-10 flex items-center gap-2 text-[14px] italic text-ink-muted">
+              <Leaf className="h-4 w-4 shrink-0 text-sage" />
+              Free to start during early access.
             </p>
           </div>
 
-          {/* Sign-up — Clerk's native card. This route is an optional catch-all
-              ([[...sign-up]]) so Clerk can route its multi-step flow (e.g. email
-              verification at /join/verify-email-address) with `path` routing. */}
-          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:justify-center lg:self-start lg:sticky lg:top-10">
+          {/* ───── Right: the sign-up card ───── */}
+          <div className="lg:sticky lg:top-24">
             {clerkEnabled ? (
-              <SignUp
-                path="/join"
-                signInUrl="/sign-in"
-                fallbackRedirectUrl="/practitioner"
-                appearance={clerkAppearance}
-              />
+              <div className="rounded-3xl border border-rule/80 bg-white p-6 shadow-[0_1px_0_rgba(31,58,95,0.02),0_28px_60px_-38px_rgba(31,58,95,0.3)] sm:p-8">
+                <div className="text-center">
+                  <h2 className="font-display text-[24px] leading-tight tracking-[-0.01em] text-charcoal">
+                    Create your free practitioner account
+                  </h2>
+                  <p className="mt-2 text-[14px] leading-[1.5] text-ink-soft">
+                    Nothing goes public until you submit and are approved.
+                  </p>
+                </div>
+
+                {/* This route is an optional catch-all ([[...sign-up]]) so Clerk can route
+                    its multi-step flow (email verification at /join/verify-email-address). */}
+                <div className="mt-6">
+                  <SignUp
+                    path="/join"
+                    signInUrl="/sign-in"
+                    fallbackRedirectUrl="/practitioner"
+                    appearance={joinClerkAppearance}
+                  />
+                </div>
+
+                <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] leading-[1.5] text-ink-muted">
+                  <Shield className="h-4 w-4 shrink-0 text-sage" />
+                  Takes about 2 minutes to start. You can finish your profile later.
+                </p>
+
+                <p className="mt-4 border-t border-rule/60 pt-4 text-center text-[14px] text-ink-soft">
+                  Already have an account?{" "}
+                  <Link href="/sign-in" className="font-medium text-charcoal underline-offset-2 hover:underline">
+                    Sign in
+                  </Link>
+                </p>
+              </div>
             ) : (
-              <p className="rounded-2xl border border-rule bg-sand/60 p-4 text-[14px] leading-[1.55] text-ink-soft">
-                Practitioner sign-up isn’t connected yet — add the Clerk keys to{" "}
-                <code className="rounded bg-charcoal/5 px-1">.env.local</code> and enable Google in
-                the Clerk dashboard to turn it on.
+              <p className="rounded-3xl border border-rule bg-white/70 p-6 text-[14px] leading-[1.6] text-ink-soft">
+                Practitioner sign-up isn&rsquo;t connected yet — add the Clerk keys to{" "}
+                <code className="rounded bg-charcoal/5 px-1">.env.local</code> and enable Google in the
+                Clerk dashboard to turn it on.
               </p>
             )}
-          </div>
 
-          {/* Benefits */}
-          <div className="lg:col-start-1 lg:row-start-2">
-            <dl className="space-y-6">
-              {BENEFITS.map((b) => (
-                <div key={b.title} className="flex gap-4">
-                  <span aria-hidden className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-teal" />
-                  <div>
-                    <dt className="text-[15px] font-medium text-charcoal">{b.title}</dt>
-                    <dd className="mt-0.5 text-[14px] leading-[1.55] text-ink-soft">{b.body}</dd>
-                  </div>
-                </div>
-              ))}
-            </dl>
-
-            <p className="mt-10 text-[14px] text-ink-muted">
-              Looking for care instead?{" "}
-              <Link href="/" className="link-underline font-medium text-charcoal">
-                find care
-              </Link>
-            </p>
+            {/* Floating reassurance chip */}
+            <div className="mt-6 flex justify-center">
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-rule/70 bg-white/90 px-4 py-2 text-[12.5px] shadow-sm backdrop-blur-sm">
+                <Leaf className="h-4 w-4 shrink-0 text-sage" />
+                <span className="text-ink-muted">After signup:</span>
+                <span className="text-charcoal">
+                  Build profile <span className="text-teal">→</span> Preview{" "}
+                  <span className="text-teal">→</span> Submit for review
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </Container>

@@ -24,3 +24,18 @@ export const clerkAppearance = {
     fontFamily: "var(--font-sans)",
   },
 };
+
+// /join variant — FLATTENS Clerk's own card chrome (no card bg/border/shadow/padding,
+// header + footer hidden) so the widget renders as just the form (Google → or → email
+// → password → Continue) INSIDE our own white card, which supplies the header, the
+// reassurance line, and the "Sign in" link. Keeps the brand `variables`.
+export const joinClerkAppearance = {
+  variables: clerkAppearance.variables,
+  elements: {
+    rootBox: "w-full",
+    cardBox: "w-full border-0 bg-transparent shadow-none",
+    card: "w-full gap-5 border-0 bg-transparent p-0 shadow-none",
+    header: "hidden", // our card supplies the title + subtitle
+    footer: "hidden", // our card supplies the "Already have an account?" link
+  },
+};
