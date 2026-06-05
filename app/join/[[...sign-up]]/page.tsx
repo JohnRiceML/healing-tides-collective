@@ -52,21 +52,20 @@ export default function JoinPage() {
     <main id="main-content" className="relative min-h-screen overflow-hidden bg-sand text-charcoal">
       {/* Coastal cliffs + ocean — contained to the bottom-LEFT corner, faded + masked,
           bleeding off the left + bottom edges. */}
-      <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 z-0 w-[min(64%,880px)] select-none">
+      <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 z-0 w-[min(46%,600px)] select-none">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/join-cove.png"
           alt=""
           className="h-auto w-full opacity-[0.95]"
           style={{
-            // Two masks intersected: fade out toward the TOP and toward the RIGHT, so
-            // those inward edges dissolve while the left + bottom (off-page) stay full.
-            // Solid further in (more of the image shows) before fading to transparent.
+            // Two masks intersected: full only at the very bottom-left corner, then
+            // dissolving FAST toward the top + right so only a hint of the image shows.
             maskImage:
-              "linear-gradient(to top, #000 52%, transparent 95%), linear-gradient(to right, #000 60%, transparent 95%)",
+              "linear-gradient(to top, #000 8%, transparent 46%), linear-gradient(to right, #000 12%, transparent 48%)",
             maskComposite: "intersect",
             WebkitMaskImage:
-              "linear-gradient(to top, #000 52%, transparent 95%), linear-gradient(to right, #000 60%, transparent 95%)",
+              "linear-gradient(to top, #000 8%, transparent 46%), linear-gradient(to right, #000 12%, transparent 48%)",
             WebkitMaskComposite: "source-in",
           }}
         />
