@@ -58,7 +58,7 @@ export default function JoinPage() {
         <img
           src="/join-cove.png"
           alt=""
-          className="h-auto w-full opacity-[0.6] [mask-image:linear-gradient(to_top_right,#000,rgba(0,0,0,0.45)_48%,transparent_80%)]"
+          className="h-auto w-full opacity-[0.95] [mask-image:linear-gradient(to_top_right,#000_0%,#000_28%,transparent_82%)]"
         />
       </div>
 
