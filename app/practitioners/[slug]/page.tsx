@@ -13,6 +13,7 @@ import { ProfileCover } from "../_components/ProfileCover";
 import { DirectoryHeaderArt } from "../_components/DirectoryHeaderArt";
 import { ViewBeacon } from "./ViewBeacon";
 import { SaveProfileButton } from "./SaveProfileButton";
+import { ExpandableValue } from "./ExpandableValue";
 
 const MATCH_MAILTO =
   "mailto:hello@healingtides.co?subject=Help%20me%20find%20a%20fit";
@@ -378,7 +379,9 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                       </span>
                       <div className="min-w-0">
                         <dt className="text-[13px] font-semibold leading-tight text-charcoal">{row.label}</dt>
-                        <dd className="mt-1 text-[14px] leading-[1.45] text-ink-soft">{row.value}</dd>
+                        <dd className="mt-1 text-[14px] leading-[1.45] text-ink-soft">
+                          <ExpandableValue text={row.value ?? ""} />
+                        </dd>
                       </div>
                     </div>
                   ))}
