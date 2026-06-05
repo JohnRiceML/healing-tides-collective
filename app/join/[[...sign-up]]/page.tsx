@@ -71,37 +71,37 @@ export default function JoinPage() {
         />
       </div>
 
-      <Container size="wide" className="relative z-10 pb-14 pt-6 sm:pb-16 sm:pt-8 md:pb-20 md:pt-10">
-        <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_minmax(0,460px)] lg:gap-16">
+      <Container size="wide" className="relative z-10 pb-12 pt-5 sm:pb-14 sm:pt-6 md:pb-16 md:pt-8">
+        <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_minmax(0,460px)] lg:gap-14">
           {/* ───── Left: the pitch + "what happens" ───── */}
           <div>
             <p className="meta text-teal">For practitioners</p>
-            <h1 className="font-display mt-5 text-[clamp(38px,6vw,64px)] font-light leading-[1.02] tracking-[-0.025em] text-charcoal">
+            <h1 className="font-display mt-4 text-[clamp(30px,4.4vw,46px)] font-light leading-[1.04] tracking-[-0.025em] text-charcoal">
               Start your practitioner profile.
             </h1>
-            <p className="mt-6 max-w-md text-[16px] leading-[1.7] text-ink-soft sm:text-[17px]">
+            <p className="mt-4 max-w-md text-[15px] leading-[1.6] text-ink-soft sm:text-[16px]">
               Create a free account to begin building your Healing Tides profile. You can save your
               progress, preview your page, and submit for review when you&rsquo;re ready.
             </p>
 
-            <p className="meta mt-12 text-ink-muted">What happens after you sign up</p>
-            <ol className="relative mt-6 max-w-md">
+            <p className="meta mt-8 text-ink-muted">What happens after you sign up</p>
+            <ol className="relative mt-4 max-w-md">
               {/* the connecting line behind the numbers */}
-              <span aria-hidden className="absolute bottom-8 left-4 top-4 w-px bg-rule" />
+              <span aria-hidden className="absolute bottom-6 left-[13.5px] top-3 w-px bg-rule" />
               {STEPS.map((s, i) => (
-                <li key={s.title} className="relative flex gap-4 pb-7 last:pb-0">
-                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-seafoam/60 text-[13px] font-medium text-ocean">
+                <li key={s.title} className="relative flex gap-3.5 pb-4 last:pb-0">
+                  <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-seafoam/60 text-[12.5px] font-medium text-ocean">
                     {i + 1}
                   </span>
-                  <div className="pt-1">
+                  <div className="pt-0.5">
                     <p className="text-[15px] font-medium leading-tight text-charcoal">{s.title}</p>
-                    <p className="mt-1 text-[14px] leading-[1.55] text-ink-soft">{s.body}</p>
+                    <p className="mt-0.5 text-[13.5px] leading-[1.5] text-ink-soft">{s.body}</p>
                   </div>
                 </li>
               ))}
             </ol>
 
-            <p className="mt-10 flex items-center gap-2 text-[14px] italic text-ink-muted">
+            <p className="mt-7 flex items-center gap-2 text-[14px] italic text-ink-muted">
               <Leaf className="h-4 w-4 shrink-0 text-sage" />
               Free to start during early access.
             </p>
@@ -110,19 +110,19 @@ export default function JoinPage() {
           {/* ───── Right: the sign-up card ───── */}
           <div className="lg:sticky lg:top-24">
             {clerkEnabled ? (
-              <div className="rounded-3xl border border-rule/80 bg-white p-6 shadow-[0_1px_0_rgba(31,58,95,0.02),0_28px_60px_-38px_rgba(31,58,95,0.3)] sm:p-8">
+              <div className="rounded-3xl border border-rule/80 bg-white p-5 shadow-[0_1px_0_rgba(31,58,95,0.02),0_28px_60px_-38px_rgba(31,58,95,0.3)] sm:p-6">
                 <div className="text-center">
-                  <h2 className="font-display text-[24px] leading-tight tracking-[-0.01em] text-charcoal">
+                  <h2 className="font-display text-[21px] leading-tight tracking-[-0.01em] text-charcoal">
                     Create your free practitioner account
                   </h2>
-                  <p className="mt-2 text-[14px] leading-[1.5] text-ink-soft">
+                  <p className="mt-1.5 text-[13.5px] leading-[1.5] text-ink-soft">
                     Nothing goes public until you submit and are approved.
                   </p>
                 </div>
 
                 {/* This route is an optional catch-all ([[...sign-up]]) so Clerk can route
                     its multi-step flow (email verification at /join/verify-email-address). */}
-                <div className="mt-6">
+                <div className="mt-5">
                   <SignUp
                     path="/join"
                     signInUrl="/sign-in"
@@ -131,7 +131,7 @@ export default function JoinPage() {
                   />
                 </div>
 
-                <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] leading-[1.5] text-ink-muted">
+                <p className="mt-4 flex items-center justify-center gap-2 text-center text-[13px] leading-[1.5] text-ink-muted">
                   <Shield className="h-4 w-4 shrink-0 text-sage" />
                   Takes about 2 minutes to start. You can finish your profile later.
                 </p>
@@ -145,7 +145,7 @@ export default function JoinPage() {
             )}
 
             {/* Floating reassurance chip */}
-            <div className="mt-6 flex justify-center">
+            <div className="mt-5 flex justify-center">
               <div className="inline-flex items-center gap-2.5 rounded-full border border-rule/70 bg-white/90 px-4 py-2 text-[12.5px] shadow-sm backdrop-blur-sm">
                 <Leaf className="h-4 w-4 shrink-0 text-sage" />
                 <span className="text-ink-muted">After signup:</span>
