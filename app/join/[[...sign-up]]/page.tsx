@@ -57,7 +57,17 @@ export default function JoinPage() {
         <img
           src="/join-cove.png"
           alt=""
-          className="h-auto w-full opacity-[0.95] [mask-image:radial-gradient(140%_130%_at_left_bottom,#000_0%,#000_22%,transparent_70%)]"
+          className="h-auto w-full opacity-[0.95]"
+          style={{
+            // Two masks intersected: fade out toward the TOP and toward the RIGHT, so
+            // those inward edges dissolve while the left + bottom (off-page) stay full.
+            maskImage:
+              "linear-gradient(to top, #000 40%, transparent 90%), linear-gradient(to right, #000 48%, transparent 90%)",
+            maskComposite: "intersect",
+            WebkitMaskImage:
+              "linear-gradient(to top, #000 40%, transparent 90%), linear-gradient(to right, #000 48%, transparent 90%)",
+            WebkitMaskComposite: "source-in",
+          }}
         />
       </div>
 
