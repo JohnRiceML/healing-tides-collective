@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
 
 import { Container } from "@/app/_components/ui";
@@ -58,7 +57,7 @@ export default function JoinPage() {
         <img
           src="/join-cove.png"
           alt=""
-          className="h-auto w-full opacity-[0.95] [mask-image:linear-gradient(to_top_right,#000_0%,#000_28%,transparent_82%)]"
+          className="h-auto w-full opacity-[0.95] [mask-image:radial-gradient(140%_130%_at_left_bottom,#000_0%,#000_22%,transparent_70%)]"
         />
       </div>
 
@@ -125,13 +124,6 @@ export default function JoinPage() {
                 <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] leading-[1.5] text-ink-muted">
                   <Shield className="h-4 w-4 shrink-0 text-sage" />
                   Takes about 2 minutes to start. You can finish your profile later.
-                </p>
-
-                <p className="mt-4 border-t border-rule/60 pt-4 text-center text-[14px] text-ink-soft">
-                  Already have an account?{" "}
-                  <Link href="/sign-in" className="font-medium text-charcoal underline-offset-2 hover:underline">
-                    Sign in
-                  </Link>
                 </p>
               </div>
             ) : (
