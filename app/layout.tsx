@@ -6,6 +6,7 @@ import { SanityLive } from "@/sanity/lib/live";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { AccountButton } from "@/app/_components/account-button";
 import { SiteNav } from "@/app/_components/site-nav";
+import { SiteFooter } from "@/app/_components/site-footer";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ClerkProvider>
             <SiteNav clerkEnabled />
             {children}
+            <SiteFooter />
             {/* Landing-only account menu — SiteNav carries account access everywhere else. */}
             <AccountButton />
             <SanityLive />
@@ -70,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <>
             <SiteNav clerkEnabled={false} />
             {children}
+            <SiteFooter />
             <SanityLive />
           </>
         )}
