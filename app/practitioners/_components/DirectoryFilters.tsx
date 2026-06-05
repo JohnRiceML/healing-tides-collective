@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
+import Link from "next/link";
 
-import { Button, Field, LinkButton, Select, TextInput } from "@/app/_components/ui";
+import { Button, Field, Select, TextInput } from "@/app/_components/ui";
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "@/app/_lib/taxonomy";
 
 export type ActiveFilters = {
@@ -57,6 +58,10 @@ function Dropdown({ children }: { children: ReactNode }) {
  * /practitioners with query params, so the page stays a Server Component with no
  * client JS. Selects/inputs default to the active params; the current sort rides
  * along in a hidden field so filtering doesn't reset it.
+ *
+ * Compact single-row layout: the note + accepting toggle (+ clear) share the top
+ * line, then one row of fields with Apply inline as the last column — no separate
+ * action row, so the card stays short on the y-axis.
  */
 export function DirectoryFilters({
   active,
@@ -81,12 +86,35 @@ export function DirectoryFilters({
       {/* keep the active sort when applying filters */}
       {sort && sort !== "recommended" ? <input type="hidden" name="sort" value={sort} /> : null}
 
-      <p className="flex items-center gap-2 text-[13px] leading-[1.5] text-ink-muted">
-        <Leaf className="h-4 w-4 shrink-0 text-sage" />
-        Curated profiles. No endless directory scrolling.
-      </p>
+      {/* Top line: the note (left) + clear/accepting (right) — fills the empty space. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="flex items-center gap-2 text-[13px] leading-[1.4] text-ink-muted">
+          <Leaf className="h-4 w-4 shrink-0 text-sage" />
+          Curated profiles. No endless directory scrolling.
+        </p>
+        <div className="flex items-center gap-4">
+          {hasActive ? (
+            <Link
+              href="/practitioners"
+              className="text-[13px] font-medium text-ink-soft underline-offset-4 transition-colors hover:text-charcoal hover:underline"
+            >
+              Clear filters
+            </Link>
+          ) : null}
+          <label className="flex cursor-pointer items-center gap-2 text-[13.5px] text-charcoal">
+            <input
+              type="checkbox"
+              name="accepting"
+              defaultChecked={acceptingNew}
+              className="h-4 w-4 shrink-0 rounded-[5px] border-rule text-charcoal accent-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            />
+            Accepting new clients
+          </label>
+        </div>
+      </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+      {/* One field row; Apply is the last column, baseline-aligned with the inputs. */}
+      <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
         <Field label="Search">
           <div className="relative">
             <TextInput
@@ -140,30 +168,9 @@ export function DirectoryFilters({
           </Dropdown>
         </Field>
 
-      </div>
-
-      {/* Action row — the accepting toggle anchors the left so Apply isn't stranded. */}
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-t border-rule/70 pt-4">
-        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] text-charcoal">
-          <input
-            type="checkbox"
-            name="accepting"
-            defaultChecked={acceptingNew}
-            className="h-[18px] w-[18px] shrink-0 rounded-[6px] border-rule text-charcoal accent-charcoal focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-          />
-          Accepting new clients
-        </label>
-
-        <div className="flex items-center gap-1">
-          {hasActive ? (
-            <LinkButton href="/practitioners" tone="ghost">
-              Clear filters
-            </LinkButton>
-          ) : null}
-          <Button type="submit" tone="primary">
-            Apply
-          </Button>
-        </div>
+        <Button type="submit" tone="primary" className="w-full sm:col-span-2 lg:col-span-1 lg:w-auto">
+          Apply
+        </Button>
       </div>
     </form>
   );
