@@ -76,7 +76,7 @@ export function DirectoryFilters({
       action="/practitioners"
       role="search"
       aria-label="Filter practitioners"
-      className="rounded-3xl border border-rule/80 bg-white p-5 shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-34px_rgba(31,58,95,0.2)] md:p-6"
+      className="rounded-3xl border border-rule/80 bg-white p-5 shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-34px_rgba(31,58,95,0.2)]"
     >
       {/* keep the active sort when applying filters */}
       {sort && sort !== "recommended" ? <input type="hidden" name="sort" value={sort} /> : null}
@@ -86,7 +86,7 @@ export function DirectoryFilters({
         Curated profiles. No endless directory scrolling.
       </p>
 
-      <div className="mt-5 grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
+      <div className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
         <Field label="Search">
           <div className="relative">
             <TextInput
@@ -152,7 +152,7 @@ export function DirectoryFilters({
         </label>
       </div>
 
-      <div className="mt-6 flex items-center justify-end gap-3 border-t border-rule/70 pt-5">
+      <div className="mt-5 flex items-center justify-end gap-3 border-t border-rule/70 pt-4">
         {hasActive ? (
           <LinkButton href="/practitioners" tone="ghost">
             Clear filters

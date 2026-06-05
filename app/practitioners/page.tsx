@@ -75,7 +75,7 @@ export default async function Page({
 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
-      <Container size="wide" className="py-14 md:py-20">
+      <Container size="wide" className="pb-16 pt-6 md:pb-20 md:pt-8">
         {/* Header — text left, atmospheric watercolor art bleeding off the top-right */}
         <header className="relative">
           <div
@@ -91,10 +91,10 @@ export default async function Page({
 
           <div className="relative z-10 max-w-xl">
             <p className="meta text-teal">The collective</p>
-            <h1 className="font-display mt-4 text-[clamp(34px,5vw,52px)] font-light leading-[1.05] tracking-[-0.02em] text-charcoal">
+            <h1 className="font-display mt-3 text-[clamp(31px,4.2vw,44px)] font-light leading-[1.04] tracking-[-0.02em] text-charcoal">
               Meet the collective.
             </h1>
-            <p className="mt-5 text-[17px] leading-[1.65] text-ink-soft">
+            <p className="mt-3.5 text-[15.5px] leading-[1.6] text-ink-soft">
               A small, considered circle of therapists and holistic practitioners. Browse by
               specialty, location, and format to find someone who feels like the right fit.
             </p>
@@ -102,7 +102,7 @@ export default async function Page({
         </header>
 
         {/* Filters */}
-        <div className="relative z-10 mt-10 md:mt-12">
+        <div className="relative z-10 mt-7 md:mt-8">
           <DirectoryFilters
             active={{ specialty, modality, region, q, acceptingNew }}
             regions={regions}
@@ -111,7 +111,7 @@ export default async function Page({
         </div>
 
         {/* Results */}
-        <section className="relative z-10 mt-10 md:mt-12" aria-label="Practitioners">
+        <section className="relative z-10 mt-7 md:mt-8" aria-label="Practitioners">
           {practitioners.length > 0 ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -124,7 +124,7 @@ export default async function Page({
                 </Suspense>
               </div>
 
-              <ul className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3">
+              <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-7 lg:grid-cols-3">
                 {practitioners.map((p) => (
                   <li key={p.slug}>
                     <PractitionerCard practitioner={p} />
