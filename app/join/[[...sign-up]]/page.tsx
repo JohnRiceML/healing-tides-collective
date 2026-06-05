@@ -51,14 +51,14 @@ function Shield({ className = "" }: { className?: string }) {
 export default function JoinPage() {
   return (
     <main id="main-content" className="relative min-h-screen overflow-hidden bg-sand text-charcoal">
-      {/* Coastal cliffs + ocean, bottom-left — soft, faded, bleeding off the edges,
-          behind the content. */}
-      <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 z-0 w-[min(50%,640px)]">
+      {/* Coastal cliffs + ocean — bold across the WHOLE bottom, anchored to the foot of
+          the page and dissolving upward, so both corners are water (never bare sand). */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-0 select-none">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/join-cove.png"
           alt=""
-          className="h-auto w-full select-none opacity-[0.55] [mask-image:linear-gradient(to_top_right,rgba(0,0,0,0.95),rgba(0,0,0,0.4)_45%,transparent_78%)]"
+          className="h-auto w-full opacity-[0.72] [mask-image:linear-gradient(to_top,#000_0%,#000_26%,transparent_72%)]"
         />
       </div>
 
