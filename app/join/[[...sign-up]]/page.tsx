@@ -47,6 +47,21 @@ function Shield({ className = "" }: { className?: string }) {
   );
 }
 
+function Check({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className={className}>
+      <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const BENEFITS = [
+  "A profile clients find on Google",
+  "Your own way of working, honored",
+  "A small, curated community",
+  "Free during early access",
+];
+
 export default function JoinPage() {
   return (
     <main id="main-content" className="relative min-h-screen overflow-hidden bg-sand text-charcoal">
@@ -84,12 +99,34 @@ export default function JoinPage() {
               progress, preview your page, and submit for review when you&rsquo;re ready.
             </p>
 
-            <p className="meta mt-8 text-ink-muted">What happens after you sign up</p>
+            {/* Benefits — the value of joining, called out up front. */}
+            <ul className="mt-6 grid max-w-md grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+              {BENEFITS.map((b, i) => (
+                <li
+                  key={b}
+                  className="rise flex items-start gap-2.5 text-[14px] leading-[1.45] text-charcoal"
+                  style={{ animationDelay: `${i * 70}ms` }}
+                >
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-seafoam/70 text-teal">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="meta mt-9 rise text-ink-muted" style={{ animationDelay: "300ms" }}>
+              What happens after you sign up
+            </p>
             <ol className="relative mt-4 max-w-md">
               {/* the connecting line behind the numbers */}
               <span aria-hidden className="absolute bottom-6 left-[13.5px] top-3 w-px bg-rule" />
               {STEPS.map((s, i) => (
-                <li key={s.title} className="relative flex gap-3.5 pb-4 last:pb-0">
+                <li
+                  key={s.title}
+                  className="rise relative flex gap-3.5 pb-4 last:pb-0"
+                  style={{ animationDelay: `${360 + i * 110}ms` }}
+                >
                   <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-seafoam/60 text-[12.5px] font-medium text-ocean">
                     {i + 1}
                   </span>
@@ -100,11 +137,6 @@ export default function JoinPage() {
                 </li>
               ))}
             </ol>
-
-            <p className="mt-7 flex items-center gap-2 text-[14px] italic text-ink-muted">
-              <Leaf className="h-4 w-4 shrink-0 text-sage" />
-              Free to start during early access.
-            </p>
           </div>
 
           {/* ───── Right: the sign-up card ───── */}
