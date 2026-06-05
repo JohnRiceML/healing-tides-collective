@@ -62,10 +62,10 @@ export default function JoinPage() {
         />
       </div>
 
-      <Container size="wide" className="relative z-10 py-12 sm:py-16 md:py-20">
+      <Container size="wide" className="relative z-10 pb-14 pt-6 sm:pb-16 sm:pt-8 md:pb-20 md:pt-10">
         <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_minmax(0,460px)] lg:gap-16">
           {/* ───── Left: the pitch + "what happens" ───── */}
-          <div className="lg:pt-6">
+          <div>
             <p className="meta text-teal">For practitioners</p>
             <h1 className="font-display mt-5 text-[clamp(38px,6vw,64px)] font-light leading-[1.02] tracking-[-0.025em] text-charcoal">
               Start your practitioner profile.
