@@ -158,6 +158,22 @@ Two families, set in [`app/layout.tsx`](../../app/layout.tsx) via `next/font` an
 
 **Imagery — the 90/10 rule.** 90% of any photo is neutral (sand, white, wood, linen); 10% carries one intentional brand-color note (a pale teal cushion, a sage plant). **Yes:** natural light, soft focus, hands, water, plants, *a studio in use*. **No:** spa-marketing clichés (lavender on white sheets, lotus-on-a-cliff). When real imagery isn't available, use type + color or an initial-circle placeholder (`bg-sand-deep`, `font-display` initial) — never stock. **Logo:** an abstracted tide/wave mark; avoid leaves, hands-holding-hearts, chakra symbols.
 
+**Atmospheric corner imagery.** One calm, on-brand photo (coast / tide / water) can anchor a marketing page by sitting in **a single corner** — bleeding off the two *off-page* edges and **dissolving to nothing on its two inward edges**. The dissolve is the whole craft:
+
+- **Decorative, behind content.** `absolute`, `pointer-events-none`, `aria-hidden`, `z-0`; give the content `relative z-10`. The image's faded zone is where the copy sits — it must never hurt text contrast.
+- **Near-full at the corner edges, fading inward.** `opacity` ~`0.9–0.95` (not a flat 50% — the corner edge should read full-strength), with the inward edges masked to transparent. **A single radial-from-the-corner only thins the *diagonal* corner.** To fade a whole **top edge _and_ right edge**, intersect two linear masks:
+  ```jsx
+  style={{
+    maskImage: "linear-gradient(to top,#000 40%,transparent 90%), linear-gradient(to right,#000 48%,transparent 90%)",
+    maskComposite: "intersect",            // a pixel shows only where BOTH masks are opaque
+    WebkitMaskComposite: "source-in",      // Safari equivalent of `intersect`
+    WebkitMaskImage: "linear-gradient(to top,#000 40%,transparent 90%), linear-gradient(to right,#000 48%,transparent 90%)",
+  }}
+  ```
+  Each edge is then an independent knob (move its `transparent` stop in/out). Make sure the stops reach `transparent` *before* the element's inward edges so there's never a hard cutoff.
+- **Contained, not full-bleed.** `w-[min(46%,600px)]`, anchored `bottom-0 left-0`. Resist the urge to span the whole bottom — a corner reads calmer.
+- **Sourcing.** Muted, no people, no spa clichés (per the 90/10 rule). When no real photo exists, generate one via the **AI Gateway** with a calm, desaturated prompt — `bfl/flux-2-klein-4b` is free-tier accessible (`gateway.imageModel(...)` + `experimental_generateImage`) — never stock. Live example: `/join` (`public/join-cove.png`).
+
 ---
 
 ## 8. Motion
