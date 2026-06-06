@@ -2,20 +2,8 @@
 
 import { useState, useTransition } from "react";
 
-import {
-  Button,
-  ChoiceChip,
-  Field,
-  LinkButton,
-  SectionHeader,
-  TextArea,
-  TextInput,
-} from "@/app/_components/ui";
-import type {
-  Modality,
-  Practitioner,
-  ProfileVisibility,
-} from "@/lib/generated/prisma/client";
+import { Button, ChoiceChip, Field, LinkButton, TextArea, TextInput } from "@/app/_components/ui";
+import type { Modality, Practitioner, ProfileVisibility } from "@/lib/generated/prisma/client";
 
 import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
 import { completenessOf } from "@/lib/completeness";
@@ -28,6 +16,17 @@ import { describeSource, type ImportData } from "./_extract/types";
 import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 import { holdMessage, readHold } from "@/app/_lib/moderation";
+import { Stepper, WIZARD_STEPS } from "./_components/Stepper";
+import { LivePreview } from "./_components/LivePreview";
+
+// Which rich (optional) profile sections live under which wizard step.
+const PRACTICE_SECTION_IDS = ["background", "approach", "who", "availability", "investment"];
+const VOICE_SECTION_IDS = ["story", "final"];
+const NEXT_HINTS = [
+  "how you work and your focus areas",
+  "your story and what healing means to you",
+  "a final review, then publish",
+];
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
   const [displayName, setDisplayName] = useState(practitioner.displayName ?? "");
@@ -45,6 +44,9 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
+
+  // Wizard step (0–3). Freely navigable — this is also the ongoing edit surface.
+  const [step, setStep] = useState(0);
 
   // Publish state — mirrors the save UX (a useTransition + an inline result).
   const [visibility, setVisibility] = useState<ProfileVisibility>(practitioner.visibility);
@@ -76,14 +78,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [importOpen, setImportOpen] = useState(isNew);
 
   // Live "match strength" — recomputed from the form on every keystroke / import, so
-  // the bar fills as fields get addressed (not only on Save). These are the
-  // match-critical fields the future matcher consumes, so % here == matchability.
+  // the bar fills as fields get addressed (not only on Save).
   const insuranceList = insurance.split(",").map((s) => s.trim()).filter(Boolean);
   const liveCompleteness = completenessOf({
     displayName, bio, values, modality, region, gender,
     specialties, insuranceAccepted: insuranceList, website,
   });
-  // Empty match-critical fields in descending match impact — names the next best add.
   const missingMatch = [
     { filled: specialties.length > 0, label: "your areas of focus" },
     { filled: !!region.trim(), label: "your location" },
@@ -98,6 +98,33 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     .filter((f) => !f.filled)
     .map((f) => f.label);
 
+  const statusLabel = held ? "On hold" : isPublished ? "Live" : "Draft";
+
+  function runSave() {
+    start(async () => {
+      const res = await saveProfile({
+        displayName, region, website, gender, bio, values, modality, specialties,
+        insuranceAccepted: insurance.split(",").map((s) => s.trim()).filter(Boolean),
+        fieldValues,
+      });
+      if (res.ok) setSaved(true);
+    });
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    runSave();
+  }
+
+  function goToStep(n: number) {
+    setStep(Math.max(0, Math.min(WIZARD_STEPS.length - 1, n)));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function onContinue() {
+    runSave();
+    goToStep(step + 1);
+  }
+
   function onPublish() {
     setPublishError(null);
     startPublish(async () => {
@@ -105,21 +132,15 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
       if (res.ok) {
         setVisibility("PUBLISHED");
         setSlug(res.slug);
-      } else {
-        setPublishError(res.error);
-      }
+      } else setPublishError(res.error);
     });
   }
-
   function onUnpublish() {
     setPublishError(null);
     startPublish(async () => {
       const res = await unpublishProfile();
-      if (res.ok) {
-        setVisibility("DRAFT");
-      } else {
-        setPublishError(res.error);
-      }
+      if (res.ok) setVisibility("DRAFT");
+      else setPublishError(res.error);
     });
   }
 
@@ -128,8 +149,6 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     dirty();
     setSpecialties((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   };
-
-  // Rich (config-driven) fields → stored in fieldValues.
   const setField = (id: string, value: string | string[]) => {
     dirty();
     setFieldValues((f) => ({ ...f, [id]: value }));
@@ -142,7 +161,6 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     });
   };
 
-  // Merge an extraction into the form — fills only EMPTY fields (never clobbers).
   function applyExtract(d: ImportData) {
     const fillIfEmpty = (cur: string, set: (v: string) => void, val?: string) => {
       if (val && val.trim() && !cur.trim()) set(val.trim());
@@ -153,12 +171,8 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     fillIfEmpty(region, setRegion, d.region);
     fillIfEmpty(gender, setGender, d.gender);
     fillIfEmpty(website, setWebsite, d.website);
-    if (d.insuranceAccepted?.length && !insurance.trim()) {
-      setInsurance(d.insuranceAccepted.join(", "));
-    }
-    if (d.specialties?.length && specialties.length === 0) {
-      setSpecialties(d.specialties);
-    }
+    if (d.insuranceAccepted?.length && !insurance.trim()) setInsurance(d.insuranceAccepted.join(", "));
+    if (d.specialties?.length && specialties.length === 0) setSpecialties(d.specialties);
     if (d.fields) {
       setFieldValues((prev) => {
         const next = { ...prev };
@@ -167,8 +181,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           const stored = Array.isArray(val) ? val.join(", ") : String(val);
           if (!stored.trim()) continue;
           const cur = next[id];
-          const empty =
-            cur == null || (Array.isArray(cur) ? cur.length === 0 : String(cur).trim() === "");
+          const empty = cur == null || (Array.isArray(cur) ? cur.length === 0 : String(cur).trim() === "");
           if (empty) next[id] = stored;
         }
         return next;
@@ -177,7 +190,6 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     setSaved(false);
   }
 
-  // How many currently-EMPTY fields this draft will fill (drives the bar's count).
   function countFills(d: ImportData): number {
     let n = 0;
     const empty = (s: string) => !s.trim();
@@ -201,7 +213,6 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
   function onBuild() {
     const urls = links.split(/\n+/).map((s) => s.trim()).filter(Boolean);
-    // Optimistic "reading" rows from what we're about to attempt.
     const reading: ImportView["sources"] = [
       ...urls.map((u) => {
         let host = u;
@@ -243,36 +254,26 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
   function onPhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-picking the same file later
+    e.target.value = "";
     if (!file) return;
     setPhotoError(null);
     startPhoto(async () => {
       const fd = new FormData();
       fd.append("photo", file);
       const res = await uploadProfilePhoto(fd);
-      if (res.ok) {
-        setPhotoUrl(res.photoUrl);
-        setImportedPhotoUrl(null);
-      } else {
-        setPhotoError(res.error);
-      }
+      if (res.ok) { setPhotoUrl(res.photoUrl); setImportedPhotoUrl(null); }
+      else setPhotoError(res.error);
     });
   }
-
   function onAdoptPhoto() {
     if (!importedPhotoUrl) return;
     setPhotoError(null);
     startPhoto(async () => {
       const res = await adoptImportedPhoto(importedPhotoUrl);
-      if (res.ok) {
-        setPhotoUrl(res.photoUrl);
-        setImportedPhotoUrl(null);
-      } else {
-        setPhotoError(res.error);
-      }
+      if (res.ok) { setPhotoUrl(res.photoUrl); setImportedPhotoUrl(null); }
+      else setPhotoError(res.error);
     });
   }
-
   function onRemovePhoto() {
     setPhotoError(null);
     startPhoto(async () => {
@@ -281,390 +282,354 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     });
   }
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    start(async () => {
-      const res = await saveProfile({
-        displayName, region, website, gender, bio, values, modality, specialties,
-        insuranceAccepted: insurance.split(",").map((s) => s.trim()).filter(Boolean),
-        fieldValues,
-      });
-      if (res.ok) {
-        setSaved(true);
-      }
-    });
-  }
-
-  return (
-    <form
-      onSubmit={onSubmit}
-      className={`space-y-10 ${importView ? (importCollapsed ? "pb-24" : "pb-64") : ""}`}
-    >
-      <SectionHeader
-        eyebrow="Your profile"
-        title="Build your profile"
-        body="This is what people will see. The “what healing means to me” note is the heart of it — write it the way you'd say it out loud."
-      />
-
-      {/* Match strength — the match-critical fields, computed LIVE so it fills as you
-          (or the importer) add detail. The fuller it is, the better we match clients. */}
-      <div>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="meta text-ink-muted">{visibility.toLowerCase()} · match strength</span>
-          <span className="text-[13px] font-medium text-charcoal">{liveCompleteness}%</span>
-        </div>
-        <div
-          aria-hidden
-          className="mt-2 h-1.5 overflow-hidden rounded-full bg-rule/60"
-        >
-          <div
-            className="h-full rounded-full bg-teal transition-[width] duration-700 ease-out"
-            style={{ width: `${liveCompleteness}%` }}
-          />
-        </div>
-        <p className="mt-2 text-[13px] leading-[1.5] text-ink-soft">
-          {liveCompleteness >= 80
-            ? "Strong — people searching for someone like you will see a full picture."
-            : missingMatch.length
-              ? `The more complete your profile, the better we match you with the right clients. Add ${missingMatch
-                  .slice(0, 2)
-                  .join(" and ")} next.`
-              : "The more complete your profile, the better we match you with the right clients."}
-        </p>
-        {practitioner.viewCount > 0 ? (
-          <p className="mt-3 text-[13px] leading-[1.5] text-ink-muted">
-            {practitioner.viewCount === 1
-              ? "1 person has viewed your profile."
-              : `${practitioner.viewCount} people have viewed your profile.`}
-          </p>
-        ) : null}
-      </div>
-
-      {/* What's actually required — the form is lighter than it looks. */}
-      <p className="rounded-2xl border border-rule bg-white/70 px-5 py-4 text-[14px] leading-[1.6] text-ink-soft">
-        <span className="font-medium text-charcoal">You can go live with just your name and a short bio.</span>{" "}
-        Everything else is optional — add it now, or anytime after you publish.
-      </p>
-
-      {/* Import-first onboarding — drop a link or two / paste a bio, we draft the form
-          (you review). Auto-expanded + welcoming for a brand-new (post-signup) profile. */}
-      <details
-        open={importOpen}
-        onToggle={(e) => setImportOpen(e.currentTarget.open)}
-        className="group rounded-3xl border border-rule bg-seafoam/20 p-5 md:p-6"
-      >
-        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-seafoam/20">
-          <span className="font-display text-[18px] leading-tight text-charcoal">
-            {isNew ? "Let's build your profile — the fast way" : "Save time — import from a link or a bio"}
-          </span>
-          <span
-            aria-hidden
-            className="ml-auto select-none text-[22px] leading-none text-ink-muted transition-transform duration-200 group-open:rotate-45"
-          >
-            +
-          </span>
+  // The rich (optional) sections as a collapsible group — used in steps 2 & 3.
+  const richSection = (sectionId: string) => {
+    const section = PROFILE_SECTIONS.find((s) => s.id === sectionId);
+    if (!section) return null;
+    return (
+      <details key={section.id} className="group border-t border-rule/70">
+        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl py-4 marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand">
+          <span className="font-display text-[18px] leading-tight text-charcoal">{section.title}</span>
+          <span className="meta text-ink-muted">· optional</span>
+          <span aria-hidden className="ml-auto select-none text-[22px] leading-none text-ink-muted transition-transform duration-200 group-open:rotate-45">+</span>
         </summary>
-        <div className="mt-4 space-y-4">
-          <p className="text-[13px] leading-[1.55] text-ink-soft">
-            Drop a link or two — your website, your Psychology Today profile — and we&rsquo;ll draft
-            your profile for you. Or paste a bio. Nothing is saved until you review and hit Save.
-          </p>
-
-          <Field label="Your links" hint="One per line — website, Psychology Today, etc.">
-            <TextArea
-              value={links}
-              onChange={(e) => setLinks(e.target.value)}
-              placeholder={"https://your-website.com\nhttps://psychologytoday.com/…"}
-              className="min-h-[80px]"
-            />
-          </Field>
-
-          <Field label="…or paste a bio" optional>
-            <TextArea
-              id="import-paste"
-              value={paste}
-              onChange={(e) => setPaste(e.target.value)}
-              placeholder="Paste your bio / Psychology Today text here"
-              className="min-h-[110px]"
-            />
-          </Field>
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Button
-              type="button"
-              onClick={onBuild}
-              disabled={extracting || (!links.trim() && paste.trim().length < 40)}
-            >
-              {extracting ? "Building your profile…" : "Build my profile"}
-            </Button>
-            {isNew ? (
-              <button
-                type="button"
-                onClick={() => setImportOpen(false)}
-                className="rounded-full px-1 text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
-              >
-                I&rsquo;ll fill it in myself
-              </button>
-            ) : null}
-          </div>
-
-          <p className="text-[12px] leading-[1.5] text-ink-muted">
-            Most links work — your website, your Psychology Today profile. LinkedIn blocks automated
-            visits, so paste that one instead.
-          </p>
+        <div className="space-y-7 pb-2">
+          {section.fields.map((field) => {
+            const val = fieldValues[field.id];
+            const str = typeof val === "string" ? val : "";
+            const arr = Array.isArray(val) ? val : [];
+            return (
+              <Field key={field.id} label={field.label} hint={field.hint} optional>
+                {field.type === "textarea" ? (
+                  <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                ) : field.type === "chips" && field.options ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {field.options.map((opt) =>
+                      field.single ? (
+                        <ChoiceChip key={opt.id} label={opt.label} selected={str === opt.id} onClick={() => setField(field.id, str === opt.id ? "" : opt.id)} />
+                      ) : (
+                        <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id)} />
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <TextInput value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                )}
+              </Field>
+            );
+          })}
         </div>
       </details>
+    );
+  };
 
-      <div className="space-y-7">
-        <Field label="Your photo" optional>
-          <div className="flex items-center gap-5">
-            {photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoUrl} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
-            ) : (
-              <span
-                aria-hidden
-                className="font-display flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-sand-deep text-[26px] text-teal"
-              >
-                {(displayName.trim()[0] ?? "·").toUpperCase()}
-              </span>
-            )}
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <label
-                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-charcoal/20 bg-white px-5 py-2.5 text-[14px] font-medium text-charcoal transition-colors hover:border-charcoal/40 hover:bg-sand-deep/50 focus-within:outline-none focus-within:ring-2 focus-within:ring-charcoal/20 focus-within:ring-offset-2 focus-within:ring-offset-sand ${
-                    photoBusy ? "pointer-events-none opacity-50" : ""
-                  }`}
-                >
-                  {photoBusy ? "Working…" : photoUrl ? "Replace photo" : "Upload a photo"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-                    className="sr-only"
-                    onChange={onPhotoFile}
-                    disabled={photoBusy}
-                  />
-                </label>
-                {photoUrl ? (
-                  <button
-                    type="button"
-                    onClick={onRemovePhoto}
-                    disabled={photoBusy}
-                    className="rounded-full px-1 text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
-                  >
-                    Remove
-                  </button>
-                ) : null}
-              </div>
-              {importedPhotoUrl && !photoUrl ? (
-                <button
-                  type="button"
-                  onClick={onAdoptPhoto}
-                  disabled={photoBusy}
-                  className="rounded-full px-1 text-left text-[13px] text-teal underline underline-offset-2 hover:text-ocean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
-                >
-                  Use the photo we found from your import →
-                </button>
-              ) : null}
-              {photoError ? (
-                <p role="alert" className="text-[13px] leading-[1.5] text-ocean">
-                  {photoError}
-                </p>
-              ) : (
-                <p className="text-[12px] leading-[1.5] text-ink-muted">
-                  A friendly headshot — JPG, PNG, or WebP, up to 6 MB. Saved as soon as you pick it.
-                </p>
-              )}
-            </div>
-          </div>
-        </Field>
+  const checklist = [
+    { label: "Add how you work", done: Boolean(modality) },
+    { label: "Choose 3–8 focus areas", done: specialties.length >= 3 },
+    { label: "Write your healing note", done: !!values.trim() },
+  ];
 
-        <Field label="Display name">
-          <TextInput value={displayName} onChange={(e) => { setDisplayName(e.target.value); dirty(); }} placeholder="e.g. Nora Hollenkamp, LICSW" />
-        </Field>
+  return (
+    <form onSubmit={onSubmit} className={importView ? (importCollapsed ? "pb-24" : "pb-64") : ""}>
+      <Stepper step={step} onStep={goToStep} />
 
-        <div className="grid gap-7 md:grid-cols-2">
-          <Field label="Location / region">
-            <TextInput value={region} onChange={(e) => { setRegion(e.target.value); dirty(); }} placeholder="e.g. Saint Paul, MN" />
-          </Field>
-          <Field label="Website" optional>
-            <TextInput type="url" value={website} onChange={(e) => { setWebsite(e.target.value); dirty(); }} placeholder="https://" />
-          </Field>
-        </div>
-
-        <Field label="How you work">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {MODALITY_OPTIONS.map((m) => (
-              <ChoiceChip
-                key={m.id}
-                label={m.label}
-                selected={modality === m.id}
-                onClick={() => { setModality(m.id); dirty(); }}
-              />
-            ))}
-          </div>
-        </Field>
-
-        <Field label="Areas of focus" hint="Pick 3–8 categories that best reflect your work.">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {SPECIALTY_OPTIONS.map((s) => (
-              <ChoiceChip
-                key={s.id}
-                label={s.label}
-                selected={specialties.includes(s.id)}
-                onClick={() => toggleSpecialty(s.id)}
-              />
-            ))}
-          </div>
-        </Field>
-
-        <Field label="Short bio">
-          <TextArea value={bio} onChange={(e) => { setBio(e.target.value); dirty(); }} placeholder="A couple of sentences about you and your practice." />
-        </Field>
-
-        <Field label="What healing means to me" hint="The differentiator. Plain, warm, in your own voice.">
-          <TextArea value={values} onChange={(e) => { setValues(e.target.value); dirty(); }} placeholder="When I sit with someone…" className="min-h-[180px]" />
-        </Field>
-
-        <div className="grid gap-7 md:grid-cols-2">
-          <Field label="Your gender" hint="Some people prefer a practitioner of a particular gender.">
-            <TextInput value={gender} onChange={(e) => { setGender(e.target.value); dirty(); }} placeholder="e.g. Woman" />
-          </Field>
-          <Field label="Insurance accepted" optional hint="Comma-separated.">
-            <TextInput value={insurance} onChange={(e) => { setInsurance(e.target.value); dirty(); }} placeholder="Aetna, BCBS, Cigna" />
-          </Field>
-        </div>
-      </div>
-
-      {/* Nora's rich profile sections — collapsed by default so the form reads light.
-          Everything here is optional; add over time. */}
-      {PROFILE_SECTIONS.map((section) => (
-        <details key={section.id} className="group border-t border-rule/70">
-          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl py-4 marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand">
-            <span className="font-display text-[19px] leading-tight text-charcoal">{section.title}</span>
-            <span className="meta text-ink-muted">· optional</span>
-            <span
-              aria-hidden
-              className="ml-auto select-none text-[22px] leading-none text-ink-muted transition-transform duration-200 group-open:rotate-45"
-            >
-              +
-            </span>
-          </summary>
-          <div className="space-y-7 pb-2">
-            {section.fields.map((field) => {
-              const val = fieldValues[field.id];
-              const str = typeof val === "string" ? val : "";
-              const arr = Array.isArray(val) ? val : [];
-              return (
-                <Field key={field.id} label={field.label} hint={field.hint} optional>
-                  {field.type === "textarea" ? (
-                    <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
-                  ) : field.type === "chips" && field.options ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {field.options.map((opt) =>
-                        field.single ? (
-                          <ChoiceChip key={opt.id} label={opt.label} selected={str === opt.id} onClick={() => setField(field.id, str === opt.id ? "" : opt.id)} />
-                        ) : (
-                          <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id)} />
-                        ),
-                      )}
-                    </div>
-                  ) : (
-                    <TextInput value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
-                  )}
-                </Field>
-              );
-            })}
-          </div>
-        </details>
-      ))}
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule/70 pt-7">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : saved ? "Saved ✓" : "Save profile"}
-        </Button>
-        <span className="text-[13px] text-ink-muted">Your photo saves on its own, above.</span>
-      </div>
-
-      {/* Status + publish — additive, calm, trauma-informed. The publish actions
-          re-derive the practitioner from the session and enforce a name+bio bar. */}
-      <section
-        aria-labelledby="publish-heading"
-        className="rounded-3xl border border-rule/80 bg-white p-7 shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-32px_rgba(31,58,95,0.18)] md:p-8"
-      >
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className={`inline-block h-2 w-2 shrink-0 rounded-full ${
-              held ? "bg-ocean" : isPublished ? "bg-teal" : "bg-rule-strong/30"
-            }`}
-          />
-          <h2 id="publish-heading" className="font-display text-[20px] leading-tight text-charcoal">
-            {held
-              ? "Your profile is on hold"
-              : isPublished
-                ? "Your profile is live"
-                : "Your profile is a draft"}
-          </h2>
-        </div>
-
-        {held ? (
-          <>
-            <div className="mt-4 rounded-2xl border border-ocean/15 bg-ocean/[0.04] p-5">
-              <p className="text-[15px] leading-[1.6] text-charcoal">{heldMsg}</p>
-            </div>
-            <p className="mt-4 text-[14px] leading-[1.6] text-ink-soft">
-              Your profile isn&rsquo;t visible to the public right now, and publishing is paused — but
-              nothing is lost. You can still edit everything here. Questions? Email{" "}
-              <a
-                href="mailto:hello@healingtides.co"
-                className="link-underline rounded-full font-medium text-charcoal"
-              >
-                hello@healingtides.co
-              </a>
-              .
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="mt-3 text-[15px] leading-[1.6] text-ink-soft">
-              {isPublished
-                ? "People looking for care can find you. You can take it down any time — nothing is permanent."
-                : "Only you can see this right now. Publish when you're ready, at your own pace."}
-            </p>
-
-            {isPublished ? (
-              <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-                {slug ? (
-                  <LinkButton
-                    href={`/practitioners/${slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    tone="secondary"
-                  >
-                    View your public page →
-                  </LinkButton>
-                ) : null}
-                <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>
-                  {publishing ? "Taking it down…" : "Take it down"}
-                </Button>
-              </div>
-            ) : (
-              <div className="mt-6">
-                <Button type="button" onClick={onPublish} disabled={publishing}>
-                  {publishing ? "Publishing…" : "Publish profile"}
-                </Button>
-              </div>
-            )}
-
-            {publishError ? (
-              <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">
-                {publishError}
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_minmax(0,340px)] lg:items-start lg:gap-10">
+        {/* ───── LEFT: the panel ───── */}
+        <div className="min-w-0 rounded-3xl border border-rule/80 bg-white p-6 shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-34px_rgba(31,58,95,0.2)] md:p-8">
+          {/* Heading + match-strength */}
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <p className="meta text-teal">Step {step + 1} of {WIZARD_STEPS.length} · {WIZARD_STEPS[step]}</p>
+              <h1 className="font-display mt-2 text-[clamp(26px,3.6vw,38px)] font-light leading-[1.05] tracking-[-0.02em] text-charcoal">
+                Build your profile
+              </h1>
+              <p className="mt-3 max-w-md text-[15px] leading-[1.6] text-ink-soft">
+                This is what people will see. The &ldquo;what healing means to me&rdquo; note is the
+                heart of it — write it the way you&rsquo;d say it out loud.
               </p>
-            ) : null}
-          </>
-        )}
-      </section>
+            </div>
+
+            <div className="w-full shrink-0 rounded-2xl border border-rule/70 bg-sand/40 p-4 lg:w-[300px]">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[13px] text-ink-soft">
+                  Profile status:{" "}
+                  <span className={`ml-1 rounded-full px-2 py-0.5 text-[12px] font-medium ${held ? "bg-ocean/10 text-ocean" : isPublished ? "bg-teal/15 text-teal" : "bg-charcoal/[0.06] text-ink-muted"}`}>
+                    {statusLabel}
+                  </span>
+                </span>
+                <span className="text-[13px] text-ink-soft">
+                  Match strength: <span className="font-medium text-charcoal">{liveCompleteness}%</span>
+                </span>
+              </div>
+              <div aria-hidden className="mt-3 h-1.5 overflow-hidden rounded-full bg-rule/60">
+                <div className="h-full rounded-full bg-teal transition-[width] duration-700 ease-out" style={{ width: `${liveCompleteness}%` }} />
+              </div>
+              <p className="mt-3 text-[12.5px] leading-[1.5] text-ink-muted">
+                {liveCompleteness >= 80
+                  ? "Strong — people see a full picture of you."
+                  : missingMatch.length
+                    ? `Adding ${missingMatch.slice(0, 1).join("")} will improve matching.`
+                    : "A fuller profile gets matched to more of the right people."}
+              </p>
+            </div>
+          </div>
+
+          {/* Held banner (every step) */}
+          {held ? (
+            <div className="mt-7 rounded-2xl border border-ocean/15 bg-ocean/[0.04] p-5">
+              <p className="font-display text-[17px] leading-tight text-charcoal">Your profile is on hold</p>
+              <p className="mt-2 text-[14.5px] leading-[1.6] text-charcoal">{heldMsg}</p>
+              <p className="mt-2 text-[13.5px] leading-[1.6] text-ink-soft">
+                It isn&rsquo;t public right now and publishing is paused — but nothing is lost, and you
+                can still edit. Questions? Email{" "}
+                <a href="mailto:hello@healingtides.co" className="link-underline font-medium text-charcoal">hello@healingtides.co</a>.
+              </p>
+            </div>
+          ) : null}
+
+          {/* ───── STEP 1 · Basics ───── */}
+          {step === 0 ? (
+            <div className="mt-8 space-y-7">
+              <Field label="Your photo" optional>
+                <div className="flex items-center gap-5">
+                  {photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoUrl} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
+                  ) : (
+                    <span aria-hidden className="font-display flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-sand-deep text-[26px] text-teal">
+                      {(displayName.trim()[0] ?? "·").toUpperCase()}
+                    </span>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-charcoal/20 bg-white px-5 py-2.5 text-[14px] font-medium text-charcoal transition-colors hover:border-charcoal/40 hover:bg-sand-deep/50 focus-within:outline-none focus-within:ring-2 focus-within:ring-charcoal/20 focus-within:ring-offset-2 focus-within:ring-offset-sand ${photoBusy ? "pointer-events-none opacity-50" : ""}`}>
+                        {photoBusy ? "Working…" : photoUrl ? "Replace photo" : "Upload a photo"}
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" className="sr-only" onChange={onPhotoFile} disabled={photoBusy} />
+                      </label>
+                      {photoUrl ? (
+                        <button type="button" onClick={onRemovePhoto} disabled={photoBusy} className="rounded-full px-1 text-[13px] text-ink-muted underline-offset-2 hover:text-charcoal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15">Remove</button>
+                      ) : null}
+                    </div>
+                    {importedPhotoUrl && !photoUrl ? (
+                      <button type="button" onClick={onAdoptPhoto} disabled={photoBusy} className="rounded-full px-1 text-left text-[13px] text-teal underline underline-offset-2 hover:text-ocean">Use the photo we found from your import →</button>
+                    ) : null}
+                    {photoError ? (
+                      <p role="alert" className="text-[13px] leading-[1.5] text-ocean">{photoError}</p>
+                    ) : (
+                      <p className="text-[12px] leading-[1.5] text-ink-muted">A friendly headshot — JPG, PNG, or WebP, up to 6 MB. Saved as soon as you pick it.</p>
+                    )}
+                  </div>
+                </div>
+              </Field>
+
+              <Field label="Display name">
+                <TextInput value={displayName} onChange={(e) => { setDisplayName(e.target.value); dirty(); }} placeholder="Your name or business name" />
+              </Field>
+
+              <div className="grid gap-7 md:grid-cols-2">
+                <Field label="Location / region">
+                  <TextInput value={region} onChange={(e) => { setRegion(e.target.value); dirty(); }} placeholder="City, state or region" />
+                </Field>
+                <Field label="Website" optional>
+                  <TextInput type="url" value={website} onChange={(e) => { setWebsite(e.target.value); dirty(); }} placeholder="https://yourwebsite.com" />
+                </Field>
+              </div>
+
+              {/* Import-first assist */}
+              <details open={importOpen} onToggle={(e) => setImportOpen(e.currentTarget.open)} className="group rounded-3xl border border-rule bg-seafoam/20 p-5 md:p-6">
+                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15">
+                  <span className="font-display text-[17px] leading-tight text-charcoal">
+                    Save time — import from a link or bio
+                  </span>
+                  <span aria-hidden className="ml-auto select-none text-[22px] leading-none text-ink-muted transition-transform duration-200 group-open:rotate-45">+</span>
+                </summary>
+                <div className="mt-4 space-y-4">
+                  <p className="text-[13px] leading-[1.55] text-ink-soft">
+                    Drop a link or two — your website, your Psychology Today profile — and we&rsquo;ll draft
+                    your profile for you. Or paste a bio. Nothing is saved until you review and hit Save.
+                  </p>
+                  <Field label="Your links" hint="One per line — website, Psychology Today, etc.">
+                    <TextArea value={links} onChange={(e) => setLinks(e.target.value)} placeholder={"https://your-website.com\nhttps://psychologytoday.com/…"} className="min-h-[80px]" />
+                  </Field>
+                  <Field label="…or paste a bio" optional>
+                    <TextArea id="import-paste" value={paste} onChange={(e) => setPaste(e.target.value)} placeholder="Paste your bio / Psychology Today text here" className="min-h-[110px]" />
+                  </Field>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <Button type="button" onClick={onBuild} disabled={extracting || (!links.trim() && paste.trim().length < 40)}>
+                      {extracting ? "Building your profile…" : "Build my profile"}
+                    </Button>
+                  </div>
+                  <p className="text-[12px] leading-[1.5] text-ink-muted">
+                    Most links work — your website, your Psychology Today profile. LinkedIn blocks automated
+                    visits, so paste that one instead.
+                  </p>
+                </div>
+              </details>
+
+              <p className="text-[13px] leading-[1.55] text-ink-muted">You can skip optional fields for now.</p>
+            </div>
+          ) : null}
+
+          {/* ───── STEP 2 · Practice details ───── */}
+          {step === 1 ? (
+            <div className="mt-8 space-y-7">
+              <Field label="How you work">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {MODALITY_OPTIONS.map((m) => (
+                    <ChoiceChip key={m.id} label={m.label} selected={modality === m.id} onClick={() => { setModality(m.id); dirty(); }} />
+                  ))}
+                </div>
+              </Field>
+
+              <Field label="Areas of focus" hint="Pick 3–8 categories that best reflect your work.">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {SPECIALTY_OPTIONS.map((s) => (
+                    <ChoiceChip key={s.id} label={s.label} selected={specialties.includes(s.id)} onClick={() => toggleSpecialty(s.id)} />
+                  ))}
+                </div>
+              </Field>
+
+              <div className="grid gap-7 md:grid-cols-2">
+                <Field label="Your gender" hint="Some people prefer a practitioner of a particular gender.">
+                  <TextInput value={gender} onChange={(e) => { setGender(e.target.value); dirty(); }} placeholder="e.g. Woman" />
+                </Field>
+                <Field label="Insurance accepted" optional hint="Comma-separated.">
+                  <TextInput value={insurance} onChange={(e) => { setInsurance(e.target.value); dirty(); }} placeholder="Aetna, BCBS, Cigna" />
+                </Field>
+              </div>
+
+              <div className="pt-1">{PRACTICE_SECTION_IDS.map(richSection)}</div>
+            </div>
+          ) : null}
+
+          {/* ───── STEP 3 · Your voice ───── */}
+          {step === 2 ? (
+            <div className="mt-8 space-y-7">
+              <Field label="What healing means to me" hint="The heart of your profile. Plain, warm, in your own voice.">
+                <TextArea value={values} onChange={(e) => { setValues(e.target.value); dirty(); }} placeholder="When I sit with someone…" className="min-h-[180px]" />
+              </Field>
+              <Field label="Short bio">
+                <TextArea value={bio} onChange={(e) => { setBio(e.target.value); dirty(); }} placeholder="A couple of sentences about you and your practice." />
+              </Field>
+              <div className="pt-1">{VOICE_SECTION_IDS.map(richSection)}</div>
+            </div>
+          ) : null}
+
+          {/* ───── STEP 4 · Review & publish ───── */}
+          {step === 3 ? (
+            <div className="mt-8 space-y-7">
+              <div className="rounded-2xl border border-rule/70 bg-sand/40 p-5">
+                <p className="meta text-ink-muted">Review</p>
+                <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-soft">
+                  Here&rsquo;s the shape of your profile — jump back to any step to change something.
+                </p>
+                <dl className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                  {[
+                    ["Name", displayName.trim() || "—"],
+                    ["Location", region.trim() || "—"],
+                    ["How you work", MODALITY_OPTIONS.find((m) => m.id === modality)?.label ?? "—"],
+                    ["Focus areas", specialties.length ? `${specialties.length} chosen` : "none yet"],
+                    ["Short bio", bio.trim() ? "added" : "missing"],
+                    ["What healing means to me", values.trim() ? "added" : "missing"],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex items-baseline justify-between gap-3 border-b border-rule/50 py-1.5 last:border-0">
+                      <dt className="text-[13px] text-ink-muted">{label}</dt>
+                      <dd className="text-[13.5px] font-medium text-charcoal">{val}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+
+              {/* Publish / status */}
+              <section aria-labelledby="publish-heading" className="rounded-2xl border border-rule/70 bg-white p-6">
+                <div className="flex items-center gap-3">
+                  <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full ${held ? "bg-ocean" : isPublished ? "bg-teal" : "bg-rule-strong/30"}`} />
+                  <h2 id="publish-heading" className="font-display text-[19px] leading-tight text-charcoal">
+                    {held ? "Your profile is on hold" : isPublished ? "Your profile is live" : "Ready to publish?"}
+                  </h2>
+                </div>
+
+                {held ? (
+                  <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-soft">
+                    Publishing is paused while your profile is on hold. You can still edit everything;
+                    reach out to <a href="mailto:hello@healingtides.co" className="link-underline font-medium text-charcoal">hello@healingtides.co</a> with questions.
+                  </p>
+                ) : (
+                  <>
+                    <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-soft">
+                      {isPublished
+                        ? "People looking for care can find you. You can take it down any time — nothing is permanent."
+                        : "Only you can see this right now. Publish when you’re ready, at your own pace. You need at least a name and a short bio."}
+                    </p>
+                    {isPublished ? (
+                      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3">
+                        {slug ? (
+                          <LinkButton href={`/practitioners/${slug}`} target="_blank" rel="noreferrer" tone="secondary">View your public page →</LinkButton>
+                        ) : null}
+                        <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>{publishing ? "Taking it down…" : "Take it down"}</Button>
+                      </div>
+                    ) : (
+                      <div className="mt-5">
+                        <Button type="button" onClick={onPublish} disabled={publishing}>{publishing ? "Publishing…" : "Publish profile"}</Button>
+                      </div>
+                    )}
+                    {publishError ? <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">{publishError}</p> : null}
+                  </>
+                )}
+              </section>
+            </div>
+          ) : null}
+
+          {/* ───── Footer ───── */}
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-rule/70 pt-6">
+            <button type="button" onClick={runSave} disabled={pending} className="rounded-full px-1 text-[14px] font-medium text-ink-soft underline-offset-4 transition-colors hover:text-charcoal hover:underline disabled:opacity-50">
+              {pending ? "Saving…" : saved ? "Saved ✓" : "Save for later"}
+            </button>
+            <div className="flex items-center gap-4">
+              {step > 0 ? (
+                <button type="button" onClick={() => goToStep(step - 1)} className="text-[14px] font-medium text-ink-muted transition-colors hover:text-charcoal">← Back</button>
+              ) : null}
+              {step < WIZARD_STEPS.length - 1 ? (
+                <div className="flex items-center gap-4">
+                  <span className="hidden text-[13px] text-ink-muted sm:inline">Next up: {NEXT_HINTS[step]}.</span>
+                  <Button type="button" onClick={onContinue}>Continue →</Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {/* ───── RIGHT: sidebar ───── */}
+        <aside className="space-y-5 lg:sticky lg:top-24">
+          <LivePreview name={displayName} region={region} photoUrl={photoUrl} specialties={specialties} seed={slug ?? practitioner.id} />
+
+          <div className="rounded-3xl border border-rule/80 bg-white p-5">
+            <p className="meta text-ink-muted">What helps you get matched</p>
+            <ul className="mt-3.5 space-y-2.5">
+              {checklist.map((it) => (
+                <li key={it.label} className="flex items-center gap-2.5 text-[14px]">
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${it.done ? "bg-teal text-sand" : "border border-rule text-transparent"}`}>
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-3 w-3"><path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </span>
+                  <span className={it.done ? "text-charcoal" : "text-ink-soft"}>{it.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex gap-3 rounded-3xl border border-rule/70 bg-seafoam/20 p-5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-seafoam/60 text-teal">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden className="h-[18px] w-[18px]">
+                <path d="M4 20C4 12 9 5 20 4c0 11-7 16-15 16-1 0-1-3-1-3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 16c2-3 5-6 9-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </span>
+            <p className="text-[13px] leading-[1.55] text-ink-soft">
+              We keep it simple so you can focus on what matters most. We&rsquo;ll guide you step by step.
+            </p>
+          </div>
+        </aside>
+      </div>
 
       {importView ? (
         <ImportStatusBar
@@ -673,6 +638,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           onToggleCollapse={() => setImportCollapsed((c) => !c)}
           onDismiss={() => setImportView(null)}
           onPasteFocus={() => {
+            setStep(0);
             setImportOpen(true);
             requestAnimationFrame(() => document.getElementById("import-paste")?.focus());
           }}
