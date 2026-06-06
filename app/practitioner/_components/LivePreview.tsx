@@ -39,7 +39,9 @@ export function LivePreview({
       </div>
 
       <div className="px-5 pb-5 text-center">
-        <div className="-mt-10 flex justify-center">
+        {/* relative z-10 so the avatar paints ABOVE the cover (a positioned/`relative`
+            element otherwise paints over static siblings, hiding the portrait). */}
+        <div className="relative z-10 -mt-10 flex justify-center">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoUrl} alt="" className="h-[72px] w-[72px] rounded-full border-4 border-white object-cover shadow-sm" />
