@@ -15,6 +15,7 @@ export function LivePreview({
   specialties,
   seed,
   theme,
+  showHeader = true,
 }: {
   name: string;
   region: string;
@@ -22,21 +23,24 @@ export function LivePreview({
   specialties: string[];
   seed: string;
   theme?: string | null;
+  showHeader?: boolean;
 }) {
   const shown = specialties.slice(0, 3);
   const initial = (name.trim()[0] ?? "·").toUpperCase();
 
   return (
     <div className="overflow-hidden rounded-3xl border border-rule/80 bg-white shadow-[0_1px_0_rgba(31,58,95,0.02),0_18px_40px_-34px_rgba(31,58,95,0.2)]">
-      <div className="flex items-center gap-2 px-5 pt-4 text-ink-muted">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden className="h-4 w-4">
-          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" strokeWidth="1.5" />
-          <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.5" />
-        </svg>
-        <span className="meta">Live profile preview</span>
-      </div>
+      {showHeader ? (
+        <div className="flex items-center gap-2 px-5 pt-4 text-ink-muted">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden className="h-4 w-4">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          <span className="meta">Live profile preview</span>
+        </div>
+      ) : null}
 
-      <div className="relative mt-3 h-24 w-full overflow-hidden">
+      <div className={`relative h-24 w-full overflow-hidden ${showHeader ? "mt-3" : ""}`}>
         <ProfileCover seed={seed} theme={theme} className="h-full w-full" />
       </div>
 
