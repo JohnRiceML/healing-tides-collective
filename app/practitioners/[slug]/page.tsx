@@ -10,13 +10,10 @@ import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
 import { SITE_URL } from "@/lib/site";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { ProfileCover } from "../_components/ProfileCover";
-import { DirectoryHeaderArt } from "../_components/DirectoryHeaderArt";
+import { GetMatchedBar } from "../_components/GetMatchedBar";
 import { ViewBeacon } from "./ViewBeacon";
 import { SaveProfileButton } from "./SaveProfileButton";
 import { ExpandableValue } from "./ExpandableValue";
-
-const MATCH_MAILTO =
-  "mailto:hello@healingtides.co?subject=Help%20me%20find%20a%20fit";
 
 // ── tiny field helpers ────────────────────────────────────────────────────────
 function arrify(v: unknown): string[] {
@@ -404,36 +401,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                 Reach out
               </a>
             </div>
-
-            {/* Looking for a fit? */}
-            <div className="relative overflow-hidden rounded-3xl border border-rule/80 bg-white p-6">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -bottom-3 right-0 z-0 w-[74%] select-none opacity-70"
-                style={{
-                  maskImage: "linear-gradient(to top, #000 35%, transparent 92%)",
-                  WebkitMaskImage: "linear-gradient(to top, #000 35%, transparent 92%)",
-                }}
-              >
-                <DirectoryHeaderArt className="h-auto w-full" />
-              </div>
-              <div className="relative z-10">
-                <h2 className="font-display text-[19px] leading-tight tracking-[-0.01em] text-charcoal">
-                  Looking for a fit?
-                </h2>
-                <p className="mt-2 max-w-[15rem] text-[14px] leading-[1.55] text-ink-soft">
-                  Tell us what you need and we&rsquo;ll help you find the right practitioner.
-                </p>
-                <a
-                  href={MATCH_MAILTO}
-                  className="mt-4 inline-flex items-center justify-center rounded-full border border-charcoal/20 bg-white px-5 py-2.5 text-[14px] font-medium text-charcoal transition-colors hover:border-charcoal/40 hover:bg-sand-deep/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-                >
-                  Get matched
-                </a>
-              </div>
-            </div>
           </aside>
         </div>
+
+        {/* "Looking for a fit?" — floats at the bottom as you scroll, then settles. */}
+        <GetMatchedBar
+          title="Looking for a fit?"
+          body={"Tell us what you need and we’ll help you find the right practitioner."}
+        />
       </Container>
     </main>
   );

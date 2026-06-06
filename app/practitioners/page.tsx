@@ -10,6 +10,7 @@ import {
 } from "@/lib/practitioners";
 import { DirectoryFilters } from "./_components/DirectoryFilters";
 import { DirectoryHeaderArt } from "./_components/DirectoryHeaderArt";
+import { GetMatchedBar } from "./_components/GetMatchedBar";
 import { PractitionerCard } from "./_components/PractitionerCard";
 import { SortSelect } from "./_components/SortSelect";
 
@@ -29,21 +30,6 @@ const ART_MASK =
 function clean(value: string | undefined): string | undefined {
   const v = value?.trim();
   return v ? v : undefined;
-}
-
-function Leaf({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
-      <path
-        d="M4 20C4 12 9 5 20 4c0 11-7 16-15 16-1 0-1-3-1-3z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M8 16c2-3 5-6 9-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 export default async function Page({
@@ -132,25 +118,10 @@ export default async function Page({
                 ))}
               </ul>
 
-              {/* Gentle, always-reachable "help me choose" nudge — floats above the grid
-                  as you scroll, then settles at the end. Sides are click-through. */}
-              <div className="pointer-events-none sticky bottom-6 z-20 mt-10 flex justify-center">
-                <div className="pointer-events-auto flex w-full max-w-2xl items-center gap-3.5 rounded-full border border-rule/80 bg-white/95 px-5 py-3 shadow-[0_12px_44px_-14px_rgba(31,58,95,0.32)] backdrop-blur-sm sm:gap-4 sm:px-6">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-seafoam/60 text-teal">
-                    <Leaf className="h-[18px] w-[18px]" />
-                  </span>
-                  <p className="flex-1 text-[13.5px] leading-[1.4] text-ink-soft sm:text-[14px]">
-                    <span className="text-charcoal">Not sure where to start?</span> Tell us what you
-                    need and we&rsquo;ll help you find a fit.
-                  </p>
-                  <a
-                    href="mailto:hello@healingtides.co?subject=Help%20me%20find%20a%20fit"
-                    className="inline-flex shrink-0 items-center justify-center rounded-full bg-charcoal px-4 py-2.5 text-[13px] font-medium text-sand transition-colors hover:bg-charcoal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/40 focus-visible:ring-offset-2 focus-visible:ring-offset-sand sm:px-5"
-                  >
-                    Get matched
-                  </a>
-                </div>
-              </div>
+              <GetMatchedBar
+                title="Not sure where to start?"
+                body={"Tell us what you need and we’ll help you find a fit."}
+              />
             </>
           ) : hasFilters ? (
             <EmptyState
