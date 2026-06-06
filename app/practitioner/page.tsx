@@ -8,7 +8,6 @@ import { clerkEnabled } from "@/lib/clerk-enabled";
 import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
-import { CoverThumb } from "@/app/practitioners/_components/CoverThumb";
 import { PublicPagePreview } from "./_components/PublicPagePreview";
 
 export const metadata: Metadata = {
@@ -188,30 +187,42 @@ export default async function PractitionerHome() {
 
       {/* ───── Top row ───── */}
       <div className="mt-8 grid gap-5 lg:grid-cols-[1.3fr_0.95fr_1.05fr]">
-        {/* Profile strength */}
-        <Card className="!p-6">
-          <div className="flex items-center gap-3">
-            <span className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-rule/60">
-              <CoverThumb color={coverColor} className="h-full w-full" />
-            </span>
-            <p className="meta text-ink-muted">Profile strength</p>
-          </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="font-display text-[40px] leading-none text-charcoal">{completeness}%</span>
-            <span className="text-[14px] text-ink-muted">complete</span>
-          </div>
-          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-rule/60">
-            <div className="h-full rounded-full bg-teal transition-[width] duration-700 ease-out" style={{ width: `${completeness}%` }} />
-          </div>
-          <p className="mt-4 text-[14px] leading-[1.6] text-ink-soft">
-            The more complete your profile, the better we match you. Add a few more details to stand
-            out and help more clients find you.
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <LinkButton href="/practitioner/edit" tone="primary">{editCta}</LinkButton>
-            <Link href="/practitioner/edit" className="text-[14px] font-medium text-teal transition-colors hover:text-ocean">
-              See what&rsquo;s missing →
-            </Link>
+        {/* Profile strength — coastal image panel (left) + content (right) */}
+        <Card className="relative overflow-hidden !p-0">
+          <div className="flex">
+            {/* Coastal image panel with a wave badge */}
+            <div className="relative w-[34%] shrink-0 overflow-hidden bg-seafoam/30">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/join-cove.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <span className="absolute left-1/2 top-8 z-10 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border border-white/70 bg-sand/90 text-teal shadow-sm backdrop-blur-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden className="h-6 w-6">
+                  <path d="M4 10q3 -3 6 0t6 0" />
+                  <path d="M4 15q3 -3 6 0t6 0" />
+                </svg>
+              </span>
+            </div>
+
+            {/* Content */}
+            <div className="min-w-0 flex-1 p-6">
+              <p className="meta text-ink-muted">Profile strength</p>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="font-display text-[40px] leading-none text-charcoal">{completeness}%</span>
+                <span className="text-[14px] text-ink-muted">complete</span>
+              </div>
+              <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-rule/60">
+                <div className="h-full rounded-full bg-teal transition-[width] duration-700 ease-out" style={{ width: `${completeness}%` }} />
+              </div>
+              <p className="mt-4 text-[14px] leading-[1.6] text-ink-soft">
+                The more complete your profile, the better we match you. Add a few more details to stand
+                out and help more clients find you.
+              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+                <LinkButton href="/practitioner/edit" tone="primary">{editCta}</LinkButton>
+                <Link href="/practitioner/edit" className="text-[14px] font-medium text-teal transition-colors hover:text-ocean">
+                  See what&rsquo;s missing →
+                </Link>
+              </div>
+            </div>
           </div>
         </Card>
 
