@@ -8,7 +8,7 @@ import { clerkEnabled } from "@/lib/clerk-enabled";
 import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
-import { ProfileCover } from "@/app/practitioners/_components/ProfileCover";
+import { CoverThumb } from "@/app/practitioners/_components/CoverThumb";
 import { LivePreview } from "./_components/LivePreview";
 
 export const metadata: Metadata = {
@@ -187,7 +187,7 @@ export default async function PractitionerHome() {
         <Card className="!p-6">
           <div className="flex items-center gap-3">
             <span className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-rule/60">
-              <ProfileCover seed={p.slug ?? p.id} design={coverDesign} color={coverColor} className="h-full w-full" />
+              <CoverThumb color={coverColor} className="h-full w-full" />
             </span>
             <p className="meta text-ink-muted">Profile strength</p>
           </div>
@@ -237,6 +237,7 @@ export default async function PractitionerHome() {
               </li>
             ))}
           </ul>
+          <p className="mt-5 text-[13px] font-medium text-ink-muted">View all insights →</p>
         </Card>
 
         {/* Your public page */}
