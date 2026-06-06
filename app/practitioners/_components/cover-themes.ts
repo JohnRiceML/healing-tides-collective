@@ -8,6 +8,9 @@ export type CoverColor = {
   label: string;
   sky: [string, string]; // background wash, top → bottom
   ramp: [string, string, string, string, string]; // light (back/mist) → deep (front)
+  /** Warm luminous accent — the sun/glow on Horizon, and a faint warmth elsewhere.
+      Optional so older data keeps working; ProfileCover falls back to a soft cream. */
+  sun?: string;
 };
 
 export type CoverDesign = {
@@ -17,12 +20,12 @@ export type CoverDesign = {
 };
 
 export const COVER_COLORS: CoverColor[] = [
-  { id: "tide", label: "Tide", sky: ["#eef5f3", "#d8ece6"], ramp: ["#cfe3dc", "#a9cdc4", "#7fb0a6", "#578f86", "#356b64"] },
-  { id: "meadow", label: "Meadow", sky: ["#f0f4ec", "#dfecd6"], ramp: ["#d2e0c8", "#b3cba6", "#8fb07f", "#6a8f5c", "#48683c"] },
-  { id: "blush", label: "Blush", sky: ["#fbf2ec", "#f6e1d3"], ramp: ["#f0d8c6", "#e6bca5", "#d79e84", "#c08066", "#9d6149"] },
-  { id: "sky", label: "Sky", sky: ["#eef3f7", "#dbe8f0"], ramp: ["#cfe0ea", "#aec9da", "#86adc6", "#5d8bab", "#3c6586"] },
-  { id: "sand", label: "Sand", sky: ["#f8f3e9", "#eee2cd"], ramp: ["#e8d8bc", "#d9c19b", "#c5a679", "#a9875b", "#856640"] },
-  { id: "fog", label: "Fog", sky: ["#f1f3f1", "#e2e8e3"], ramp: ["#d7ddd7", "#bfc8c1", "#a1ada6", "#7f8d86", "#5c6863"] },
+  { id: "tide", label: "Tide", sky: ["#eef5f3", "#d8ece6"], ramp: ["#cfe3dc", "#a9cdc4", "#7fb0a6", "#578f86", "#356b64"], sun: "#fbf0dd" },
+  { id: "meadow", label: "Meadow", sky: ["#f0f4ec", "#dfecd6"], ramp: ["#d2e0c8", "#b3cba6", "#8fb07f", "#6a8f5c", "#48683c"], sun: "#f7f0d6" },
+  { id: "blush", label: "Blush", sky: ["#fbf2ec", "#f6e1d3"], ramp: ["#f0d8c6", "#e6bca5", "#d79e84", "#c08066", "#9d6149"], sun: "#fde7cf" },
+  { id: "sky", label: "Sky", sky: ["#eef3f7", "#dbe8f0"], ramp: ["#cfe0ea", "#aec9da", "#86adc6", "#5d8bab", "#3c6586"], sun: "#fbeede" },
+  { id: "sand", label: "Sand", sky: ["#f8f3e9", "#eee2cd"], ramp: ["#e8d8bc", "#d9c19b", "#c5a679", "#a9875b", "#856640"], sun: "#fdeccb" },
+  { id: "fog", label: "Fog", sky: ["#f1f3f1", "#e2e8e3"], ramp: ["#d7ddd7", "#bfc8c1", "#a1ada6", "#7f8d86", "#5c6863"], sun: "#f6f1e4" },
 ];
 
 export const COVER_DESIGNS: CoverDesign[] = [
