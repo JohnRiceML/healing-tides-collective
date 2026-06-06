@@ -91,11 +91,12 @@ const WAVE_ACCENTS = [
 // Distant layers: base pulled toward the sky (atmospheric haze) + very light top.
 // Near layers: base stays saturated/deep, top still gets a soft watercolour wash.
 function layerStops(base: string, skyLow: string, depth: number) {
-  // Distant layers lose contrast into the sky; near layers keep their colour.
-  const hazed = mix(base, skyLow, (1 - depth) * 0.55);
-  // The top edge of each band is a brighter wash of its own (already-hazed) colour;
-  // back layers wash almost to mist, front layers keep a gentler, richer gradient.
-  const top = lighten(hazed, 0.34 + (1 - depth) * 0.34);
+  // Gentle atmospheric haze — JUST enough to recede the back layers, never so much
+  // they wash out into the sky (that left waves/hills/dunes looking empty). Every ridge
+  // must stay clearly visible + distinct, like the reference.
+  const hazed = mix(base, skyLow, (1 - depth) * 0.22);
+  // The top edge gets a soft watercolour wash; kept restrained so bands keep their colour.
+  const top = lighten(hazed, 0.12 + (1 - depth) * 0.14);
   return { top, bottom: hazed };
 }
 
@@ -229,12 +230,12 @@ function Scene({ design, c, gid }: { design: string; c: CoverColor; gid: string 
           d={`M${cx - 26},${horizon} L${cx + 26},${horizon} L${cx + 70},340 L${cx - 70},340 Z`}
           fill={`url(#${gid}-reflect)`}
         />
-        {/* a few shimmer lines, brightest near the horizon */}
-        <g stroke={lighten(sun, 0.25)} fill="none" strokeLinecap="round">
-          <path d="M150,224 H1050" strokeWidth="2.4" opacity="0.3" />
-          <path d="M250,258 H950" strokeWidth="2.2" opacity="0.24" />
-          <path d="M340,294 H860" strokeWidth="2" opacity="0.18" />
-          <path d="M420,322 H780" strokeWidth="1.8" opacity="0.13" />
+        {/* soft sun-shimmer — concentrated under the sun + blurred, so it reads as light
+            on water rather than ruled lines */}
+        <g stroke={lighten(sun, 0.32)} fill="none" strokeLinecap="round" filter={`url(#${gid}-b2)`}>
+          <path d="M414,230 H786" strokeWidth="2.6" opacity="0.5" />
+          <path d="M452,262 H748" strokeWidth="2.2" opacity="0.36" />
+          <path d="M492,296 H708" strokeWidth="1.8" opacity="0.24" />
         </g>
       </>
     );
