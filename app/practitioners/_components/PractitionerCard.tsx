@@ -4,7 +4,7 @@ import type { PractitionerCard as PractitionerCardData } from "@/lib/practitione
 import { specialtyLabel } from "@/app/_lib/taxonomy";
 import { derivedBadges } from "@/app/_lib/verification";
 
-import { CoverArt } from "./CoverArt";
+import { ProfileCover } from "./ProfileCover";
 
 const MAX_SPECIALTIES = 4;
 
@@ -53,7 +53,7 @@ export function PractitionerCard({ practitioner }: { practitioner: PractitionerC
       {/* Cover — the default "wide image" (their own once they upload one), with one
           status badge: accepting-new-clients takes priority; else a founding pill. */}
       <div className="relative h-28 w-full overflow-hidden">
-        <CoverArt seed={slug} theme={coverTheme} className="h-full w-full" />
+        <ProfileCover seed={slug} theme={coverTheme} className="h-full w-full" />
         {acceptingNew ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11.5px] font-medium text-charcoal shadow-sm backdrop-blur-sm">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#6f9b6a]" />
