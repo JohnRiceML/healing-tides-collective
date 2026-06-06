@@ -5,6 +5,12 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
 import { slugify } from "@/lib/slug";
+import { readHold } from "@/app/_lib/moderation";
+
+// An admin hold is a hard stop: while held, the practitioner can edit but cannot change
+// their own published status (publish OR unpublish). Only an admin release lifts it.
+const HELD_MESSAGE =
+  "Your profile is on hold with the Healing Tides team, so it can’t be published right now. Please reach out to hello@healingtides.co — we’re happy to help.";
 
 // Minimum bar to go public: a name + something to read. Keeps empty shells out of
 // the directory. (The completeness % is a separate, softer nudge — not a gate.)
@@ -37,6 +43,10 @@ export async function publishProfile() {
   const result = await getOrCreatePractitioner();
   if (!result) return { ok: false as const, error: "You're not signed in." };
   const p = result.practitioner;
+
+  if (readHold(p.fieldValues)) {
+    return { ok: false as const, error: HELD_MESSAGE, held: true as const };
+  }
 
   if (!readyToPublish(p)) {
     return {
@@ -82,6 +92,10 @@ export async function unpublishProfile() {
   const result = await getOrCreatePractitioner();
   if (!result) return { ok: false as const, error: "You're not signed in." };
   const p = result.practitioner;
+
+  if (readHold(p.fieldValues)) {
+    return { ok: false as const, error: HELD_MESSAGE, held: true as const };
+  }
 
   try {
     await db.practitioner.update({

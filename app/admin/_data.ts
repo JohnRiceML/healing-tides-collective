@@ -5,6 +5,7 @@
 import { db } from "@/lib/db";
 import type { ProfileVisibility } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
+import { readHold } from "@/app/_lib/moderation";
 
 export type AdminPractitionerRow = {
   id: string;
@@ -18,6 +19,8 @@ export type AdminPractitionerRow = {
   updatedAt: Date;
   email: string | null;
   verificationBadges: string[];
+  held: boolean; // currently on an admin hold
+  holdMessage: string | null; // practitioner-facing reason (if held)
 };
 
 export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
@@ -37,11 +40,16 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       user: { select: { email: true } },
     },
   });
-  return rows.map(({ user, fieldValues, ...r }) => ({
-    ...r,
-    email: user?.email ?? null,
-    verificationBadges: grantedBadgesFrom(fieldValues),
-  }));
+  return rows.map(({ user, fieldValues, ...r }) => {
+    const hold = readHold(fieldValues);
+    return {
+      ...r,
+      email: user?.email ?? null,
+      verificationBadges: grantedBadgesFrom(fieldValues),
+      held: Boolean(hold),
+      holdMessage: hold?.message || null,
+    };
+  });
 }
 
 export type AdminStats = {

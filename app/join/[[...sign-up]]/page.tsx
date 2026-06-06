@@ -8,14 +8,14 @@ import { clerkEnabled } from "@/lib/clerk-enabled";
 export const metadata: Metadata = {
   title: "Start your practitioner profile — Healing Tides Collective",
   description:
-    "Create a free account to begin building your Healing Tides practitioner profile. Save your progress, preview your page, and submit for review when you're ready.",
+    "Create a free account to begin building your Healing Tides practitioner profile. Save your progress, preview your page, and publish when you're ready.",
 };
 
 const STEPS: { title: string; body: string }[] = [
   { title: "Create your account", body: "Save your place and start your profile." },
   { title: "Build your profile", body: "Add your story, specialties, location, and approach." },
   { title: "Preview before going live", body: "See your page before seekers can find it." },
-  { title: "Submit for review", body: "Profiles are reviewed before joining the collective." },
+  { title: "Publish when you're ready", body: "You're in control — nothing is public until you publish." },
 ];
 
 function Leaf({ className = "" }: { className?: string }) {
@@ -96,7 +96,7 @@ export default function JoinPage() {
             </h1>
             <p className="mt-4 max-w-md text-[15px] leading-[1.6] text-ink-soft sm:text-[16px]">
               Create a free account to begin building your Healing Tides profile. You can save your
-              progress, preview your page, and submit for review when you&rsquo;re ready.
+              progress, preview your page, and publish when you&rsquo;re ready.
             </p>
 
             {/* Benefits — the value of joining, called out up front. */}
@@ -148,7 +148,7 @@ export default function JoinPage() {
                     Create your free practitioner account
                   </h2>
                   <p className="mt-1.5 text-[13.5px] leading-[1.5] text-ink-soft">
-                    Nothing goes public until you submit and are approved.
+                    Nothing goes public until you publish it yourself.
                   </p>
                 </div>
 
@@ -183,7 +183,7 @@ export default function JoinPage() {
                 <span className="text-ink-muted">After signup:</span>
                 <span className="text-charcoal">
                   Build profile <span className="text-teal">→</span> Preview{" "}
-                  <span className="text-teal">→</span> Submit for review
+                  <span className="text-teal">→</span> Publish
                 </span>
               </div>
             </div>

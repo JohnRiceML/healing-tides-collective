@@ -27,6 +27,7 @@ import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
 import { describeSource, type ImportData } from "./_extract/types";
 import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
+import { holdMessage, readHold } from "@/app/_lib/moderation";
 
 export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
   const [displayName, setDisplayName] = useState(practitioner.displayName ?? "");
@@ -51,6 +52,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishing, startPublish] = useTransition();
   const isPublished = visibility === "PUBLISHED";
+
+  // Admin hold (set in /admin or by the Clerk webhook) — the practitioner can still edit
+  // while held, but can't publish/unpublish. Read from the original row (admins, not the
+  // practitioner, change this), so it's a constant for the session.
+  const held = readHold(practitioner.fieldValues) !== null;
+  const heldMsg = held ? holdMessage(practitioner.fieldValues) : "";
 
   // AI "drop your links / paste a bio → draft" assist — fills the form for review; never saves/publishes.
   const [paste, setPaste] = useState("");
@@ -589,48 +596,74 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
           <span
             aria-hidden
             className={`inline-block h-2 w-2 shrink-0 rounded-full ${
-              isPublished ? "bg-teal" : "bg-rule-strong/30"
+              held ? "bg-ocean" : isPublished ? "bg-teal" : "bg-rule-strong/30"
             }`}
           />
           <h2 id="publish-heading" className="font-display text-[20px] leading-tight text-charcoal">
-            {isPublished ? "Your profile is live" : "Your profile is a draft"}
+            {held
+              ? "Your profile is on hold"
+              : isPublished
+                ? "Your profile is live"
+                : "Your profile is a draft"}
           </h2>
         </div>
-        <p className="mt-3 text-[15px] leading-[1.6] text-ink-soft">
-          {isPublished
-            ? "People looking for care can find you. You can take it down any time — nothing is permanent."
-            : "Only you can see this right now. Publish when you're ready, at your own pace."}
-        </p>
 
-        {isPublished ? (
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-            {slug ? (
-              <LinkButton
-                href={`/practitioners/${slug}`}
-                target="_blank"
-                rel="noreferrer"
-                tone="secondary"
+        {held ? (
+          <>
+            <div className="mt-4 rounded-2xl border border-ocean/15 bg-ocean/[0.04] p-5">
+              <p className="text-[15px] leading-[1.6] text-charcoal">{heldMsg}</p>
+            </div>
+            <p className="mt-4 text-[14px] leading-[1.6] text-ink-soft">
+              Your profile isn&rsquo;t visible to the public right now, and publishing is paused — but
+              nothing is lost. You can still edit everything here. Questions? Email{" "}
+              <a
+                href="mailto:hello@healingtides.co"
+                className="link-underline rounded-full font-medium text-charcoal"
               >
-                View your public page →
-              </LinkButton>
-            ) : null}
-            <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>
-              {publishing ? "Taking it down…" : "Take it down"}
-            </Button>
-          </div>
+                hello@healingtides.co
+              </a>
+              .
+            </p>
+          </>
         ) : (
-          <div className="mt-6">
-            <Button type="button" onClick={onPublish} disabled={publishing}>
-              {publishing ? "Publishing…" : "Publish profile"}
-            </Button>
-          </div>
-        )}
+          <>
+            <p className="mt-3 text-[15px] leading-[1.6] text-ink-soft">
+              {isPublished
+                ? "People looking for care can find you. You can take it down any time — nothing is permanent."
+                : "Only you can see this right now. Publish when you're ready, at your own pace."}
+            </p>
 
-        {publishError ? (
-          <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">
-            {publishError}
-          </p>
-        ) : null}
+            {isPublished ? (
+              <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+                {slug ? (
+                  <LinkButton
+                    href={`/practitioners/${slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    tone="secondary"
+                  >
+                    View your public page →
+                  </LinkButton>
+                ) : null}
+                <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>
+                  {publishing ? "Taking it down…" : "Take it down"}
+                </Button>
+              </div>
+            ) : (
+              <div className="mt-6">
+                <Button type="button" onClick={onPublish} disabled={publishing}>
+                  {publishing ? "Publishing…" : "Publish profile"}
+                </Button>
+              </div>
+            )}
+
+            {publishError ? (
+              <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">
+                {publishError}
+              </p>
+            ) : null}
+          </>
+        )}
       </section>
 
       {importView ? (
