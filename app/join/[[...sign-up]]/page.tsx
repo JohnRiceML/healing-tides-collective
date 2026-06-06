@@ -158,7 +158,7 @@ export default function JoinPage() {
                   <SignUp
                     path="/join"
                     signInUrl="/sign-in"
-                    fallbackRedirectUrl="/practitioner"
+                    forceRedirectUrl="/practitioner"
                     appearance={joinClerkAppearance}
                   />
                 </div>

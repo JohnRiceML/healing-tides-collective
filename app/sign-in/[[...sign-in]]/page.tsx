@@ -30,7 +30,7 @@ export default function SignInPage() {
               <SignIn
                 path="/sign-in"
                 signUpUrl="/join"
-                fallbackRedirectUrl="/practitioner"
+                forceRedirectUrl="/practitioner"
                 appearance={clerkAppearance}
               />
             ) : (
