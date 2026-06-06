@@ -82,13 +82,6 @@ export function PublicPagePreview({
             ) : null}
           </div>
         </div>
-
-        {/* skeleton bio lines */}
-        <div className="mt-3.5 space-y-1.5">
-          <div className="h-2 w-full rounded-full bg-rule/45" />
-          <div className="h-2 w-5/6 rounded-full bg-rule/40" />
-          <div className="h-2 w-2/3 rounded-full bg-rule/35" />
-        </div>
       </div>
     </div>
   );
