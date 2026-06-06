@@ -9,7 +9,7 @@ import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { CoverThumb } from "@/app/practitioners/_components/CoverThumb";
-import { LivePreview } from "./_components/LivePreview";
+import { PublicPagePreview } from "./_components/PublicPagePreview";
 
 export const metadata: Metadata = {
   title: "Your dashboard — Healing Tides Collective",
@@ -128,6 +128,11 @@ export default async function PractitionerHome() {
   const completeness = p.completeness;
   const coverDesign = typeof fv.cover_design === "string" ? fv.cover_design : null;
   const coverColor = typeof fv.cover_color === "string" ? fv.cover_color : null;
+  const arrify = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : typeof v === "string" && v.trim() ? [v] : [];
+  const credentials = arrify(fv.credentials).join(", ");
+  const role = typeof fv.title === "string" ? fv.title : "";
+  const ageGroups = arrify(fv.age_groups);
   const badges = badgesFor({ createdAt: p.createdAt, verificationBadges: grantedBadgesFrom(p.fieldValues) });
   const isFounding = badges.some((b) => b.id === "founding_member");
   const editCta = completeness >= 100 ? "Edit profile" : "Finish profile";
@@ -244,15 +249,18 @@ export default async function PractitionerHome() {
         <Card className="!p-6">
           <p className="meta text-ink-muted">Your public page</p>
           <div className="mt-3">
-            <LivePreview
-              showHeader={false}
+            <PublicPagePreview
               name={p.displayName ?? ""}
+              credentials={credentials}
+              role={role}
               region={p.region ?? ""}
-              photoUrl={p.photoUrl ?? ""}
               specialties={p.specialties ?? []}
-              seed={p.slug ?? p.id}
+              modality={p.modality}
+              ageGroups={ageGroups}
+              photoUrl={p.photoUrl ?? ""}
               design={coverDesign}
               color={coverColor}
+              seed={p.slug ?? p.id}
             />
           </div>
           {isLive && p.slug ? (
