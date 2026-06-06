@@ -35,6 +35,7 @@ const cardRow = (over = {}) => ({
   title: null, // derived from fieldValues.title by the read layer
   specialties: [],
   photoUrl: null,
+  coverTheme: null, // derived from fieldValues.cover_theme
   featured: false,
   acceptingNew: false, // derived from fieldValues.availability_state
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -104,13 +105,14 @@ describe("getPublishedPractitioners", () => {
     expect(cards).toEqual([cardRow({ slug: "x", displayName: "X" })]);
   });
 
-  it("derives the role (title) + accepting status from fieldValues", async () => {
+  it("derives the role (title) + accepting status + cover theme from fieldValues", async () => {
     findMany.mockResolvedValue([
-      cardRow({ fieldValues: { title: "  Acupuncturist ", availability_state: "accepting" } }),
+      cardRow({ fieldValues: { title: "  Acupuncturist ", availability_state: "accepting", cover_theme: "meadow" } }),
     ]);
     const [card] = await getPublishedPractitioners();
     expect(card.title).toBe("Acupuncturist");
     expect(card.acceptingNew).toBe(true);
+    expect(card.coverTheme).toBe("meadow");
     expect(card).not.toHaveProperty("fieldValues"); // raw blob never leaves the read layer
   });
 

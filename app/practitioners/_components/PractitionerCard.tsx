@@ -36,7 +36,7 @@ function MapPin({ className = "" }: { className?: string }) {
  * allowlist; a plain img is the safe, deploy-proof choice).
  */
 export function PractitionerCard({ practitioner }: { practitioner: PractitionerCardData }) {
-  const { slug, displayName, bio, region, title, specialties, photoUrl, acceptingNew, createdAt, verificationBadges } =
+  const { slug, displayName, bio, region, title, specialties, photoUrl, coverTheme, acceptingNew, createdAt, verificationBadges } =
     practitioner;
 
   const isFounding =
@@ -53,7 +53,7 @@ export function PractitionerCard({ practitioner }: { practitioner: PractitionerC
       {/* Cover — the default "wide image" (their own once they upload one), with one
           status badge: accepting-new-clients takes priority; else a founding pill. */}
       <div className="relative h-28 w-full overflow-hidden">
-        <CoverArt seed={slug} className="h-full w-full" />
+        <CoverArt seed={slug} theme={coverTheme} className="h-full w-full" />
         {acceptingNew ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11.5px] font-medium text-charcoal shadow-sm backdrop-blur-sm">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#6f9b6a]" />

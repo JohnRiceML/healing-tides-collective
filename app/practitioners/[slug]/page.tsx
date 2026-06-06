@@ -213,7 +213,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           <div className="min-w-0">
             {/* Cover */}
             <div className="relative h-44 overflow-hidden rounded-3xl border border-rule/50 sm:h-56">
-              <ProfileCover seed={p.slug} className="h-full w-full" />
+              <ProfileCover seed={p.slug} theme={p.coverTheme} className="h-full w-full" />
             </div>
 
             {/* Portrait overlapping the cover */}

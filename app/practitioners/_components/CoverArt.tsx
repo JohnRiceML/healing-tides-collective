@@ -1,8 +1,12 @@
 // Default "wide image" for a practitioner — a calm, on-brand SVG cover evoking
-// tides. Deterministic from a seed (the slug), so each person gets a consistent,
-// distinct band of colour even before they upload their own. Original artwork
+// tides. Wave shape is deterministic from a seed (the slug) for per-card variety;
+// the colour comes from the chosen cover theme (defaults to Tide). Original artwork
 // (no photos, no licensing), tiny, and renders server-side.
 
+import { coverTheme } from "./cover-themes";
+
+// Seed-based fallback palettes (kept for pickCover's tested shape; colour now comes
+// from the cover theme).
 const PALETTES: [string, string, string][] = [
   ["#d6ede8", "#5f8f8b", "#1f3a5f"], // seafoam → teal → ocean
   ["#a8bfa3", "#5f8f8b", "#1f3a5f"], // sage → teal → ocean
@@ -55,8 +59,19 @@ export function pickCover(seed: string) {
   };
 }
 
-export function CoverArt({ seed, className }: { seed: string; className?: string }) {
-  const { palette: pal, wave, gid } = pickCover(seed);
+export function CoverArt({
+  seed,
+  className,
+  theme,
+}: {
+  seed: string;
+  className?: string;
+  theme?: string | null;
+}) {
+  // Wave SHAPE + gradient-id stay seed-based (per-card variety); the COLOR comes from
+  // the chosen cover theme (defaults to Tide).
+  const { wave, gid } = pickCover(seed);
+  const pal = coverTheme(theme).wave;
 
   return (
     <svg

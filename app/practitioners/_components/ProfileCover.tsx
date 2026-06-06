@@ -1,16 +1,9 @@
 // Wide watercolor cover banner for a practitioner profile — soft receding hills +
-// a botanical sprig, in the brand palette. Original SVG (no photos, no licensing),
-// renders server-side. A gentle blur gives the watercolor edge. The hue shifts a
-// little by seed (the slug) so each profile feels distinct without leaving the palette.
+// a botanical sprig. Original SVG (no photos, no licensing), renders server-side. A
+// gentle blur gives the watercolor edge. Colour comes from the chosen cover theme
+// (defaults to Tide); the seed only keeps gradient-ids unique.
 
-const PALETTES: { mist: string; hills: string[]; sprig: string }[] = [
-  // seafoam → teal → ocean (the mockup's blue-green)
-  { mist: "#eef3ee", hills: ["#cfe0d8", "#aecabf", "#84a79d", "#5f8f8b", "#3c6a6e"], sprig: "#4d7d79" },
-  // sage-forward
-  { mist: "#eef2ea", hills: ["#d3e0cf", "#b3c7ab", "#8aa886", "#62876a", "#3f6450"], sprig: "#5a8268" },
-  // cooler, ocean-deep
-  { mist: "#edf1f1", hills: ["#cfe1de", "#a6c6c4", "#7aa4a6", "#52818c", "#2f5566"], sprig: "#46757e" },
-];
+import { coverTheme } from "./cover-themes";
 
 function hashSeed(s: string): number {
   let h = 0;
@@ -18,10 +11,17 @@ function hashSeed(s: string): number {
   return h;
 }
 
-export function ProfileCover({ seed, className }: { seed: string; className?: string }) {
-  const h = hashSeed(seed || "tide");
-  const pal = PALETTES[h % PALETTES.length];
-  const gid = `htc-pc-${h.toString(36)}`;
+export function ProfileCover({
+  seed,
+  className,
+  theme,
+}: {
+  seed: string;
+  className?: string;
+  theme?: string | null;
+}) {
+  const pal = coverTheme(theme);
+  const gid = `htc-pc-${hashSeed(seed || "tide").toString(36)}`;
 
   return (
     <svg

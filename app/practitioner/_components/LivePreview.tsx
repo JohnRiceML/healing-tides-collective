@@ -14,12 +14,14 @@ export function LivePreview({
   photoUrl,
   specialties,
   seed,
+  theme,
 }: {
   name: string;
   region: string;
   photoUrl: string;
   specialties: string[];
   seed: string;
+  theme?: string | null;
 }) {
   const shown = specialties.slice(0, 3);
   const initial = (name.trim()[0] ?? "·").toUpperCase();
@@ -35,7 +37,7 @@ export function LivePreview({
       </div>
 
       <div className="relative mt-3 h-24 w-full overflow-hidden">
-        <ProfileCover seed={seed} className="h-full w-full" />
+        <ProfileCover seed={seed} theme={theme} className="h-full w-full" />
       </div>
 
       <div className="px-5 pb-5 text-center">
