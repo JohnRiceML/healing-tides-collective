@@ -193,11 +193,18 @@ export default async function PractitionerHome() {
             {/* Coastal image panel with a wave badge */}
             <div className="relative w-[34%] shrink-0 overflow-hidden bg-seafoam/30">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/join-cove.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <span className="absolute left-1/2 top-8 z-10 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border border-white/70 bg-sand/90 text-teal shadow-sm backdrop-blur-sm">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden className="h-6 w-6">
-                  <path d="M4 10q3 -3 6 0t6 0" />
-                  <path d="M4 15q3 -3 6 0t6 0" />
+              <img
+                src="/join-cove.png"
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ filter: "saturate(1.45) brightness(1.03)" }}
+              />
+              {/* green wash — warmer + more alive */}
+              <div className="absolute inset-0 bg-gradient-to-b from-seafoam/25 via-sage/25 to-teal/40" />
+              <span className="absolute left-1/2 top-8 z-10 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border border-white/70 bg-sand/90 text-[#5a8268] shadow-sm backdrop-blur-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-6 w-6">
+                  <path d="M4 20C4 12 9 5 20 4c0 11-7 16-15 16-1 0-1-3-1-3z" />
+                  <path d="M8 16c2-3 5-6 9-8" />
                 </svg>
               </span>
             </div>
