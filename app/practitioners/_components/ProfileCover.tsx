@@ -1,9 +1,9 @@
-// Watercolor cover for a practitioner — a soft gradient WASH (chosen colour) + a clean
-// MOTIF (chosen design): waves, hills, mountains, a leaf sprig, a tree, or plain. The two
-// are picked independently. Calm + simple by design so the portrait stays the focus.
-// Original SVG, renders server-side; the seed only keeps gradient-ids unique.
+// Watercolor cover — a soft sky WASH (chosen colour) + a layered MOTIF (chosen design):
+// Waves, Hills, Mountains, Botanical, Horizon, Dunes, or Minimal. Layers step through the
+// colour's light→deep ramp for real depth; a gentle blur gives the painterly edge. Original
+// SVG, renders server-side; the seed only keeps gradient-ids unique.
 
-import { coverColor, coverDesign } from "./cover-themes";
+import { coverColor, coverDesign, type CoverColor } from "./cover-themes";
 
 function hashSeed(s: string): number {
   let h = 0;
@@ -11,67 +11,110 @@ function hashSeed(s: string): number {
   return h;
 }
 
-/** The motif paths for a design, drawn in the colour's `ink`. */
-function Motif({ design, ink }: { design: string; ink: string }) {
-  switch (design) {
-    case "plain":
-      return null;
-    case "hills":
-      return (
-        <>
-          <path d="M0,206 C220,176 440,220 660,196 C880,172 1050,206 1200,194 L1200,340 L0,340 Z" fill={ink} opacity="0.16" />
-          <path d="M0,252 C260,226 520,266 780,246 C980,230 1110,256 1200,248 L1200,340 L0,340 Z" fill={ink} opacity="0.26" />
-          <path d="M0,296 C320,282 660,312 1000,296 C1110,291 1160,300 1200,298 L1200,340 L0,340 Z" fill={ink} opacity="0.38" />
-        </>
-      );
-    case "mountains":
-      return (
-        <>
-          <path d="M0,214 L230,150 L410,222 L610,130 L830,216 L1030,160 L1200,222 L1200,340 L0,340 Z" fill={ink} opacity="0.2" />
-          <path d="M0,262 L290,200 L540,272 L780,200 L1020,266 L1200,228 L1200,340 L0,340 Z" fill={ink} opacity="0.32" />
-          <path d="M0,302 L380,266 L760,308 L1120,266 L1200,288 L1200,340 L0,340 Z" fill={ink} opacity="0.42" />
-        </>
-      );
-    case "leaf":
-      return (
-        <>
-          <path d="M0,300 C400,284 800,308 1200,294 L1200,340 L0,340 Z" fill={ink} opacity="0.2" />
-          <g fill={ink}>
-            <path d="M1076,300 C1058,244 1066,184 1098,134" stroke={ink} strokeWidth="2.5" fill="none" opacity="0.34" strokeLinecap="round" />
-            <path d="M1072,262 C1038,254 1016,232 1012,206 C1046,210 1068,232 1072,262 Z" opacity="0.22" />
-            <path d="M1080,228 C1116,222 1140,200 1146,172 C1112,174 1086,196 1080,228 Z" opacity="0.2" />
-            <path d="M1086,196 C1054,188 1034,168 1031,144 C1062,148 1082,168 1086,196 Z" opacity="0.2" />
-            <path d="M1094,166 C1128,160 1150,140 1156,114 C1124,116 1100,138 1094,166 Z" opacity="0.18" />
-            <circle cx="1100" cy="132" r="6" opacity="0.26" />
-          </g>
-        </>
-      );
-    case "tree":
-      return (
-        <>
-          <path d="M0,302 C400,288 800,310 1200,296 L1200,340 L0,340 Z" fill={ink} opacity="0.2" />
-          <g stroke={ink} fill="none" strokeWidth="2" opacity="0.32" strokeLinecap="round">
-            <path d="M900,302 L900,168" strokeWidth="3.5" />
-            <path d="M900,210 C872,200 850,196 828,198 M900,196 C928,184 952,178 976,180 M900,182 C880,168 866,152 858,134 M900,168 C922,152 938,136 948,116 M900,156 C890,140 884,126 882,110" />
-            <g fill={ink} stroke="none" opacity="0.5">
-              <circle cx="828" cy="198" r="4.5" />
-              <circle cx="976" cy="180" r="4.5" />
-              <circle cx="858" cy="134" r="4.5" />
-              <circle cx="948" cy="116" r="4.5" />
-              <circle cx="882" cy="110" r="4.5" />
-            </g>
-          </g>
-        </>
-      );
-    case "waves":
-    default:
-      return (
-        <>
-          <path d="M0,236 C300,210 600,258 900,234 C1050,222 1150,240 1200,232 L1200,340 L0,340 Z" fill={ink} opacity="0.22" />
-          <path d="M0,288 C360,268 760,298 1200,282 L1200,340 L0,340 Z" fill={ink} opacity="0.34" />
-        </>
-      );
+// Layered fill paths per design (back → front), drawn with ramp[0..4].
+const LAYERS: Record<string, string[]> = {
+  waves: [
+    "M0,150 C300,128 600,168 900,148 C1050,138 1150,156 1200,150 L1200,340 L0,340 Z",
+    "M0,196 C280,176 560,212 860,192 C1040,180 1140,198 1200,192 L1200,340 L0,340 Z",
+    "M0,236 C320,218 620,250 920,232 C1060,224 1150,238 1200,234 L1200,340 L0,340 Z",
+    "M0,274 C300,258 640,288 960,270 C1080,263 1160,276 1200,272 L1200,340 L0,340 Z",
+    "M0,306 C360,292 760,316 1200,302 L1200,340 L0,340 Z",
+  ],
+  hills: [
+    "M0,170 C200,140 420,180 640,158 C860,136 1040,172 1200,158 L1200,340 L0,340 Z",
+    "M0,210 C240,184 500,222 760,202 C980,186 1110,214 1200,206 L1200,340 L0,340 Z",
+    "M0,248 C280,226 560,260 840,242 C1020,230 1130,250 1200,244 L1200,340 L0,340 Z",
+    "M0,284 C320,266 660,298 1000,280 C1100,274 1160,286 1200,282 L1200,340 L0,340 Z",
+    "M0,312 C400,300 800,322 1200,308 L1200,340 L0,340 Z",
+  ],
+  mountains: [
+    "M0,180 L240,118 L430,196 L650,104 L880,190 L1080,130 L1200,194 L1200,340 L0,340 Z",
+    "M0,224 L300,162 L540,238 L780,160 L1030,232 L1200,196 L1200,340 L0,340 Z",
+    "M0,262 L340,206 L600,276 L860,200 L1100,266 L1200,236 L1200,340 L0,340 Z",
+    "M0,296 L400,256 L780,302 L1120,258 L1200,284 L1200,340 L0,340 Z",
+    "M0,318 L520,298 L920,322 L1200,304 L1200,340 L0,340 Z",
+  ],
+  dunes: [
+    "M0,196 C420,150 720,244 1200,184 L1200,340 L0,340 Z",
+    "M0,238 C360,202 820,282 1200,222 L1200,340 L0,340 Z",
+    "M0,272 C460,240 840,300 1200,258 L1200,340 L0,340 Z",
+    "M0,300 C420,280 880,318 1200,288 L1200,340 L0,340 Z",
+    "M0,320 C520,310 940,330 1200,312 L1200,340 L0,340 Z",
+  ],
+};
+
+// Soft white accent lines that weave through the Waves design.
+const WAVE_ACCENTS = [
+  "M0,166 C300,144 600,184 900,164 C1050,154 1150,172 1200,166",
+  "M0,250 C320,232 620,264 920,246 C1060,238 1150,252 1200,248",
+  "M0,290 C300,274 640,304 960,286 C1080,279 1160,292 1200,288",
+];
+
+function Scene({ design, c, gid }: { design: string; c: CoverColor; gid: string }) {
+  const r = c.ramp;
+
+  if (design === "minimal") {
+    return (
+      <path d="M0,256 C400,236 800,268 1200,250 L1200,340 L0,340 Z" fill={r[1]} opacity="0.5" />
+    );
   }
+
+  if (design === "botanical") {
+    // A faint ground + an elegant line-art leaf sprig, centered.
+    return (
+      <>
+        <path d="M0,300 C400,286 800,310 1200,296 L1200,340 L0,340 Z" fill={r[1]} opacity="0.45" />
+        <g stroke={r[4]} fill="none" strokeWidth="2.2" opacity="0.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M600,302 C594,250 598,198 606,148" />
+          <path d="M599,256 C566,250 542,232 532,206 C566,206 590,224 599,256 Z" />
+          <path d="M601,244 C634,238 658,220 668,194 C634,194 610,212 601,244 Z" />
+          <path d="M601,212 C572,206 552,188 544,164 C572,166 593,184 601,212 Z" />
+          <path d="M603,200 C632,194 652,176 660,152 C632,154 611,172 603,200 Z" />
+          <path d="M604,172 C580,166 564,150 558,130 C580,132 597,148 604,172 Z" />
+          <path d="M606,162 C630,156 646,140 652,120 C630,122 613,138 606,162 Z" />
+          <path d="M606,148 C600,132 600,118 606,106 C612,118 612,132 606,148 Z" />
+        </g>
+      </>
+    );
+  }
+
+  if (design === "horizon") {
+    return (
+      <>
+        {/* sun + glow, just above the waterline */}
+        <circle cx="600" cy="158" r="80" fill="#ffffff" opacity="0.28" />
+        <circle cx="600" cy="156" r="46" fill="#fdf6ec" opacity="0.9" />
+        {/* water */}
+        <rect x="0" y="196" width="1200" height="144" fill={r[2]} opacity="0.9" />
+        <rect x="0" y="196" width="1200" height="144" fill={r[3]} opacity="0.22" />
+        {/* sun reflection on the water */}
+        <path d="M576,200 L624,200 L640,340 L560,340 Z" fill="#fdf6ec" opacity="0.22" />
+        {/* ripple lines */}
+        <g stroke="#ffffff" strokeWidth="2" fill="none" opacity="0.22" strokeLinecap="round">
+          <path d="M120,236 H1080" />
+          <path d="M220,272 H980" />
+          <path d="M320,304 H880" />
+        </g>
+      </>
+    );
+  }
+
+  // Layered designs: waves / hills / mountains / dunes
+  const layers = LAYERS[design] ?? LAYERS.waves;
+  return (
+    <>
+      {layers.map((d, i) => (
+        <path key={i} d={d} fill={r[i]} opacity={0.92} />
+      ))}
+      {design === "waves" ? (
+        <g stroke="#ffffff" fill="none" strokeWidth="2.2" opacity="0.38" strokeLinecap="round">
+          {WAVE_ACCENTS.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
+      ) : null}
+    </>
+  );
 }
 
 export function ProfileCover({
@@ -87,8 +130,8 @@ export function ProfileCover({
 }) {
   const c = coverColor(color);
   const d = coverDesign(design);
-  const [c0, c1, c2] = c.grad;
   const gid = `htc-pc-${hashSeed(seed || "tide").toString(36)}`;
+  const sharp = d === "mountains" || d === "botanical";
 
   return (
     <svg
@@ -99,20 +142,24 @@ export function ProfileCover({
       focusable="false"
     >
       <defs>
-        <linearGradient id={`${gid}-g`} x1="0" y1="0" x2="0.35" y2="1">
-          <stop offset="0%" stopColor={c0} />
-          <stop offset="58%" stopColor={c1} />
-          <stop offset="100%" stopColor={c2} />
+        <linearGradient id={`${gid}-sky`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={c.sky[0]} />
+          <stop offset="100%" stopColor={c.sky[1]} />
         </linearGradient>
-        <filter id={`${gid}-s`} x="-5%" y="-5%" width="110%" height="115%">
-          <feGaussianBlur stdDeviation={d === "mountains" || d === "tree" ? "1.4" : "2.4"} />
+        <radialGradient id={`${gid}-haze`} cx="0.42" cy="0.18" r="0.7">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+          <stop offset="72%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <filter id={`${gid}-soft`} x="-4%" y="-4%" width="108%" height="112%">
+          <feGaussianBlur stdDeviation={sharp ? "1.3" : "2.4"} />
         </filter>
       </defs>
 
-      <rect width="1200" height="340" fill={`url(#${gid}-g)`} />
-      <g filter={`url(#${gid}-s)`}>
-        <Motif design={d} ink={c.ink} />
+      <rect width="1200" height="340" fill={`url(#${gid}-sky)`} />
+      <g filter={`url(#${gid}-soft)`}>
+        <Scene design={d} c={c} gid={gid} />
       </g>
+      <rect width="1200" height="340" fill={`url(#${gid}-haze)`} />
     </svg>
   );
 }
