@@ -22,7 +22,10 @@ export function ExpandableValue({ text, lines = 2 }: { text: string; lines?: num
 
   return (
     <>
-      <span ref={ref} className={`block ${open ? "" : clamp}`}>
+      {/* NB: don't add `block` alongside the clamp — `line-clamp-*` sets
+          display:-webkit-box, and a `block` utility overrides it and kills the clamp.
+          So: clamp class when collapsed, plain `block` only when expanded. */}
+      <span ref={ref} className={open ? "block" : clamp}>
         {text}
       </span>
       {overflows || open ? (

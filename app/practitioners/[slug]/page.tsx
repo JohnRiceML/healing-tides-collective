@@ -380,7 +380,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                       <div className="min-w-0">
                         <dt className="text-[13px] font-semibold leading-tight text-charcoal">{row.label}</dt>
                         <dd className="mt-1 text-[14px] leading-[1.45] text-ink-soft">
-                          <ExpandableValue text={row.value ?? ""} />
+                          <ExpandableValue text={row.value ?? ""} lines={1} />
                         </dd>
                       </div>
                     </div>
