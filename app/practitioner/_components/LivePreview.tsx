@@ -14,7 +14,8 @@ export function LivePreview({
   photoUrl,
   specialties,
   seed,
-  theme,
+  design,
+  color,
   showHeader = true,
 }: {
   name: string;
@@ -22,7 +23,8 @@ export function LivePreview({
   photoUrl: string;
   specialties: string[];
   seed: string;
-  theme?: string | null;
+  design?: string | null;
+  color?: string | null;
   showHeader?: boolean;
 }) {
   const shown = specialties.slice(0, 3);
@@ -41,7 +43,7 @@ export function LivePreview({
       ) : null}
 
       <div className={`relative h-24 w-full overflow-hidden ${showHeader ? "mt-3" : ""}`}>
-        <ProfileCover seed={seed} theme={theme} className="h-full w-full" />
+        <ProfileCover seed={seed} design={design} color={color} className="h-full w-full" />
       </div>
 
       <div className="px-5 pb-5 text-center">

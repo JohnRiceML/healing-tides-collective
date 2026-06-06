@@ -126,7 +126,8 @@ export default async function PractitionerHome() {
   const firstName = (p.displayName ?? "").trim().split(/\s+/)[0] || "there";
   const memberSince = new Date(p.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const completeness = p.completeness;
-  const coverTheme = typeof fv.cover_theme === "string" ? fv.cover_theme : null;
+  const coverDesign = typeof fv.cover_design === "string" ? fv.cover_design : null;
+  const coverColor = typeof fv.cover_color === "string" ? fv.cover_color : null;
   const badges = badgesFor({ createdAt: p.createdAt, verificationBadges: grantedBadgesFrom(p.fieldValues) });
   const isFounding = badges.some((b) => b.id === "founding_member");
   const editCta = completeness >= 100 ? "Edit profile" : "Finish profile";
@@ -186,7 +187,7 @@ export default async function PractitionerHome() {
         <Card className="!p-6">
           <div className="flex items-center gap-3">
             <span className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-rule/60">
-              <ProfileCover seed={p.slug ?? p.id} theme={coverTheme} className="h-full w-full" />
+              <ProfileCover seed={p.slug ?? p.id} design={coverDesign} color={coverColor} className="h-full w-full" />
             </span>
             <p className="meta text-ink-muted">Profile strength</p>
           </div>
@@ -249,7 +250,8 @@ export default async function PractitionerHome() {
               photoUrl={p.photoUrl ?? ""}
               specialties={p.specialties ?? []}
               seed={p.slug ?? p.id}
-              theme={coverTheme}
+              design={coverDesign}
+              color={coverColor}
             />
           </div>
           {isLive && p.slug ? (

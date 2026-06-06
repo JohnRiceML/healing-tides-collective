@@ -39,7 +39,8 @@ export type PractitionerCard = {
   title: string | null; // professional title / role, shown as the card eyebrow
   specialties: string[];
   photoUrl: string | null;
-  coverTheme: string | null; // chosen cover palette (fieldValues.cover_theme); null → default
+  coverDesign: string | null; // chosen cover motif (fieldValues.cover_design); null → default
+  coverColor: string | null; // chosen cover palette (fieldValues.cover_color); null → default
   featured: boolean;
   acceptingNew: boolean; // availability_state === "accepting" → "Accepting new clients" badge
   createdAt: Date; // for the Founding Member badge
@@ -136,7 +137,8 @@ export async function getPublishedPractitioners(
     slug: r.slug as string,
     displayName: r.displayName as string,
     title: fieldString(fieldValues, "title"),
-    coverTheme: fieldString(fieldValues, "cover_theme"),
+    coverDesign: fieldString(fieldValues, "cover_design"),
+    coverColor: fieldString(fieldValues, "cover_color"),
     acceptingNew: fieldString(fieldValues, "availability_state") === "accepting",
     verificationBadges: grantedBadgesFrom(fieldValues),
   }));
@@ -181,7 +183,8 @@ export async function getPractitionerBySlug(
     slug: r.slug,
     displayName: r.displayName,
     title: fieldString(r.fieldValues, "title"),
-    coverTheme: fieldString(r.fieldValues, "cover_theme"),
+    coverDesign: fieldString(r.fieldValues, "cover_design"),
+    coverColor: fieldString(r.fieldValues, "cover_color"),
     acceptingNew: fieldString(r.fieldValues, "availability_state") === "accepting",
     verificationBadges: grantedBadgesFrom(r.fieldValues),
   };

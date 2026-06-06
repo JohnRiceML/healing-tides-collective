@@ -330,7 +330,8 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     { label: "Write your healing note", done: !!values.trim() },
   ];
 
-  const coverThemeValue = typeof fieldValues.cover_theme === "string" ? fieldValues.cover_theme : "";
+  const coverDesignValue = typeof fieldValues.cover_design === "string" ? fieldValues.cover_design : "";
+  const coverColorValue = typeof fieldValues.cover_color === "string" ? fieldValues.cover_color : "";
 
   return (
     <form onSubmit={onSubmit} className={importView ? (importCollapsed ? "pb-24" : "pb-64") : ""}>
@@ -425,8 +426,13 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                 </div>
               </Field>
 
-              <Field label="Cover style" hint="The watercolor background on your profile and card.">
-                <CoverThemePicker value={coverThemeValue} onChange={(id) => setField("cover_theme", id)} />
+              <Field label="Cover style" hint="Pick a design, then a color — shown on your profile and card.">
+                <CoverThemePicker
+                  design={coverDesignValue}
+                  color={coverColorValue}
+                  onDesignChange={(id) => setField("cover_design", id)}
+                  onColorChange={(id) => setField("cover_color", id)}
+                />
               </Field>
 
               <Field label="Display name">
@@ -608,7 +614,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
 
         {/* ───── RIGHT: sidebar ───── */}
         <aside className="space-y-5 lg:sticky lg:top-24">
-          <LivePreview name={displayName} region={region} photoUrl={photoUrl} specialties={specialties} seed={slug ?? practitioner.id} theme={coverThemeValue} />
+          <LivePreview name={displayName} region={region} photoUrl={photoUrl} specialties={specialties} seed={slug ?? practitioner.id} design={coverDesignValue} color={coverColorValue} />
 
           <div className="rounded-3xl border border-rule/80 bg-white p-5">
             <p className="meta text-ink-muted">What helps you get matched</p>
