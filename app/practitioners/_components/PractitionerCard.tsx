@@ -30,7 +30,7 @@ function MapPin({ className = "" }: { className?: string }) {
 
 /**
  * One person in the directory — a warm, linked card: a default "wide image" cover
- * (CoverArt, until they upload their own) with a single status badge, an overlapping
+ * (ProfileCover, until they upload their own) with a single status badge, an overlapping
  * circular portrait, their name + location + role, a line of bio, and a few focus
  * areas. Photos render as a plain lazy <img> (their host isn't in next/image's
  * allowlist; a plain img is the safe, deploy-proof choice).
