@@ -150,6 +150,17 @@ function Scene({ design, c, gid }: { design: string; c: CoverColor; gid: string 
   const skyLow = c.sky[1];
   const sun = c.sun ?? "#fbf0dd";
 
+  // ── Classic — the original cover: a clean sky wash + a few calm, smooth wave bands ──
+  if (design === "classic") {
+    return (
+      <g filter={`url(#${gid}-b1)`}>
+        <path d="M0,228 C300,204 600,250 900,228 C1050,217 1150,234 1200,226 L1200,340 L0,340 Z" fill={r[2]} opacity="0.55" />
+        <path d="M0,272 C360,252 760,294 1200,276 L1200,340 L0,340 Z" fill={r[3]} opacity="0.72" />
+        <path d="M0,308 C400,296 800,322 1200,304 L1200,340 L0,340 Z" fill={r[4]} opacity="0.85" />
+      </g>
+    );
+  }
+
   // ── Minimal — barely there: one whisper-soft, gradient-washed band ──
   if (design === "minimal") {
     const { top, bottom } = layerStops(r[2], skyLow, 0.4);
@@ -180,6 +191,7 @@ function Scene({ design, c, gid }: { design: string; c: CoverColor; gid: string 
         {/* A single elegant sprig: one graceful stem with paired tapering leaves,
             consistent thin stroke. Sits just right of centre, rising from the field. */}
         <g
+          transform="translate(208,-6)"
           stroke={stroke}
           fill="none"
           strokeWidth="2"
@@ -207,7 +219,7 @@ function Scene({ design, c, gid }: { design: string; c: CoverColor; gid: string 
   if (design === "horizon") {
     const waterTop = mix(r[2], skyLow, 0.35); // hazy where the water meets the sky
     const waterBot = r[4];
-    const cx = 600;
+    const cx = 432; // sun sits off-centre (left of middle) — more natural than dead-centre
     const horizon = 196;
     const sunR = 44;
     const sunCy = horizon - 24;
@@ -233,9 +245,9 @@ function Scene({ design, c, gid }: { design: string; c: CoverColor; gid: string 
         {/* soft sun-shimmer — concentrated under the sun + blurred, so it reads as light
             on water rather than ruled lines */}
         <g stroke={lighten(sun, 0.32)} fill="none" strokeLinecap="round" filter={`url(#${gid}-b2)`}>
-          <path d="M414,230 H786" strokeWidth="2.6" opacity="0.5" />
-          <path d="M452,262 H748" strokeWidth="2.2" opacity="0.36" />
-          <path d="M492,296 H708" strokeWidth="1.8" opacity="0.24" />
+          <path d={`M${cx - 186},230 H${cx + 186}`} strokeWidth="2.6" opacity="0.5" />
+          <path d={`M${cx - 148},262 H${cx + 148}`} strokeWidth="2.2" opacity="0.36" />
+          <path d={`M${cx - 108},296 H${cx + 108}`} strokeWidth="1.8" opacity="0.24" />
         </g>
       </>
     );

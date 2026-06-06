@@ -29,6 +29,7 @@ export const COVER_COLORS: CoverColor[] = [
 ];
 
 export const COVER_DESIGNS: CoverDesign[] = [
+  { id: "classic", label: "Classic", rep: "tide" },
   { id: "waves", label: "Waves", rep: "sky" },
   { id: "hills", label: "Hills", rep: "meadow" },
   { id: "mountains", label: "Mountains", rep: "sky" },
