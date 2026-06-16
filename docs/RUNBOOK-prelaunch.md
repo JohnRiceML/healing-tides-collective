@@ -64,6 +64,6 @@ Local + Preview currently share the prod DB; a branch isolates them so testing n
 ---
 
 ## After all steps
-- Tick the boxes in [`docs/PHASE-2-STATUS.md`](PHASE-2-STATUS.md) § *Pre-launch hardening*.
+- Tick the boxes in [`docs/BUILD-TRACKER.md`](BUILD-TRACKER.md) § *Config owed by John*.
 - Scrub any remaining exposed creds from notes / chat history.
 - Smoke-test the full practitioner flow on prod with the new prod Clerk instance: sign up → build profile → publish → public page renders → appears in `/practitioners`.

@@ -1,6 +1,6 @@
 # Product Spec — from Nora (2026-06)
 
-> Nora's full product vision, captured from her responses to the Phase-2 inputs ask. This is the **canonical spec** for the upcoming builds. Taxonomy lives separately in [taxonomy.md](taxonomy.md) + `app/_lib/taxonomy.ts`. Status of each piece is tracked in [../PHASE-2-STATUS.md](../PHASE-2-STATUS.md).
+> Nora's full product vision, captured from her responses to the Phase-2 inputs ask. This is the **canonical spec** for the upcoming builds. Taxonomy lives separately in [taxonomy.md](taxonomy.md) + `app/_lib/taxonomy.ts`. Status of each piece is tracked in [../BUILD-TRACKER.md](../BUILD-TRACKER.md).
 >
 > Scale note: this spans the rest of the **practitioner** side *and* the whole **seeker / matching** side (previously the deferred brief) + an admin founder dashboard + a verification system + membership tiers. It is **many builds**, not one — see the roadmap at the bottom.
 

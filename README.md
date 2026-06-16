@@ -29,7 +29,7 @@ A working Next.js app, live on production.
 - **Backend:** Prisma 7 → **Neon Postgres** and **Clerk** auth are **wired** (the `init` migration is applied; the listing reads + writes live). **Stripe** (billing) and **Resend** (email) are decided but **not yet wired**.
 - **Phase 2 — Get Matched (seeker side / matching engine):** a **clickable prototype** under `/prototype` (UI only). The guided seeker intake + matching is a separate, deferred brief, gated on the PHI/HIPAA decision.
 
-Living docs: **[`docs/SYSTEM.md`](docs/SYSTEM.md)** (where things live + status) · [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) (roadmap) · [`planning/decisions-log.md`](planning/decisions-log.md) (ADRs — why things are the way they are).
+Living docs: **[`docs/SYSTEM.md`](docs/SYSTEM.md)** (where things live + status) · [`docs/BUILD-TRACKER.md`](docs/BUILD-TRACKER.md) (the build tracker — status, roadmap, open decisions) · [`planning/decisions-log.md`](planning/decisions-log.md) (ADRs — why things are the way they are).
 
 ## Stack
 
@@ -124,7 +124,7 @@ healing-tides-collective/
 ├── tests/                     Vitest suite (read layer, publish/save actions, utils)
 ├── .claude/agents/            13 agents — backend system owners + the DB & style teams
 ├── sanity/                    client, queries, image/live helpers, schema types
-├── docs/                      SYSTEM.md (the map), PHASE-2-STATUS.md, architecture/,
+├── docs/                      SYSTEM.md (the map), BUILD-TRACKER.md, architecture/,
 │                              design/UI-SYSTEM.md, brand / positioning / personas
 ├── planning/                  decisions-log (ADRs), timeline, milestones, setup-checklist
 ├── notes/ inspiration/ assets/ public/

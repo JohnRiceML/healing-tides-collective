@@ -16,6 +16,9 @@ This doc is the "structure for the next stage." It locks the stack and the syste
 | Auth | **Clerk** (hosted) | Owns identity; local `User` is a mirror. |
 | Billing | **Stripe** | Source of truth; app mirrors subscription state. |
 | Email | **Resend** (+ React Email) | Transactional only. |
+
+> **⚠️ Status & a brief override (2026-06-16).** This table is the *intended architecture*, not the wired state. **Stripe and Resend are decided + agent-stubbed but not implemented** — see [BUILD-TRACKER.md](../BUILD-TRACKER.md) for live status. Also, the **June-10 build brief moved email to Outlook/Microsoft 365** (`nora@healingtides.co`); the sender mechanism (Microsoft Graph API vs. a transactional service like Resend) is an open decision tracked in BUILD-TRACKER § Open decisions.
+
 | CMS | **Sanity** (existing) | Editorial / journal content — unchanged. |
 | Hosting | **Vercel** | Existing. |
 

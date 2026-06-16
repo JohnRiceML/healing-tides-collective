@@ -60,7 +60,7 @@ Reference implementation for all four: the sibling **counsel-post** repo (which 
 **Auth — wired 2026-05-31** (env-gated; ✅ `tsc`): `lib/clerk-enabled.ts` (the gate boolean — db-free), `lib/auth.ts` (`getCurrentDbUser`, `getOrCreatePractitioner`), `proxy.ts` (Clerk proxy), `<ClerkProvider>` in `app/layout.tsx`. With no Clerk keys it all no-ops so the app still runs. Flow: `/join` (sign-up) → `/practitioner`. **Pending:** add Clerk keys to `.env.local` + enable Google in the Clerk dashboard.
 
 ## Where plans & decisions live
-- **Phase 2 status & roadmap:** [PHASE-2-STATUS.md](PHASE-2-STATUS.md) — what's shipped vs. what's left.
+- **Build tracker (status & roadmap):** [BUILD-TRACKER.md](BUILD-TRACKER.md) — what's shipped vs. what's left, keyed to the June-10 brief, with open decisions. (Supersedes the retired PHASE-2-STATUS.md.)
 - **Next-stage plan:** [docs/architecture/PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) — stack, ownership, env contract, open scope questions.
 - **Decisions (ADRs):** [planning/decisions-log.md](../planning/decisions-log.md) — why things are the way they are.
 - **Brand / product:** `docs/` — `positioning`, `personas`, `content-strategy`, `design-spec`, `brand-guidelines`.
