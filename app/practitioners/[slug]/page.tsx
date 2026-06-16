@@ -7,6 +7,7 @@ import { Container, DLRow } from "@/app/_components/ui";
 import { getPractitionerBySlug, type PractitionerProfile } from "@/lib/practitioners";
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
 import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
+import { safeWebsite } from "@/lib/url";
 import { SITE_URL } from "@/lib/site";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { ProfileCover } from "../_components/ProfileCover";
@@ -65,6 +66,10 @@ function initialOf(name: string): string {
   return first ? first.toUpperCase() : "·";
 }
 
+/** Free-text profile fields that hold a URL — rendered as a sanitized link, not raw
+ *  text. (booking_link + website are surfaced elsewhere; these two only live here.) */
+const URL_FIELDS = new Set(["video_url", "socials"]);
+
 /** Remaining rich fields (those not already surfaced in the hero/sidebar). */
 function RichProfile({
   fieldValues,
@@ -88,6 +93,8 @@ function RichProfile({
           <dl className="mt-2">
             {section.fields.map((field) => {
               const v = fieldValues[field.id];
+              // URL fields → a safe external link (drops javascript:/data:/… schemes).
+              const href = URL_FIELDS.has(field.id) ? safeWebsite(typeof v === "string" ? v : "") : null;
               const flat =
                 field.type === "chips" && field.options
                   ? (Array.isArray(v) ? v : [v as string]).map((id) => optionLabel(field.id, id)).join(" · ")
@@ -96,7 +103,20 @@ function RichProfile({
                     : null;
               return (
                 <DLRow key={field.id} label={field.label}>
-                  {flat !== null ? flat : <span className="whitespace-pre-line">{v as string}</span>}
+                  {href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="break-words text-teal underline-offset-2 hover:underline"
+                    >
+                      {field.id === "video_url" ? "Watch introduction ↗" : href.replace(/^https?:\/\//, "")}
+                    </a>
+                  ) : flat !== null ? (
+                    flat
+                  ) : (
+                    <span className="whitespace-pre-line">{v as string}</span>
+                  )}
                 </DLRow>
               );
             })}
