@@ -99,6 +99,16 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
     .filter((f) => !f.filled)
     .map((f) => f.label);
 
+  // The hard publish gate — mirrors readyToPublish() in publish-actions.ts (name + bio).
+  // Surfacing it client-side turns a server-side rejection into a calm, specific nudge.
+  const missingToPublish = [
+    { filled: !!displayName.trim(), label: "your name" },
+    { filled: !!bio.trim(), label: "a short bio" },
+  ]
+    .filter((f) => !f.filled)
+    .map((f) => f.label);
+  const canPublish = missingToPublish.length === 0;
+
   const statusLabel = held ? "On hold" : isPublished ? "Live" : "Draft";
 
   function runSave() {
@@ -325,6 +335,8 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   };
 
   const checklist = [
+    { label: "Add your name", done: !!displayName.trim() },
+    { label: "Write a short bio", done: !!bio.trim() },
     { label: "Add how you work", done: Boolean(modality) },
     { label: "Choose 3–8 focus areas", done: specialties.length >= 3 },
     { label: "Write your healing note", done: !!values.trim() },
@@ -583,7 +595,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                       </div>
                     ) : (
                       <div className="mt-5">
-                        <Button type="button" onClick={onPublish} disabled={publishing}>{publishing ? "Publishing…" : "Publish profile"}</Button>
+                        {!canPublish ? (
+                          <p className="mb-3 rounded-xl border border-rule bg-sand/60 px-4 py-3 text-[13.5px] leading-[1.55] text-ink-soft">
+                            Almost there — add {missingToPublish.join(" and ")} to publish.
+                          </p>
+                        ) : null}
+                        <Button type="button" onClick={onPublish} disabled={publishing || !canPublish}>{publishing ? "Publishing…" : "Publish profile"}</Button>
                       </div>
                     )}
                     {publishError ? <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">{publishError}</p> : null}
