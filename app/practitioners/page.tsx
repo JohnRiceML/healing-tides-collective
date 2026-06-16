@@ -86,6 +86,13 @@ export default async function Page({
               A small, considered circle of therapists and holistic practitioners. Browse by
               specialty, location, and format to find someone who feels like the right fit.
             </p>
+            <p className="mt-3 text-[14px] leading-[1.6] text-ink-muted">
+              New to this?{" "}
+              <Link href="/journal" className="font-medium text-teal underline-offset-2 hover:underline">
+                The Journal
+              </Link>{" "}
+              explores different kinds of care and what they feel like.
+            </p>
           </div>
         </header>
 

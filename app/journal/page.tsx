@@ -126,7 +126,12 @@ export default async function BlogIndexPage() {
       <footer className="border-t border-rule">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6 px-6 py-10 md:px-16">
           <p className="font-display text-base text-charcoal">Healing Tides Collective</p>
-          <p className="meta text-ink-muted">© 2026 / Care, matched. By a person.</p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link href="/practitioners" className="meta text-teal underline-offset-2 hover:underline">
+              Find a practitioner →
+            </Link>
+            <p className="meta text-ink-muted">© 2026 / Care, matched. By a person.</p>
+          </div>
         </div>
       </footer>
     </main>

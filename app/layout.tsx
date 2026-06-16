@@ -59,6 +59,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
+        {/* Site-wide Organization identity for search + AI assistants. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Healing Tides Collective",
+              url: SITE_URL,
+              logo: `${SITE_URL}/og.jpg`,
+              email: "hello@healingtides.co",
+              description: DESCRIPTION,
+              areaServed: { "@type": "State", name: "Minnesota" },
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
         {clerkEnabled ? (
           <ClerkProvider>
             <SiteNav clerkEnabled />
