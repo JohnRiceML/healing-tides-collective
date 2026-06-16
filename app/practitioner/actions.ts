@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
@@ -22,6 +23,19 @@ export type ProfileInput = {
   /** Nora's rich "Join the Collective" fields — stored in the fieldValues JSON column. */
   fieldValues?: Record<string, string | string[]>;
 };
+
+/**
+ * Explicit opt-in: turn the signed-in user into a practitioner (create the profile
+ * shell + promote the role) and send them into the editor. This is the ONLY UI path
+ * that promotes — page GETs are read-only (`getPractitioner`), so merely visiting
+ * `/practitioner` never makes a seeker a practitioner.
+ */
+export async function becomePractitioner() {
+  const result = await getOrCreatePractitioner();
+  if (!result) redirect("/join");
+  revalidatePath("/practitioner");
+  redirect("/practitioner/edit");
+}
 
 export async function saveProfile(input: ProfileInput) {
   // Re-derive the practitioner from the session — never trust a client-passed id.

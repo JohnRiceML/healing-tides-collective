@@ -48,7 +48,7 @@
 |---|---|---|
 | **Seeker intake** — conversational/voice-style, ~5–10 questions | 🔴 | "Get matched" is a `mailto` today. |
 | **Matching engine** encoding Nora's clinical intuition | 🔴 | Gated on Nora's "homework" doc (§5). |
-| **Seeker accounts** with abstracted/de-identified identity | 🔴 | 🐞 **Blocked by a live bug:** `getOrCreatePractitioner()` in `lib/auth.ts` auto-promotes *any* signed-in user (default role `SEEKER`) to `PRACTITIONER` with a draft profile the moment they hit `/practitioner`. The role fork must be fixed before any seeker work. |
+| **Seeker accounts** with abstracted/de-identified identity | 🔴 | Surface unbuilt — but the blocking **role-fork bug is fixed** (2026-06-16): page GETs now use the read-only `getPractitioner()`; promotion happens only via the explicit `becomePractitioner` action, so visiting `/practitioner` no longer turns a seeker into a practitioner. `lib/auth.ts`, `tests/auth.test.ts`. |
 | **Referral delivery** (curated list to seeker; de-identified ping to practitioner) | 🔴 | Needs the relational tables + email sender. |
 | **Consultation request flow** (availability → request → accept/decline → email ping) | 🔴 | No `Consultation` model; no scheduling. (Brief: keep on-platform, **no external calendars yet**.) |
 
@@ -136,7 +136,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 
 ## Next up (unblocked today, no waiting on Nora)
 
-1. 🐞 **Fix the seeker/practitioner role fork** — prerequisite for the entire seeker side, and a live bug.
+1. ✅ ~~Fix the seeker/practitioner role fork~~ — done 2026-06-16 (`getPractitioner` read-only GETs + explicit `becomePractitioner`).
 2. **Account-deletion flow** — M0 requirement + compliance.
 3. **Pick the email path** (decision #2) → wire scaffolding → unblocks completeness nudges *and* M2 referrals.
 4. **Stripe** (decision #1) — clean M0 job now while the schema's fresh, if we say go.

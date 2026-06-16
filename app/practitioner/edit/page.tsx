@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Container } from "@/app/_components/ui";
-import { getOrCreatePractitioner } from "@/lib/auth";
+import { getPractitioner } from "@/lib/auth";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 
 import { ProfileEditor } from "../ProfileEditor";
@@ -36,7 +37,7 @@ export default async function EditProfilePage() {
     );
   }
 
-  const result = await getOrCreatePractitioner();
+  const result = await getPractitioner();
   if (!result) {
     return (
       <Shell>
@@ -50,6 +51,10 @@ export default async function EditProfilePage() {
       </Shell>
     );
   }
+
+  // Not a practitioner yet — send them to the dashboard, where opting in is an
+  // explicit choice (rather than promoting on this GET).
+  if (!result.practitioner) redirect("/practitioner");
 
   return (
     <Shell>

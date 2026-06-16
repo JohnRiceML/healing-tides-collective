@@ -62,6 +62,28 @@ export async function getOrCreatePractitioner(): Promise<
   return { user, practitioner };
 }
 
+/**
+ * Read-only resolve of the signed-in user + their practitioner profile, if any.
+ * Unlike {@link getOrCreatePractitioner} this NEVER writes — no row creation, no
+ * role promotion — so it is safe to call from a GET (page render). `practitioner`
+ * is null when the signed-in user hasn't opted into a practitioner profile yet.
+ * Returns null when nobody is signed in.
+ *
+ * Use this for page renders; promotion happens only via an explicit action
+ * (`becomePractitioner`) so merely visiting `/practitioner` never turns a seeker
+ * into a practitioner.
+ */
+export async function getPractitioner(): Promise<
+  { user: User; practitioner: Practitioner | null } | null
+> {
+  const user = await getCurrentDbUser();
+  if (!user) return null;
+  const practitioner = await db.practitioner.findUnique({
+    where: { userId: user.id },
+  });
+  return { user, practitioner };
+}
+
 /** Comma-separated email allowlist (env `ADMIN_EMAILS`). Grants admin WITHOUT a DB
  *  write — the simplest way to bootstrap admins and to manage them when the DB isn't
  *  conveniently writable. Emails come from Clerk (verified), so they're trustworthy. */

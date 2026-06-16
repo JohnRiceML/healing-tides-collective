@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Card, Container, LinkButton } from "@/app/_components/ui";
-import { getOrCreatePractitioner } from "@/lib/auth";
+import { Button, Card, Container, LinkButton } from "@/app/_components/ui";
+import { getPractitioner } from "@/lib/auth";
+import { becomePractitioner } from "./actions";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
@@ -103,7 +104,7 @@ export default async function PractitionerHome() {
     );
   }
 
-  const result = await getOrCreatePractitioner();
+  const result = await getPractitioner();
   if (!result) {
     return (
       <Shell>
@@ -111,6 +112,29 @@ export default async function PractitionerHome() {
           You&rsquo;re not signed in.{" "}
           <Link href="/join" className="underline">Join or sign in</Link>.
         </p>
+      </Shell>
+    );
+  }
+
+  // Signed in, but not a practitioner yet. Promotion is an explicit choice — never a
+  // side effect of landing here — so a seeker browsing the app stays a seeker.
+  if (!result.practitioner) {
+    return (
+      <Shell>
+        <Card className="mx-auto max-w-xl text-center">
+          <h1 className="font-serif text-2xl text-charcoal">Set up your practitioner profile</h1>
+          <p className="mt-3 text-ink-soft">
+            You&rsquo;re signed in. Create your practitioner profile to join the collective
+            and become findable in the directory.
+          </p>
+          <form action={becomePractitioner} className="mt-6">
+            <Button type="submit">Set up your practice</Button>
+          </form>
+          <p className="mt-4 text-[13px] text-ink-muted">
+            Just looking for care?{" "}
+            <Link href="/practitioners" className="underline">Browse the collective</Link>.
+          </p>
+        </Card>
       </Shell>
     );
   }
