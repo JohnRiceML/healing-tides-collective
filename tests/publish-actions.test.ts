@@ -79,6 +79,15 @@ describe("publishProfile", () => {
     const r = await publishProfile();
     expect(r.ok).toBe(false);
   });
+
+  it("refuses to publish while on hold, and never writes", async () => {
+    getOrCreatePractitioner.mockResolvedValue(
+      session({ fieldValues: { __hold: { message: "on hold" } } }),
+    );
+    const r = await publishProfile();
+    expect(r).toMatchObject({ ok: false, held: true });
+    expect(update).not.toHaveBeenCalled();
+  });
 });
 
 describe("unpublishProfile", () => {
@@ -95,5 +104,14 @@ describe("unpublishProfile", () => {
     update.mockRejectedValue(new Error("db down"));
     const r = await unpublishProfile();
     expect(r.ok).toBe(false);
+  });
+
+  it("refuses to unpublish while on hold, and never writes", async () => {
+    getOrCreatePractitioner.mockResolvedValue(
+      session({ slug: "x", fieldValues: { __hold: { message: "on hold" } } }),
+    );
+    const r = await unpublishProfile();
+    expect(r).toMatchObject({ ok: false, held: true });
+    expect(update).not.toHaveBeenCalled();
   });
 });
