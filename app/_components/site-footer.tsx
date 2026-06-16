@@ -20,6 +20,7 @@ const EXPLORE = [
   { href: "/practitioners", label: "Find care" },
   { href: "/journal", label: "Journal" },
   { href: "/about", label: "About" },
+  { href: "/crisis", label: "If you're in crisis" },
 ];
 
 const PRACTITIONERS = [
@@ -90,8 +91,15 @@ export function SiteFooter() {
           </nav>
         </div>
 
+        {/* Safety line — present on every footer-bearing page. */}
+        <p className="mt-12 border-t border-rule/60 pt-6 text-[13px] leading-[1.6] text-ink-muted">
+          Not emergency care. If you&rsquo;re in crisis, call or text{" "}
+          <a href="tel:988" className="font-medium text-charcoal underline-offset-2 hover:underline">988</a>{" "}
+          — or see <Link href="/crisis" className="font-medium text-charcoal underline-offset-2 hover:underline">support resources</Link>.
+        </p>
+
         {/* Bottom bar */}
-        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-rule/60 pt-6">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-rule/60 pt-6">
           <p className="meta text-ink-muted">© 2026 Healing Tides Collective</p>
           <p className="meta text-ink-muted">Care, matched. By a person.</p>
         </div>
