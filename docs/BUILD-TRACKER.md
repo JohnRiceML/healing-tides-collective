@@ -27,7 +27,7 @@
 | Brief item (§3) | Status | Evidence / reality |
 |---|---|---|
 | **Database** (practitioners, seekers, profiles, applications, matches, messages/events) | 🟡 | Only `User`, `Practitioner`, `ProfileView` exist in `prisma/schema.prisma`. **No `Application`, `Match`, `Message`, `Consultation`, or `Seeker` models** — this is the real foundational gap before M2. |
-| **Google auth + account creation AND deletion (both user types)** | 🟡 | Clerk wired, Google enabled (`/join`, `/sign-in`). **Account deletion is not user-facing** — only `app/api/webhooks/clerk/route.ts` reacts to a Clerk-side delete (→ auto-hide). Needs a real "delete my account" flow (also a compliance item). |
+| **Google auth + account creation AND deletion (both user types)** | 🟡 | Clerk wired, Google enabled (`/join`, `/sign-in`). The user-facing **"Delete account"** already exists via Clerk's `UserButton` (enable the toggle in the Clerk dashboard — John). What's unresolved is **what deletion does to our data**: today `user.deleted` only *hides* the profile (not erasure). True erasure vs. hide-and-preserve is a legal call — see [decision #7](#open-decisions-brief-changed-the-plan). |
 | **Stripe wired now** (before charging) | 🔴 | No Stripe dependency. **But the schema is already prepped:** `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus` enum (`NONE/TRIALING/ACTIVE/PAST_DUE/CANCELED`), plus dormant `tier` / `featured` / `accountType` on `Practitioner`. So wiring = checkout + webhook + a gating read; **no migration**. See [decision #1](#open-decisions-brief-changed-the-plan). |
 | **Email automation scaffolding** (transactional + follow-up) | 🔴 | No email-send library present at all. ⚠️ Brief specifies Outlook/M365 — that's a *mailbox*, not a sending API. See [decision #2](#open-decisions-brief-changed-the-plan). |
 
@@ -108,6 +108,7 @@ Audit trail of what's live, folded from the retired PHASE-2-STATUS.md. Useful fo
 4. **Pricing simplified to ~$30 single tier + 3–6mo free intro** (was $10/$25/$100). Schema supports both, so no rework — just confirm the launch shape. Free-intro window length (3 vs. 6 mo / through Dec) is itself an open call (§13).
 5. **Crisis UX** (§8 open): pause/close chat vs. overlay message — design with Nora.
 6. **Out-of-state messaging** aggressiveness (§11 open).
+7. **Account-deletion semantics (GDPR) — Christie.** When a user deletes their Clerk account, do we *hide* their data (today's behavior, preserves an audit trail) or *hard-erase* it (true right-to-erasure)? The schema is erasure-ready (`Practitioner → User` cascade; `ProfileView` follows) but the Blob photo needs explicit cleanup. **Recommended:** split it — ban/lock → hide; voluntary `user.deleted` → erase (cascade-delete the `User` row + delete the photo blob). Code site flagged in `app/api/webhooks/clerk/route.ts`. ~1hr to implement once the call is made.
 
 ## Owed by Nora (don't block M1)
 
@@ -134,11 +135,19 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 
 ---
 
-## Next up (unblocked today, no waiting on Nora)
+## Recently shipped (2026-06-16 — the non-email/Stripe batch)
 
-1. ✅ ~~Fix the seeker/practitioner role fork~~ — done 2026-06-16 (`getPractitioner` read-only GETs + explicit `becomePractitioner`).
-2. **Account-deletion flow** — M0 requirement + compliance.
-3. **Pick the email path** (decision #2) → wire scaffolding → unblocks completeness nudges *and* M2 referrals.
-4. **Stripe** (decision #1) — clean M0 job now while the schema's fresh, if we say go.
+- ✅ Role-fork fix (`getPractitioner` read-only GETs + explicit `becomePractitioner`).
+- ✅ "Ages served" directory filter (the spec's highest-importance filter).
+- ✅ Video intro + socials render as sanitized external links.
+- ✅ Publish-gate nudge (button disables + names the missing field; no surprise error).
+- ✅ Live `/crisis` page + footer 988 safety line + "not emergency care" disclaimer.
+- ✅ Organization JSON-LD + journal↔directory internal links (AI-search/SEO).
+- ✅ publish/unpublish hold-guard tests.
 
-Nora-gated items (claim flow, matching homework, admin sketch, board URLs) slot in as she delivers.
+## Next up
+
+1. **Account-deletion semantics** — decision-gated ([decision #7](#open-decisions-brief-changed-the-plan), Christie). ~1hr once decided.
+2. **Pick the email path** (decision #2) → wire scaffolding → unblocks completeness *reminder emails* + M2 referrals.
+3. **Stripe** (decision #1) — clean M0 job now while the schema's fresh, if we say go.
+4. Nora-gated: claim flow, matching homework, admin dashboard sketch, license/board URLs.

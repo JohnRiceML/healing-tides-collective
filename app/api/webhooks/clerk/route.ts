@@ -9,6 +9,14 @@
 //
 // Soft, never destructive: we hide, we don't delete — data + audit survive (an admin can
 // Release later from /admin).
+//
+// OPEN DECISION (M0 "account deletion" + GDPR erasure): user.deleted currently HIDES,
+// same as a ban — which is NOT true erasure. The schema is erasure-ready (Practitioner
+// → User is onDelete: Cascade, so deleting the User row also removes ProfileView), but
+// the Vercel Blob photo would still need explicit cleanup. Whether a voluntary deletion
+// should hard-erase is a legal call (Christie). Recommended split, pending sign-off:
+// ban/lock → hide (preserve audit); voluntary user.deleted → erase. See
+// docs/BUILD-TRACKER.md § Open decisions #7.
 
 import { Webhook } from "svix";
 
