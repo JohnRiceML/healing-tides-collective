@@ -175,6 +175,21 @@ describe("buildPractitionerWhere", () => {
     expect(buildPractitionerWhere({ acceptingNew: false })).not.toHaveProperty("fieldValues");
   });
 
+  it("filters age groups via the fieldValues JSON array (array_contains)", () => {
+    const where = buildPractitionerWhere({ ageGroups: "adults" });
+    expect(where.fieldValues).toEqual({ path: ["age_groups"], array_contains: "adults" });
+  });
+
+  it("ANDs the two JSON filters when both are active (no fieldValues collision)", () => {
+    const where = buildPractitionerWhere({ acceptingNew: true, ageGroups: "adolescents" });
+    // They must NOT collapse onto one fieldValues key — that would drop one filter.
+    expect(where).not.toHaveProperty("fieldValues");
+    expect(where.AND).toEqual([
+      { fieldValues: { path: ["availability_state"], equals: "accepting" } },
+      { fieldValues: { path: ["age_groups"], array_contains: "adolescents" } },
+    ]);
+  });
+
   it("composes all filters together", () => {
     const where = buildPractitionerWhere({
       specialty: "grief_loss",

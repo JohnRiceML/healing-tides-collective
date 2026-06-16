@@ -3,11 +3,13 @@ import Link from "next/link";
 
 import { Button, Field, Select, TextInput } from "@/app/_components/ui";
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "@/app/_lib/taxonomy";
+import { AGE_GROUP_OPTIONS } from "@/app/_lib/profile-fields";
 
 export type ActiveFilters = {
   specialty?: string;
   modality?: string;
   region?: string;
+  ageGroups?: string;
   q?: string;
   acceptingNew?: boolean;
 };
@@ -72,8 +74,8 @@ export function DirectoryFilters({
   regions: string[];
   sort: string;
 }) {
-  const { specialty = "", modality = "", region = "", q = "", acceptingNew = false } = active;
-  const hasActive = Boolean(specialty || modality || region || q || acceptingNew);
+  const { specialty = "", modality = "", region = "", ageGroups = "", q = "", acceptingNew = false } = active;
+  const hasActive = Boolean(specialty || modality || region || ageGroups || q || acceptingNew);
 
   return (
     <form
@@ -114,7 +116,7 @@ export function DirectoryFilters({
       </div>
 
       {/* One field row; Apply is the last column, baseline-aligned with the inputs. */}
-      <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
+      <div className="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto] lg:items-end">
         <Field label="Search">
           <div className="relative">
             <TextInput
@@ -162,6 +164,19 @@ export function DirectoryFilters({
               {regions.map((r) => (
                 <option key={r} value={r}>
                   {r}
+                </option>
+              ))}
+            </Select>
+          </Dropdown>
+        </Field>
+
+        <Field label="Ages served">
+          <Dropdown>
+            <Select name="ageGroups" defaultValue={ageGroups} aria-label="Filter by age group served">
+              <option value="">Any age group</option>
+              {AGE_GROUP_OPTIONS.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.label}
                 </option>
               ))}
             </Select>

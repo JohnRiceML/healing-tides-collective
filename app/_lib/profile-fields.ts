@@ -29,6 +29,18 @@ export type ProfileSection = {
   fields: ProfileField[];
 };
 
+/** Canonical age-group options — the single source for the editor field AND the
+ *  directory filter (so their ids never drift). */
+export const AGE_GROUP_OPTIONS: ProfileFieldOption[] = [
+  "Children",
+  "Adolescents",
+  "Adults",
+  "Older Adults",
+  "Couples",
+  "Families",
+  "Groups",
+].map((l) => ({ id: l.toLowerCase().replace(/[^a-z]+/g, "_"), label: l }));
+
 export const PROFILE_SECTIONS: ProfileSection[] = [
   {
     id: "story",
@@ -74,7 +86,7 @@ export const PROFILE_SECTIONS: ProfileSection[] = [
         id: "age_groups",
         label: "Age groups",
         type: "chips",
-        options: ["Children", "Adolescents", "Adults", "Older Adults", "Couples", "Families", "Groups"].map((l) => ({ id: l.toLowerCase().replace(/[^a-z]+/g, "_"), label: l })),
+        options: AGE_GROUP_OPTIONS,
       },
       { id: "ideal_client", label: "Who thrives working with you?", type: "textarea", hint: "The clients, goals, or experiences that tend to be a strong fit." },
     ],

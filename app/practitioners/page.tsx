@@ -39,6 +39,7 @@ export default async function Page({
     specialty?: string;
     modality?: string;
     region?: string;
+    ageGroups?: string;
     q?: string;
     accepting?: string;
     sort?: string;
@@ -48,14 +49,15 @@ export default async function Page({
   const specialty = clean(params.specialty);
   const modality = clean(params.modality);
   const region = clean(params.region);
+  const ageGroups = clean(params.ageGroups);
   const q = clean(params.q);
   // Checkbox: present (any truthy value, e.g. "on") means "only accepting new clients".
   const acceptingNew = Boolean(clean(params.accepting));
   const sort = normalizeSort(clean(params.sort));
 
-  const hasFilters = Boolean(specialty || modality || region || q || acceptingNew);
+  const hasFilters = Boolean(specialty || modality || region || ageGroups || q || acceptingNew);
   const [practitioners, regions] = await Promise.all([
-    getPublishedPractitioners({ specialty, modality, region, q, acceptingNew }, sort),
+    getPublishedPractitioners({ specialty, modality, region, ageGroups, q, acceptingNew }, sort),
     getDistinctRegions(),
   ]);
 
@@ -90,7 +92,7 @@ export default async function Page({
         {/* Filters */}
         <div className="relative z-10 mt-7 md:mt-8">
           <DirectoryFilters
-            active={{ specialty, modality, region, q, acceptingNew }}
+            active={{ specialty, modality, region, ageGroups, q, acceptingNew }}
             regions={regions}
             sort={sort}
           />
