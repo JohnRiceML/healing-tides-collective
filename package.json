@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "sanity:extract": "sanity schema extract",
     "sanity:typegen": "sanity schema extract && sanity typegen generate",
     "postinstall": "prisma generate",
