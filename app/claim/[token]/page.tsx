@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Container, LinkButton } from "@/app/_components/ui";
+import { Button, Container } from "@/app/_components/ui";
 import { getInviteByToken, inviteIsClaimable, readPrefill } from "@/lib/invites";
+import { startClaim } from "../claim-actions";
 
 // Tokenized, per-person — never index these.
 export const metadata: Metadata = {
@@ -86,11 +87,13 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
         </dl>
       ) : null}
 
-      <div className="mt-7">
-        <LinkButton href="/join">Claim my profile</LinkButton>
-      </div>
+      <form action={startClaim} className="mt-7">
+        <input type="hidden" name="token" value={token} />
+        <Button type="submit">Claim my profile</Button>
+      </form>
       <p className="mt-4 text-[13px] leading-[1.6] text-ink-muted">
-        Already have an account? <Link href="/sign-in" className="underline">Sign in</Link>.
+        Already have an account? <Link href="/sign-in" className="underline">Sign in</Link>, then open this
+        link again.
       </p>
     </Shell>
   );

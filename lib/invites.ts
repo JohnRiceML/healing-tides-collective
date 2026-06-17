@@ -45,3 +45,42 @@ export async function getInviteByToken(token: string) {
 export function inviteIsClaimable(invite: { claimedAt: Date | null } | null): boolean {
   return Boolean(invite && !invite.claimedAt);
 }
+
+/** What an invite's prefill should set on a (possibly part-filled) practitioner. */
+export type ClaimUpdate = {
+  displayName?: string;
+  region?: string;
+  website?: string;
+  specialties?: string[];
+  title?: string; // lives in fieldValues
+};
+
+/**
+ * Fill-if-empty: decide which fields a claim should populate, NEVER overwriting
+ * anything the practitioner has already entered. Pure — the caller applies it (URL
+ * sanitizing, fieldValues merge, completeness) so this stays trivially testable.
+ */
+export function buildClaimUpdate(
+  p: {
+    displayName?: string | null;
+    region?: string | null;
+    website?: string | null;
+    specialties?: string[];
+    fieldValues?: unknown;
+  },
+  invite: { displayName?: string | null; prefill?: unknown },
+): ClaimUpdate {
+  const prefill = readPrefill(invite.prefill);
+  const out: ClaimUpdate = {};
+  const empty = (v?: string | null) => !v || !v.trim();
+
+  if (empty(p.displayName) && invite.displayName?.trim()) out.displayName = invite.displayName.trim();
+  if (empty(p.region) && prefill.region) out.region = prefill.region;
+  if (empty(p.website) && prefill.website) out.website = prefill.website;
+  if ((p.specialties?.length ?? 0) === 0 && prefill.specialties?.length) out.specialties = prefill.specialties;
+
+  const existingTitle = (p.fieldValues as Record<string, unknown> | null | undefined)?.title;
+  if (empty(typeof existingTitle === "string" ? existingTitle : "") && prefill.title) out.title = prefill.title;
+
+  return out;
+}

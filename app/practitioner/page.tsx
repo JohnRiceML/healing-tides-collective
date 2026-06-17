@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { Button, Card, Container, LinkButton } from "@/app/_components/ui";
 import { getPractitioner } from "@/lib/auth";
 import { becomePractitioner } from "./actions";
+import { completeClaim } from "@/app/claim/claim-actions";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
@@ -118,18 +120,23 @@ export default async function PractitionerHome() {
   }
 
   // Signed in, but not a practitioner yet. Promotion is an explicit choice — never a
-  // side effect of landing here — so a seeker browsing the app stays a seeker.
+  // side effect of landing here — so a seeker browsing the app stays a seeker. If they
+  // arrived via a claim link (the ht_claim cookie), offer to finish that instead.
   if (!result.practitioner) {
+    const claiming = Boolean((await cookies()).get("ht_claim")?.value);
     return (
       <Shell>
         <Card className="mx-auto max-w-xl text-center">
-          <h1 className="font-serif text-2xl text-charcoal">Set up your practitioner profile</h1>
+          <h1 className="font-serif text-2xl text-charcoal">
+            {claiming ? "Finish claiming your profile" : "Set up your practitioner profile"}
+          </h1>
           <p className="mt-3 text-ink-soft">
-            You&rsquo;re signed in. Create your practitioner profile to join the collective
-            and become findable in the directory.
+            {claiming
+              ? "You’re almost in. Finish claiming to set up your pre-filled profile in the collective."
+              : "You’re signed in. Create your practitioner profile to join the collective and become findable in the directory."}
           </p>
-          <form action={becomePractitioner} className="mt-6">
-            <Button type="submit">Set up your practice</Button>
+          <form action={claiming ? completeClaim : becomePractitioner} className="mt-6">
+            <Button type="submit">{claiming ? "Finish claiming" : "Set up your practice"}</Button>
           </form>
           <p className="mt-4 text-[13px] text-ink-muted">
             Just looking for care?{" "}
