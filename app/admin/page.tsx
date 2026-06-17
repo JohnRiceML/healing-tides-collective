@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getAdminPractitioners, getAdminStats } from "./_data";
 import { BadgeEditor } from "./BadgeEditor";
 import { HoldControl } from "./HoldControl";
+import { InviteCreator } from "./InviteCreator";
 
 export const metadata: Metadata = {
   title: "Admin — Healing Tides Collective",
@@ -54,6 +55,10 @@ export default async function AdminPage() {
           <Stat label="Published" value={stats.published} />
           <Stat label="Drafts" value={stats.draft} />
           <Stat label="Total views" value={stats.totalViews} />
+        </div>
+
+        <div className="mt-8">
+          <InviteCreator />
         </div>
 
         {rows.length === 0 ? (

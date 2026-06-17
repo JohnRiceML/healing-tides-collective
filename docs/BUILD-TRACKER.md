@@ -125,6 +125,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 
 - 🔴 **Rotate the leaked Neon + Clerk + Serper credentials** (all shared in chat) before any production push.
 - `SERPER_API_KEY` in `.env.local` + Vercel — powers the practitioner local-visibility audit (returns "not configured" until set). Rotate the one pasted in chat via [serper.dev](https://serper.dev).
+- **Run `npm run db:migrate`** to create the `invites` table (the claim-flow scaffold's schema). Until then the claim/admin-invite code compiles but errors at runtime (table missing) — the rest of the app is unaffected. (Migrations are John-only; the prod classifier blocks the agent from running them.)
 - `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel + the Clerk dashboard webhook (`user.updated` + `user.deleted`) — moderation auto-hide 501s until then.
 - `ADMIN_EMAILS` in Vercel — `/admin` is closed until set.
 - Paste the **Neon connection string** into `.env.local` (local dev/migrations blocked).
@@ -146,6 +147,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 - ✅ Organization JSON-LD + journal↔directory internal links (AI-search/SEO).
 - ✅ publish/unpublish hold-guard tests.
 - ✅ **Practitioner local-visibility audit** (Serper) — a dashboard "How you show up on Google" check: runs `{specialty} {city}` searches and reports whether the practitioner appears + who's ahead. The brief §10 brand/SEO upsell hook + an event recruitment lever. On-demand (no per-load API cost); needs `SERPER_API_KEY`. Persistence + scheduled refresh + AI-search presence are v2.
+- 🟡 **Claim-flow scaffold (increment 1)** — `Invite` model + `lib/invites.ts` read layer + admin **Create claim link** (`/admin`) + the `/claim/[token]` landing page (looks up the invite, shows the prefill, "Claim my profile" CTA). No fake Practitioner rows, so unclaimed invites never hit the directory. **Needs:** (a) John runs `npm run db:migrate` to create the `invites` table; (b) **increment 2** — the claim→signup→link auth wiring (cookie through Clerk, then `becomePractitioner` + apply prefill + mark claimed), which needs a live Clerk/DB to validate; (c) email to actually *send* invites (decision #2). PT auto-pull stays deferred (ToS/Christie) — practitioners can use the existing importer post-claim.
 
 ## Next up
 

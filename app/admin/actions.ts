@@ -6,7 +6,42 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { RESERVED_BADGES_KEY, sanitizeGrant } from "@/app/_lib/verification";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
+import { newInviteToken, type InvitePrefill } from "@/lib/invites";
+import { SITE_URL } from "@/lib/site";
 import type { Prisma } from "@/lib/generated/prisma/client";
+
+/**
+ * Create a claim invite for a waitlist practitioner. ADMIN-ONLY. Returns the claim
+ * URL to share (email wiring is a separate, deferred step — for now copy the link).
+ * Does NOT create a Practitioner row, so an un-claimed invite never hits the directory.
+ */
+export async function createInvite(input: {
+  email: string;
+  displayName?: string;
+  prefill?: InvitePrefill;
+}): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const email = input.email.trim().toLowerCase();
+  if (!email) return { ok: false, error: "An email is required." };
+
+  const token = newInviteToken();
+  try {
+    await db.invite.create({
+      data: {
+        token,
+        email,
+        displayName: input.displayName?.trim() || null,
+        prefill: (input.prefill ?? {}) as Prisma.InputJsonValue,
+      },
+    });
+  } catch {
+    return { ok: false, error: "Couldn't create the invite — please try again." };
+  }
+  revalidatePath("/admin");
+  return { ok: true, url: `${SITE_URL}/claim/${token}` };
+}
 
 /**
  * Grant/revoke a practitioner's verification badges. ADMIN-ONLY. Writes the reserved

@@ -134,3 +134,21 @@ model ProfileView {
   @@index([viewedAt])
   @@map("profile_views")
 }
+
+// A pre-seeded invitation for a waitlist practitioner to "claim" their profile.
+// We deliberately DON'T pre-create Practitioner rows (those require a User, and would
+// pollute the directory) — the invite holds the prefill until someone signs up and
+// claims it via /claim/[token]. `token` is the opaque, unguessable URL segment.
+model Invite {
+  id              String    @id @default(cuid())
+  token           String    @unique
+  email           String // who it's for (from Nora's waitlist)
+  displayName     String?   @map("display_name") // prefill
+  prefill         Json      @default("{}") // {region, specialties, title, website, …} from the CSV
+  createdAt       DateTime  @default(now()) @map("created_at")
+  claimedAt       DateTime? @map("claimed_at")
+  claimedByUserId String?   @map("claimed_by_user_id") // the User.id that claimed it
+
+  @@index([email])
+  @@map("invites")
+}
