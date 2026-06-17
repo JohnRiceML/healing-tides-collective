@@ -123,7 +123,8 @@ Audit trail of what's live, folded from the retired PHASE-2-STATUS.md. Useful fo
 
 Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-prelaunch.md)**.
 
-- 🔴 **Rotate the leaked Neon + Clerk credentials** (shared in chat) before any production push.
+- 🔴 **Rotate the leaked Neon + Clerk + Serper credentials** (all shared in chat) before any production push.
+- `SERPER_API_KEY` in `.env.local` + Vercel — powers the practitioner local-visibility audit (returns "not configured" until set). Rotate the one pasted in chat via [serper.dev](https://serper.dev).
 - `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel + the Clerk dashboard webhook (`user.updated` + `user.deleted`) — moderation auto-hide 501s until then.
 - `ADMIN_EMAILS` in Vercel — `/admin` is closed until set.
 - Paste the **Neon connection string** into `.env.local` (local dev/migrations blocked).
@@ -144,6 +145,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 - ✅ Live `/crisis` page + footer 988 safety line + "not emergency care" disclaimer.
 - ✅ Organization JSON-LD + journal↔directory internal links (AI-search/SEO).
 - ✅ publish/unpublish hold-guard tests.
+- ✅ **Practitioner local-visibility audit** (Serper) — a dashboard "How you show up on Google" check: runs `{specialty} {city}` searches and reports whether the practitioner appears + who's ahead. The brief §10 brand/SEO upsell hook + an event recruitment lever. On-demand (no per-load API cost); needs `SERPER_API_KEY`. Persistence + scheduled refresh + AI-search presence are v2.
 
 ## Next up
 

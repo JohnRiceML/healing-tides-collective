@@ -10,6 +10,7 @@ import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { PublicPagePreview } from "./_components/PublicPagePreview";
+import { VisibilityCard } from "./_components/VisibilityCard";
 
 export const metadata: Metadata = {
   title: "Your dashboard — Healing Tides Collective",
@@ -397,6 +398,11 @@ export default async function PractitionerHome() {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* How you show up on Google — on-demand local-visibility check (Serper) */}
+      <div className="mt-5">
+        <VisibilityCard />
       </div>
     </Shell>
   );
