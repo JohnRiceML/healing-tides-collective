@@ -13,6 +13,9 @@ import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { PublicPagePreview } from "./_components/PublicPagePreview";
 import { VisibilityCard } from "./_components/VisibilityCard";
+import { PresencePanel } from "./_components/PresencePanel";
+import { findabilityStage, weeklyViewBuckets, presenceNextStep } from "@/lib/presence";
+import { getWeeklyViewDates } from "@/lib/presence-data";
 
 export const metadata: Metadata = {
   title: "Your dashboard — Healing Tides Collective",
@@ -167,6 +170,28 @@ export default async function PractitionerHome() {
   const badges = badgesFor({ createdAt: p.createdAt, verificationBadges: grantedBadgesFrom(p.fieldValues) });
   const isFounding = badges.some((b) => b.id === "founding_member");
   const editCta = completeness >= 100 ? "Edit profile" : "Finish profile";
+
+  // "Your presence" — findable, not promotional. Own-profile signals only; no comparison.
+  const hasContactLink =
+    Boolean(p.website?.trim()) || (typeof fv.booking_link === "string" && fv.booking_link.trim() !== "");
+  const specialtiesCount = p.specialties?.length ?? 0;
+  const hasRegion = Boolean(p.region?.trim());
+  const findability = findabilityStage({
+    published: p.visibility === "PUBLISHED",
+    completeness,
+    hasContactLink,
+    specialtiesCount,
+    hasRegion,
+  });
+  const presenceViews = weeklyViewBuckets(await getWeeklyViewDates(p.id), new Date());
+  const presenceStep = presenceNextStep({
+    published: p.visibility === "PUBLISHED",
+    hasBio: Boolean(p.bio?.trim()),
+    specialtiesCount,
+    hasIdealClient: typeof fv.ideal_client === "string" && fv.ideal_client.trim() !== "",
+    hasContactLink,
+    hasRegion,
+  });
 
   const availabilityDone =
     (typeof fv.availability_state === "string" && fv.availability_state !== "") ||
@@ -407,10 +432,17 @@ export default async function PractitionerHome() {
         </Card>
       </div>
 
-      {/* How you show up on Google — on-demand local-visibility check (Serper) */}
-      <div className="mt-5">
-        <VisibilityCard />
-      </div>
+      {/* Your presence — findable, not promotional: Findability + this week + one step */}
+      <section className="mt-8">
+        <h2 className="meta text-ink-muted">How people find you</h2>
+        <div className="mt-3">
+          <PresencePanel findability={findability} views={presenceViews} nextStep={presenceStep} region={p.region} />
+        </div>
+        {/* On-demand local-search check (Serper) */}
+        <div className="mt-5">
+          <VisibilityCard />
+        </div>
+      </section>
     </Shell>
   );
 }

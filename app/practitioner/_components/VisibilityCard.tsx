@@ -59,7 +59,7 @@ export function VisibilityCard() {
                   </p>
                   {q.competitors.length ? (
                     <p className="mt-1 text-[12.5px] leading-[1.5] text-ink-muted">
-                      Ranking instead: {q.competitors.join(" · ")}
+                      Also showing up here: {q.competitors.join(" · ")}
                     </p>
                   ) : null}
                 </>
