@@ -23,8 +23,15 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default async function ClaimPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function ClaimPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ e?: string }>;
+}) {
   const { token } = await params;
+  const { e } = await searchParams;
   const invite = await getInviteByToken(token);
 
   if (!invite) {
@@ -69,6 +76,15 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
         we&rsquo;ll start your profile{prefill.region ? ` for ${prefill.region}` : ""} — pre-filled,
         so there&rsquo;s very little to type.
       </p>
+
+      {e === "email_mismatch" ? (
+        <p className="mt-5 rounded-xl border border-ocean/25 bg-ocean/5 px-4 py-3 text-[14px] leading-[1.55] text-charcoal">
+          This invitation was sent to a specific email address. Please sign in with the email it
+          was sent to, or email{" "}
+          <a href="mailto:hello@healingtides.co" className="font-medium text-ocean underline-offset-2 hover:underline">hello@healingtides.co</a>{" "}
+          and we&rsquo;ll update it.
+        </p>
+      ) : null}
 
       {(prefill.region || prefill.title) ? (
         <dl className="mt-6 rounded-2xl border border-rule/70 bg-white p-5 text-[14px]">

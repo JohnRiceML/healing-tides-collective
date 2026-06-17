@@ -58,8 +58,12 @@ function matchVia(r: SerpResult, id: VisibilityIdentity): QueryVisibility["via"]
   const host = hostOf(r.link);
   if (id.domain && host && host === id.domain) return "website";
   if (id.profilePath && r.link.includes(id.profilePath)) return "profile";
-  const name = id.name.trim().toLowerCase();
-  if (name && r.title.toLowerCase().includes(name)) return "name";
+  // Word-boundary match so "Sam" doesn't count "Samsara Wellness" as a hit.
+  const name = id.name.trim();
+  if (name) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(r.title)) return "name";
+  }
   return null;
 }
 

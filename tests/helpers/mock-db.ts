@@ -43,6 +43,11 @@ function collection(initial: Row[] = []) {
       Object.assign(row, data);
       return { ...row };
     },
+    updateMany: async ({ where = {}, data }: { where?: Row; data: Row }) => {
+      const matched = rows.filter((r) => matches(r, where));
+      matched.forEach((r) => Object.assign(r, data));
+      return { count: matched.length };
+    },
     upsert: async ({ where, create, update }: { where: Row; create: Row; update: Row }) => {
       const row = rows.find((r) => matches(r, where));
       if (row) {

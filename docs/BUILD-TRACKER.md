@@ -100,6 +100,12 @@ Audit trail of what's live, folded from the retired PHASE-2-STATUS.md. Useful fo
 
 **Already received from Nora (don't re-ask)** — captured in [docs/product/](product/): the 11-category taxonomy, the full profile question set, pricing (originally $10/$25/$100, now simplified — decision #4), and a detailed admin-dashboard spec. Still owed: the items under [Owed by Nora](#owed-by-nora-dont-block-m1).
 
+## Adversarial review (2026-06-17) — fixed vs. deferred
+
+A multi-agent review of the session diff surfaced 9 distinct confirmed issues. **Fixed:**
+JSON-LD `</script>` escaping on the profile page (stored-XSS, matched the layout's pattern);
+claim-flow hardening — **atomic claim** (`updateMany … WHERE claimedAt IS NULL`, no double-claim race), **email-match gate** (a forwarded link can't be hijacked — only the invited Clerk-verified email may claim, with a graceful mismatch message), and **surfaced failures** (no more silent redirect); claim cookie maxAge 30→60 min; visibility name match is now **word-boundary** (no "Sam"→"Samsara"); slug-collision retry now has a unit test. **Deferred (noted, not bugs):** a cross-entity **audit-log table** for claims (`claimedAt`/`claimedByUserId` is the MVP audit; promote when the moderation audit table lands) and de-duping the client/server **publish-gate** predicate (a nit refactor).
+
 ## Open decisions — brief changed the plan
 
 1. **Stripe: wire now, or stay parked?** Brief pulls it into M0; schema is ready so it's a contained job (checkout + webhook + gating read, no migration). Trade-off: build it cold now vs. when the ~3–6mo free-intro period actually ends.

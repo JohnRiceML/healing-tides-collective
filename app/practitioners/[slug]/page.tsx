@@ -216,7 +216,11 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
       <ViewBeacon slug={p.slug} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(p)) }} />
+      <script
+        type="application/ld+json"
+        // Escape `<` so a practitioner's name/bio can't break out of the script tag.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(p)).replace(/</g, "\\u003c") }}
+      />
 
       <Container size="wide" className="pb-16 pt-6 md:pb-24 md:pt-8">
         <nav aria-label="Breadcrumb">

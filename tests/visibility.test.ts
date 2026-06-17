@@ -72,6 +72,14 @@ describe("evaluateQuery", () => {
     expect(r.via).toBe("name");
   });
 
+  it("matches a name only on a word boundary (not a substring of a longer word)", () => {
+    const sam = { name: "Sam", domain: null, profilePath: "" };
+    expect(evaluateQuery("q", [result({ title: "Samsara Wellness Center", link: "https://x.com" })], sam).found).toBe(false);
+    const hit = evaluateQuery("q", [result({ title: "Sam Rivera, LICSW", link: "https://x.com" })], sam);
+    expect(hit.found).toBe(true);
+    expect(hit.via).toBe("name");
+  });
+
   it("reports not-found with up to 3 competitors when they're absent", () => {
     const r = evaluateQuery("q", [
       result({ title: "A", link: "https://a.com", position: 1 }),

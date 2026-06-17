@@ -72,6 +72,17 @@ describe("publishProfile", () => {
     expect(update).toHaveBeenCalledTimes(2);
   });
 
+  it("appends a numeric suffix when the base slug is already taken", async () => {
+    getOrCreatePractitioner.mockResolvedValue(session());
+    // First candidate "aspen-rivera" collides; "aspen-rivera-2" is free.
+    findFirst.mockResolvedValueOnce({ id: "someone-else" }).mockResolvedValueOnce(null);
+    update.mockResolvedValue({});
+    const r = await publishProfile();
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.slug).toBe("aspen-rivera-2");
+    expect(update.mock.calls[0][0].data.slug).toBe("aspen-rivera-2");
+  });
+
   it("returns a friendly error if the write keeps failing", async () => {
     getOrCreatePractitioner.mockResolvedValue(session());
     findFirst.mockResolvedValue(null);

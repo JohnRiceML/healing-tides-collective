@@ -46,17 +46,24 @@ async function runRedirecting(fn: () => Promise<unknown>): Promise<string> {
   }
 }
 
+// Wire the signed-in user (email must match the invite to pass the claim gate) + the
+// practitioner the prefill lands on, both reading from the live store.
+function signInAs(opts: { userId: string; email: string; practitionerId: string }) {
+  h.getCurrentDbUser.mockResolvedValue(aUser({ id: opts.userId, email: opts.email }));
+  h.getOrCreatePractitioner.mockImplementation(async () => ({
+    user: aUser({ id: opts.userId, email: opts.email }),
+    practitioner: await h.db.practitioner.findFirst({ where: { id: opts.practitionerId } }),
+  }));
+}
+
 describe("claim completion: prefill the empty fields, mark the invite claimed", () => {
-  it("fills name + region from the invite and claims it once", async () => {
+  it("fills name + region from the invite and claims it once (matching email)", async () => {
     h.token = "tok-1";
     h.db = makeMockDb({
-      invites: [anInvite({ token: "tok-1", displayName: "Jordan Lake", prefill: { region: "Saint Paul, MN" }, claimedAt: null })],
+      invites: [anInvite({ token: "tok-1", email: "jordan@example.com", displayName: "Jordan Lake", prefill: { region: "Saint Paul, MN" }, claimedAt: null })],
       practitioners: [aPractitioner({ id: "p1", userId: "u1", displayName: null, region: null })],
     });
-    h.getOrCreatePractitioner.mockImplementation(async () => ({
-      user: aUser({ id: "u1" }),
-      practitioner: await h.db.practitioner.findFirst({ where: { id: "p1" } }),
-    }));
+    signInAs({ userId: "u1", email: "jordan@example.com", practitionerId: "p1" });
 
     const url = await runRedirecting(completeClaim);
     expect(url).toBe("/practitioner/edit");
@@ -74,13 +81,10 @@ describe("claim completion: prefill the empty fields, mark the invite claimed", 
   it("does not overwrite fields the practitioner already filled", async () => {
     h.token = "tok-2";
     h.db = makeMockDb({
-      invites: [anInvite({ token: "tok-2", displayName: "Jordan Lake", prefill: { region: "Saint Paul, MN" }, claimedAt: null })],
+      invites: [anInvite({ token: "tok-2", email: "jordan@example.com", displayName: "Jordan Lake", prefill: { region: "Saint Paul, MN" }, claimedAt: null })],
       practitioners: [aPractitioner({ id: "p2", userId: "u2", displayName: "Dr. Jordan", region: "Minneapolis" })],
     });
-    h.getOrCreatePractitioner.mockImplementation(async () => ({
-      user: aUser({ id: "u2" }),
-      practitioner: await h.db.practitioner.findFirst({ where: { id: "p2" } }),
-    }));
+    signInAs({ userId: "u2", email: "jordan@example.com", practitionerId: "p2" });
 
     await runRedirecting(completeClaim);
 
@@ -89,19 +93,31 @@ describe("claim completion: prefill the empty fields, mark the invite claimed", 
     expect(p.region).toBe("Minneapolis"); // kept
   });
 
-  it("is a no-op for an already-claimed invite", async () => {
+  it("refuses a claim from a different email than the invite (no claim, no prefill)", async () => {
     h.token = "tok-3";
     h.db = makeMockDb({
-      invites: [anInvite({ token: "tok-3", claimedAt: new Date("2026-06-01T00:00:00Z") })],
-      practitioners: [aPractitioner({ id: "p3", userId: "u3", displayName: "Existing" })],
+      invites: [anInvite({ token: "tok-3", email: "jordan@example.com", displayName: "Jordan Lake", prefill: { region: "Saint Paul, MN" }, claimedAt: null })],
+      practitioners: [aPractitioner({ id: "p3", userId: "u3", displayName: null })],
     });
-    h.getOrCreatePractitioner.mockImplementation(async () => ({
-      user: aUser({ id: "u3" }),
-      practitioner: await h.db.practitioner.findFirst({ where: { id: "p3" } }),
-    }));
+    signInAs({ userId: "u3", email: "attacker@example.com", practitionerId: "p3" });
+
+    const url = await runRedirecting(completeClaim);
+    expect(url).toBe("/claim/tok-3?e=email_mismatch");
+
+    expect(db().invite.rows()[0].claimedAt).toBeNull(); // not claimed
+    expect(db().practitioner.rows()[0].displayName).toBeNull(); // not prefilled
+    expect(h.getOrCreatePractitioner).not.toHaveBeenCalled(); // not promoted
+  });
+
+  it("is a no-op for an already-claimed invite", async () => {
+    h.token = "tok-4";
+    h.db = makeMockDb({
+      invites: [anInvite({ token: "tok-4", claimedAt: new Date("2026-06-01T00:00:00Z") })],
+      practitioners: [aPractitioner({ id: "p4", userId: "u4", displayName: "Existing" })],
+    });
 
     await runRedirecting(completeClaim);
-    // getOrCreatePractitioner is never reached for a claimed invite → no writes.
+    expect(h.getCurrentDbUser).not.toHaveBeenCalled();
     expect(h.getOrCreatePractitioner).not.toHaveBeenCalled();
     expect(db().practitioner.rows()[0].displayName).toBe("Existing");
   });
