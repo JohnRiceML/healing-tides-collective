@@ -6,9 +6,12 @@ import { getPractitioner } from "@/lib/auth";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { weeklyViewBuckets } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
-import { buildBrand, type BrandSignals } from "@/lib/brand";
-import { readPresenceScan, brandSignalsFromScan } from "@/lib/presence-scan";
+import { buildBrand } from "@/lib/brand";
+import { buildBrandSignals } from "@/lib/brand-signals";
+import { readPresenceScan } from "@/lib/presence-scan";
 
+import { BrandHero } from "../_components/brand/BrandHero";
+import { BrandTiles } from "../_components/brand/BrandTiles";
 import { DimensionChapter } from "../_components/brand/DimensionChapter";
 import { VisibilityCard } from "../_components/VisibilityCard";
 
@@ -81,28 +84,12 @@ export default async function PractitionerBrandPage() {
   const fv = (p.fieldValues ?? {}) as Record<string, unknown>;
 
   // ── Build the brand signals from this practitioner's own profile ────────────────
-  // No comparison to anyone else. The Serper-backed signals (coverage / map pack / knowledge
-  // graph) come from the LAST cached presence scan (run on demand from the VisibilityCard).
-  // Until they run a scan, readPresenceScan → null → brandSignalsFromScan → {}, so those
-  // dimensions keep their calm "not checked yet" invitations. Once scanned, the moon states move.
+  // No comparison to anyone else. The Serper-backed signals come from the LAST cached presence
+  // scan (run on demand from the VisibilityCard); until then those dimensions keep their calm
+  // "not checked yet" invitations. buildBrandSignals is shared with the dashboard so the moons match.
   const weekly = weeklyViewBuckets(await getWeeklyViewDates(p.id), new Date());
   const scan = readPresenceScan(fv);
-
-  const signals: BrandSignals = {
-    published: p.visibility === "PUBLISHED",
-    completeness: p.completeness,
-    hasBio: Boolean(p.bio?.trim()),
-    hasValues: Boolean(p.values?.trim()),
-    hasPhoto: Boolean(p.photoUrl?.trim()),
-    hasModality: Boolean(p.modality),
-    hasWebsite: Boolean(p.website?.trim()),
-    hasRegion: Boolean(p.region?.trim()),
-    specialtiesCount: p.specialties?.length ?? 0,
-    weeklyViews: { thisWeek: weekly.thisWeek, total: weekly.total },
-    ...brandSignalsFromScan(scan),
-  };
-
-  const brand = buildBrand(signals);
+  const brand = buildBrand(buildBrandSignals(p, weekly, scan));
 
   // A calm, absolute "last checked" label (server-formatted → no hydration drift) for the card.
   const lastCheckedLabel =
@@ -110,19 +97,36 @@ export default async function PractitionerBrandPage() {
       ? new Date(scan.checkedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
       : undefined;
 
+  // Their own identity, for the personal hero.
+  const firstName = (p.displayName ?? "").trim().split(/\s+/)[0] ?? "";
+  const role = typeof fv.title === "string" ? fv.title : "";
+
   return (
     <Shell>
-      {/* ── Section header ─────────────────────────────────────────────────────── */}
-      <header>
-        <p className="meta text-ink-muted">Your brand</p>
-        <h1 className="font-display mt-3 text-[clamp(30px,5vw,46px)] font-light leading-[1.04] tracking-[-0.02em] text-charcoal">
-          Your brand, cared for
-        </h1>
-        <p className="mt-4 max-w-2xl text-[16px] leading-[1.65] text-ink-soft">
-          Your brand is simply how the right person recognizes you when they go looking for
-          care. {brand.overall}
+      {/* ── Personal hero: their cover art, photo, name + where their brand is now ─ */}
+      <BrandHero
+        firstName={firstName}
+        fullName={p.displayName ?? ""}
+        role={role}
+        region={p.region ?? ""}
+        photoUrl={p.photoUrl ?? ""}
+        design={typeof fv.cover_design === "string" ? fv.cover_design : null}
+        color={typeof fv.cover_color === "string" ? fv.cover_color : null}
+        seed={p.slug ?? p.id}
+        overall={brand.overall}
+      />
+
+      {/* ── The shape of your brand: five tiles at a glance (the top tiles) ──────── */}
+      <section className="mt-8">
+        <p className="meta text-ink-muted">The shape of your brand</p>
+        <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-ink-soft">
+          Five parts that, together, help the right person find and remember you. Tap any one to
+          tend it.
         </p>
-      </header>
+        <div className="mt-4">
+          <BrandTiles dimensions={brand.dimensions} hrefBase="" />
+        </div>
+      </section>
 
       {/* ── Where to begin: the one grounded next step ─────────────────────────── */}
       {brand.nextStep ? (
@@ -161,21 +165,28 @@ export default async function PractitionerBrandPage() {
         </div>
       )}
 
-      {/* ── The five dimensions — collapsed; the one to begin with opens ───────── */}
-      <p className="mt-10 text-[14px] text-ink-muted">
-        The five parts of your brand. Open any one to see where you are and what you might tend.
+      {/* ── Tend each part — the deep, dimension-by-dimension chapters ─────────── */}
+      <h2 className="font-display mt-12 text-[22px] leading-tight tracking-[-0.01em] text-charcoal">
+        Tend each part
+      </h2>
+      <p className="mt-1.5 text-[14px] text-ink-muted">
+        Open any one to see where you are and the next small thing you might do.
       </p>
-      <div className="mt-3 space-y-3.5">
+      <div className="mt-4 space-y-3.5">
         {brand.dimensions.map((d) => {
           const open = d.id === (brand.nextStep?.dimensionId ?? "where_found");
-          return d.id === "where_found" ? (
-            // "Where you're found" hosts the on-demand local-search check (Serper):
-            // the coverage map + local map pack live inside this chapter.
-            <DimensionChapter key={d.id} dimension={d} defaultOpen={open}>
-              <VisibilityCard lastCheckedLabel={lastCheckedLabel} />
-            </DimensionChapter>
-          ) : (
-            <DimensionChapter key={d.id} dimension={d} defaultOpen={open} />
+          return (
+            <div key={d.id} id={`dim-${d.id}`} className="scroll-mt-6">
+              {d.id === "where_found" ? (
+                // "Where you're found" hosts the on-demand local-search check (Serper):
+                // the coverage map + local map pack live inside this chapter.
+                <DimensionChapter dimension={d} defaultOpen={open}>
+                  <VisibilityCard lastCheckedLabel={lastCheckedLabel} />
+                </DimensionChapter>
+              ) : (
+                <DimensionChapter dimension={d} defaultOpen={open} />
+              )}
+            </div>
           );
         })}
       </div>

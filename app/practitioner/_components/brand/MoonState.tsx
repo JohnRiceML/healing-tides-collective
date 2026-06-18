@@ -30,7 +30,20 @@ const WORD: Record<DimensionState, string> = {
   settled: "settled",
 };
 
-export function MoonState({ state, label = false }: { state: DimensionState; label?: boolean }) {
+const SIZE: Record<"sm" | "lg", string> = {
+  sm: "h-3.5 w-3.5 border-[1.5px]",
+  lg: "h-6 w-6 border-2",
+};
+
+export function MoonState({
+  state,
+  label = false,
+  size = "sm",
+}: {
+  state: DimensionState;
+  label?: boolean;
+  size?: "sm" | "lg";
+}) {
   const pct = FILL[state];
   const word = WORD[state];
 
@@ -38,7 +51,7 @@ export function MoonState({ state, label = false }: { state: DimensionState; lab
     <span className="inline-flex items-center gap-2 leading-none">
       <span
         aria-hidden
-        className="relative inline-block h-3.5 w-3.5 shrink-0 rounded-full border-[1.5px] border-rule"
+        className={`relative inline-block shrink-0 rounded-full border-rule ${SIZE[size]}`}
         style={
           pct > 0
             ? {

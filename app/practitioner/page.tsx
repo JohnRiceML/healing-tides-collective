@@ -16,6 +16,10 @@ import { VisibilityCard } from "./_components/VisibilityCard";
 import { PresencePanel } from "./_components/PresencePanel";
 import { findabilityStage, weeklyViewBuckets, presenceNextStep } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
+import { buildBrand } from "@/lib/brand";
+import { buildBrandSignals } from "@/lib/brand-signals";
+import { readPresenceScan } from "@/lib/presence-scan";
+import { BrandTiles } from "./_components/brand/BrandTiles";
 
 export const metadata: Metadata = {
   title: "Your dashboard — Healing Tides Collective",
@@ -192,6 +196,14 @@ export default async function PractitionerHome() {
     hasContactLink,
     hasRegion,
   });
+
+  // The 5-part brand read — same shared signals as the brand center, so the tiles match.
+  const brandScan = readPresenceScan(fv);
+  const brand = buildBrand(buildBrandSignals(p, presenceViews, brandScan));
+  const brandLastChecked =
+    brandScan?.checkedAt && !Number.isNaN(Date.parse(brandScan.checkedAt))
+      ? new Date(brandScan.checkedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : undefined;
 
   const availabilityDone =
     (typeof fv.availability_state === "string" && fv.availability_state !== "") ||
@@ -432,32 +444,41 @@ export default async function PractitionerHome() {
         </Card>
       </div>
 
-      {/* Your presence — findable, not promotional: Findability + this week + one step */}
+      {/* Your brand — the 5-part shape at a glance, a doorway into the brand center */}
+      <section className="mt-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="meta text-ink-muted">Your brand</h2>
+          <Link
+            href="/practitioner/brand"
+            className="text-[13.5px] font-medium text-teal transition-colors hover:text-ocean"
+          >
+            Open your brand center →
+          </Link>
+        </div>
+        <Card className="mt-3 !p-6">
+          <p className="max-w-2xl text-[15px] leading-[1.6] text-ink-soft">
+            How the right person finds and remembers you. {brand.overall}
+          </p>
+          {brand.nextStep ? (
+            <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-xl bg-seafoam/35 px-4 py-3 text-[13.5px] leading-[1.5] text-charcoal">
+              <span className="meta shrink-0 text-teal">Begin with</span>
+              <span>{brand.nextStep.insight.what}</span>
+            </p>
+          ) : null}
+          <div className="mt-5">
+            <BrandTiles dimensions={brand.dimensions} hrefBase="/practitioner/brand" compact />
+          </div>
+        </Card>
+      </section>
+
+      {/* How people find you — the live findability detail + on-demand local check */}
       <section className="mt-8">
         <h2 className="meta text-ink-muted">How people find you</h2>
         <div className="mt-3">
           <PresencePanel findability={findability} views={presenceViews} nextStep={presenceStep} region={p.region} />
         </div>
-        {/* A calm doorway into the deeper, dimension-by-dimension brand read. */}
-        <Link
-          href="/practitioner/brand"
-          className="group mt-5 flex items-center justify-between gap-4 rounded-2xl border border-rule/70 bg-white px-5 py-4 transition-colors hover:border-teal/40 hover:bg-seafoam/20"
-        >
-          <span className="min-w-0">
-            <span className="font-display block text-[16px] leading-tight text-charcoal">
-              Your brand, cared for
-            </span>
-            <span className="mt-1 block text-[13.5px] leading-[1.5] text-ink-muted">
-              Understand and tend how people find you.
-            </span>
-          </span>
-          <span aria-hidden className="shrink-0 text-teal transition-transform group-hover:translate-x-0.5">
-            →
-          </span>
-        </Link>
-        {/* On-demand local-search check (Serper) */}
         <div className="mt-5">
-          <VisibilityCard />
+          <VisibilityCard lastCheckedLabel={brandLastChecked} />
         </div>
       </section>
     </Shell>
