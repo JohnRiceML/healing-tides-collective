@@ -438,6 +438,23 @@ export default async function PractitionerHome() {
         <div className="mt-3">
           <PresencePanel findability={findability} views={presenceViews} nextStep={presenceStep} region={p.region} />
         </div>
+        {/* A calm doorway into the deeper, dimension-by-dimension brand read. */}
+        <Link
+          href="/practitioner/brand"
+          className="group mt-5 flex items-center justify-between gap-4 rounded-2xl border border-rule/70 bg-white px-5 py-4 transition-colors hover:border-teal/40 hover:bg-seafoam/20"
+        >
+          <span className="min-w-0">
+            <span className="font-display block text-[16px] leading-tight text-charcoal">
+              Your brand, cared for
+            </span>
+            <span className="mt-1 block text-[13.5px] leading-[1.5] text-ink-muted">
+              Understand and tend how people find you.
+            </span>
+          </span>
+          <span aria-hidden className="shrink-0 text-teal transition-transform group-hover:translate-x-0.5">
+            →
+          </span>
+        </Link>
         {/* On-demand local-search check (Serper) */}
         <div className="mt-5">
           <VisibilityCard />
