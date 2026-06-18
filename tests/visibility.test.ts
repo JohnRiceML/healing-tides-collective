@@ -1,8 +1,23 @@
 import { describe, it, expect } from "vitest";
 
-import { buildAuditQueries, evaluateQuery, hostOf, type VisibilityIdentity } from "@/lib/visibility";
-import type { SerpResult } from "@/lib/serper";
+import {
+  buildAuditQueries,
+  buildCoverage,
+  buildCoverageQueries,
+  evaluateQuery,
+  hostOf,
+  type VisibilityIdentity,
+} from "@/lib/visibility";
+import type { SerpResult, SerpPage } from "@/lib/serper";
 import { SPECIALTY_OPTIONS } from "@/app/_lib/taxonomy";
+
+const page = (over: Partial<SerpPage> = {}): SerpPage => ({
+  organic: [],
+  peopleAlsoAsk: [],
+  relatedSearches: [],
+  knowledgeGraphPresent: false,
+  ...over,
+});
 
 const result = (over: Partial<SerpResult>): SerpResult => ({
   title: "Some Clinic",
@@ -98,5 +113,155 @@ describe("evaluateQuery", () => {
       profilePath: "",
     });
     expect(r.found).toBe(false);
+  });
+});
+
+describe("buildCoverageQueries", () => {
+  it("returns [] without a region (a local query needs a place)", () => {
+    expect(buildCoverageQueries(["trauma_recovery"], null)).toEqual([]);
+    expect(buildCoverageQueries(["trauma_recovery"], "   ")).toEqual([]);
+  });
+
+  it("expands a category id into its real subcategory phrases, not the bucket label", () => {
+    const qs = buildCoverageQueries(["trauma_recovery"], "Saint Paul, MN");
+    const labels = qs.map((q) => q.label);
+    expect(labels).toEqual(["Trauma Healing", "Nervous System Healing", "Addiction & Recovery"]);
+    // The broad category label is NOT what we search — the warmer phrases are.
+    expect(labels).not.toContain("Trauma & Recovery");
+    for (const q of qs) expect(q.query.endsWith("Saint Paul, MN")).toBe(true);
+    expect(qs[0]).toEqual({
+      id: "trauma_healing",
+      label: "Trauma Healing",
+      query: "Trauma Healing Saint Paul, MN",
+    });
+  });
+
+  it("falls back to a subcategory id's own label when it has no children", () => {
+    const qs = buildCoverageQueries(["somatic"], "Duluth, MN");
+    expect(qs).toEqual([{ id: "somatic", label: "Somatic Healing", query: "Somatic Healing Duluth, MN" }]);
+  });
+
+  it("falls back to the raw id for an unknown specialty", () => {
+    const qs = buildCoverageQueries(["totally_unknown"], "Duluth, MN");
+    expect(qs).toEqual([
+      { id: "totally_unknown", label: "totally_unknown", query: "totally_unknown Duluth, MN" },
+    ]);
+  });
+
+  it("dedupes overlapping expansions and caps at the limit", () => {
+    // Two categories whose expansions don't overlap, but together exceed the cap.
+    const qs = buildCoverageQueries(["trauma_recovery", "relationships_connection"], "Saint Paul, MN", 5);
+    expect(qs).toHaveLength(5);
+    const queries = qs.map((q) => q.query);
+    expect(new Set(queries).size).toBe(queries.length); // no dupes
+  });
+
+  it("dedupes when the same id is passed twice", () => {
+    const qs = buildCoverageQueries(["mens_wellness", "mens_wellness"], "Saint Paul, MN");
+    expect(qs).toEqual([
+      { id: "mens_mental_health", label: "Men's Mental Health", query: "Men's Mental Health Saint Paul, MN" },
+    ]);
+  });
+});
+
+describe("buildCoverage", () => {
+  const id: VisibilityIdentity = {
+    name: "Nora Hollenkamp",
+    domain: "nora-therapy.com",
+    profilePath: "/practitioners/nora-hollenkamp",
+  };
+
+  const mine = (position: number): SerpResult =>
+    result({ title: "Nora — Therapy", link: "https://www.nora-therapy.com/", position });
+
+  it("counts how many terms the practitioner appears for", () => {
+    const cov = buildCoverage(
+      [
+        { query: "a place", label: "A", page: page({ organic: [mine(2)] }) },
+        { query: "b place", label: "B", page: page({ organic: [result({ title: "Someone Else", link: "https://x.com", position: 1 })] }) },
+        { query: "c place", label: "C", page: page({ organic: [mine(5)] }) },
+      ],
+      id,
+    );
+    expect(cov.total).toBe(3);
+    expect(cov.appeared).toBe(2);
+    expect(cov.terms.every((t) => typeof t.label === "string")).toBe(true);
+  });
+
+  it("orders appeared terms first (wins lead)", () => {
+    const cov = buildCoverage(
+      [
+        { query: "absent place", label: "Absent", page: page({ organic: [result({ title: "Other", link: "https://x.com", position: 1 })] }) },
+        { query: "present place", label: "Present", page: page({ organic: [mine(4)] }) },
+      ],
+      id,
+    );
+    expect(cov.terms[0].label).toBe("Present");
+    expect(cov.terms[0].found).toBe(true);
+    expect(cov.terms[1].found).toBe(false);
+  });
+
+  it("orders a found term ahead of a clearly-absent one regardless of input order", () => {
+    const cov = buildCoverage(
+      [
+        { query: "absent place", label: "Absent", page: page({ organic: [result({ title: "X", link: "https://x.com", position: 1 })] }) },
+        { query: "present place", label: "Present", page: page({ organic: [mine(3)] }) },
+      ],
+      id,
+    );
+    expect(cov.terms.map((t) => t.label)).toEqual(["Present", "Absent"]);
+  });
+
+  it("dedupes People-also-ask questions and related searches across pages, capping at 8", () => {
+    const cov = buildCoverage(
+      [
+        {
+          query: "a place",
+          label: "A",
+          page: page({
+            organic: [mine(1)],
+            peopleAlsoAsk: ["What is somatic therapy?", "How much does therapy cost?"],
+            relatedSearches: ["trauma therapist near me", "somatic experiencing"],
+          }),
+        },
+        {
+          query: "b place",
+          label: "B",
+          page: page({
+            organic: [mine(1)],
+            // duplicate question (case-insensitive) + a new one
+            peopleAlsoAsk: ["how much does therapy cost?", "Is EMDR effective?"],
+            relatedSearches: ["Somatic Experiencing", "polyvagal therapy"],
+          }),
+        },
+      ],
+      id,
+    );
+    expect(cov.questions).toEqual([
+      "What is somatic therapy?",
+      "How much does therapy cost?",
+      "Is EMDR effective?",
+    ]);
+    expect(cov.relatedSearches).toEqual([
+      "trauma therapist near me",
+      "somatic experiencing",
+      "polyvagal therapy",
+    ]);
+  });
+
+  it("caps questions and related searches at 8", () => {
+    const many = Array.from({ length: 12 }, (_, i) => `Q${i}`);
+    const manyRel = Array.from({ length: 12 }, (_, i) => `R${i}`);
+    const cov = buildCoverage(
+      [{ query: "a place", label: "A", page: page({ organic: [mine(1)], peopleAlsoAsk: many, relatedSearches: manyRel }) }],
+      id,
+    );
+    expect(cov.questions).toHaveLength(8);
+    expect(cov.relatedSearches).toHaveLength(8);
+  });
+
+  it("is empty-safe with no terms", () => {
+    const cov = buildCoverage([], id);
+    expect(cov).toEqual({ terms: [], appeared: 0, total: 0, questions: [], relatedSearches: [] });
   });
 });

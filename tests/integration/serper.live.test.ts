@@ -10,8 +10,8 @@
 
 import { describe, it, expect } from "vitest";
 
-import { searchSerp } from "@/lib/serper";
-import { buildAuditQueries, evaluateQuery } from "@/lib/visibility";
+import { searchSerp, searchSerpPage } from "@/lib/serper";
+import { buildAuditQueries, buildCoverageQueries, buildCoverage, evaluateQuery } from "@/lib/visibility";
 
 const hasKey = Boolean(process.env.SERPER_API_KEY);
 
@@ -37,6 +37,33 @@ describe.skipIf(!hasKey)("Serper live integration", () => {
     },
     20_000,
   );
+
+  it("captures the SERP signals we used to discard (people-also-ask + related searches)", async () => {
+    const page = await searchSerpPage("somatic therapy Saint Paul, Minnesota", { num: 10 });
+    // eslint-disable-next-line no-console
+    console.log(
+      `\n[serpPage] organic=${page.organic.length} · knowledgeGraph=${page.knowledgeGraphPresent}\n` +
+        `  people also ask:\n${page.peopleAlsoAsk.slice(0, 4).map((q) => `    · ${q}`).join("\n")}\n` +
+        `  related searches: ${page.relatedSearches.slice(0, 6).join(" · ")}\n`,
+    );
+    expect(page.organic.length).toBeGreaterThan(0);
+  }, 20_000);
+
+  it("builds a real coverage read for a multi-specialty practitioner", async () => {
+    const queries = buildCoverageQueries(["trauma_recovery", "relationships_connection"], "Saint Paul, Minnesota");
+    const perTerm = [];
+    for (const q of queries.slice(0, 4)) {
+      perTerm.push({ query: q.query, label: q.label, page: await searchSerpPage(q.query, { num: 10 }) });
+    }
+    const cov = buildCoverage(perTerm, { name: "Psychology Today", domain: "psychologytoday.com", profilePath: "" });
+    // eslint-disable-next-line no-console
+    console.log(
+      `\n[coverage] appears for ${cov.appeared} of ${cov.total} searches:\n` +
+        cov.terms.map((t) => `    ${t.found ? "●" : "○"} ${t.label} — ${t.found ? `#${t.position}` : "not yet"}`).join("\n") +
+        `\n  questions seekers ask: ${cov.questions.length} · related terms: ${cov.relatedSearches.length}\n`,
+    );
+    expect(cov.total).toBeGreaterThan(0);
+  }, 30_000);
 
   it("evaluates whether a sample practitioner appears", async () => {
     const query = buildAuditQueries(["anxiety_stress"], "Saint Paul, Minnesota")[0];

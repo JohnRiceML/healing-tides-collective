@@ -14,12 +14,29 @@ export type SerpResult = {
   position: number;
 };
 
-export async function searchSerp(
+// Full SERP page: organic results plus the three SERP-feature signals we
+// previously discarded — "People also ask" questions, related-search queries,
+// and whether Google rendered a knowledge-graph panel for the query.
+export type SerpPage = {
+  organic: SerpResult[];
+  peopleAlsoAsk: string[];
+  relatedSearches: string[];
+  knowledgeGraphPresent: boolean;
+};
+
+const EMPTY_PAGE: SerpPage = {
+  organic: [],
+  peopleAlsoAsk: [],
+  relatedSearches: [],
+  knowledgeGraphPresent: false,
+};
+
+export async function searchSerpPage(
   query: string,
   opts: { num?: number; gl?: string } = {},
-): Promise<SerpResult[]> {
+): Promise<SerpPage> {
   const apiKey = process.env.SERPER_API_KEY;
-  if (!apiKey) return [];
+  if (!apiKey) return { ...EMPTY_PAGE };
 
   try {
     const res = await fetch(SERPER_ENDPOINT, {
@@ -29,17 +46,46 @@ export async function searchSerp(
     });
     if (!res.ok) {
       console.error(`[serper] HTTP ${res.status} for "${query}"`);
-      return [];
+      return { ...EMPTY_PAGE };
     }
-    const data = (await res.json()) as { organic?: Array<Record<string, unknown>> };
-    return (data.organic ?? []).map((item, i) => ({
+    const data = (await res.json()) as {
+      organic?: Array<Record<string, unknown>>;
+      peopleAlsoAsk?: Array<Record<string, unknown>>;
+      relatedSearches?: Array<Record<string, unknown>>;
+      knowledgeGraph?: unknown;
+    };
+
+    const organic: SerpResult[] = (data.organic ?? []).map((item, i) => ({
       title: typeof item.title === "string" ? item.title : "",
       link: typeof item.link === "string" ? item.link : "",
       snippet: typeof item.snippet === "string" ? item.snippet : "",
       position: typeof item.position === "number" ? item.position : i + 1,
     }));
+
+    const peopleAlsoAsk: string[] = (data.peopleAlsoAsk ?? [])
+      .map((item) => (typeof item.question === "string" ? item.question : ""))
+      .filter((q) => q.length > 0);
+
+    const relatedSearches: string[] = (data.relatedSearches ?? [])
+      .map((item) => (typeof item.query === "string" ? item.query : ""))
+      .filter((q) => q.length > 0);
+
+    return {
+      organic,
+      peopleAlsoAsk,
+      relatedSearches,
+      knowledgeGraphPresent: Boolean(data.knowledgeGraph),
+    };
   } catch (err) {
     console.error(`[serper] error for "${query}"`, err);
-    return [];
+    return { ...EMPTY_PAGE };
   }
+}
+
+export async function searchSerp(
+  query: string,
+  opts: { num?: number; gl?: string } = {},
+): Promise<SerpResult[]> {
+  const page = await searchSerpPage(query, opts);
+  return page.organic;
 }

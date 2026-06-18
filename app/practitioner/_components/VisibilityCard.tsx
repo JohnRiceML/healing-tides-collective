@@ -3,7 +3,12 @@
 import { useState, useTransition } from "react";
 
 import { Button } from "@/app/_components/ui";
-import { runVisibilityAudit, type VisibilityReport } from "../visibility-actions";
+import type { Coverage, TermCoverage } from "@/lib/visibility";
+import { runVisibilityAudit } from "../visibility-actions";
+
+type AuditResult =
+  | { ok: true; coverage: Coverage }
+  | { ok: false; reason: "unauthenticated" | "not_practitioner" | "no_region" | "unconfigured" };
 
 const REASON_COPY: Record<string, string> = {
   no_region: "Add your location to your profile, then we can check how you show up locally.",
@@ -12,12 +17,34 @@ const REASON_COPY: Record<string, string> = {
   unauthenticated: "Please sign in again.",
 };
 
+/** Where the seeker found them, in calm prose. */
+function viaLabel(via: TermCoverage["via"]): string {
+  if (via === "website") return "your website";
+  if (via === "profile") return "your Healing Tides page";
+  return "your Healing Tides page";
+}
+
+/** A filled teal dot for "you appear", a hollow rule-ring for "not yet". */
+function Glyph({ found, className = "" }: { found: boolean; className?: string }) {
+  return found ? (
+    <span
+      aria-hidden
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-teal ${className}`}
+    />
+  ) : (
+    <span
+      aria-hidden
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full border-[1.5px] border-rule ${className}`}
+    />
+  );
+}
+
 export function VisibilityCard() {
-  const [report, setReport] = useState<VisibilityReport | null>(null);
+  const [result, setResult] = useState<AuditResult | null>(null);
   const [pending, start] = useTransition();
 
   function run() {
-    start(async () => setReport(await runVisibilityAudit()));
+    start(async () => setResult((await runVisibilityAudit()) as AuditResult));
   }
 
   return (
@@ -30,48 +57,115 @@ export function VisibilityCard() {
 
       <div className="mt-4">
         <Button type="button" onClick={run} disabled={pending}>
-          {pending ? "Checking…" : report?.ok ? "Check again" : "Check my visibility"}
+          {pending ? "Checking…" : result?.ok ? "Check again" : "Check my visibility"}
         </Button>
       </div>
 
-      {report && !report.ok ? (
+      {result && !result.ok ? (
         <p className="mt-4 text-[14px] leading-[1.6] text-ink-soft">
-          {REASON_COPY[report.reason] ?? "Couldn't run the check — please try again."}
+          {REASON_COPY[result.reason] ?? "Couldn't run the check — please try again."}
         </p>
       ) : null}
 
-      {report?.ok ? (
-        <ul className="mt-5 space-y-3">
-          {report.queries.map((q) => (
-            <li key={q.query} className="rounded-xl border border-rule/70 bg-sand/40 p-4">
-              <p className="text-[13px] font-medium text-charcoal">
-                &ldquo;{q.query}&rdquo;
+      {result?.ok ? <CoverageMap coverage={result.coverage} /> : null}
+    </section>
+  );
+}
+
+function CoverageMap({ coverage }: { coverage: Coverage }) {
+  const { terms, appeared, total, questions, relatedSearches } = coverage;
+
+  return (
+    <div className="mt-6">
+      {/* 1) Overview ----------------------------------------------------- */}
+      <div className="rounded-xl border border-rule/70 bg-seafoam/30 p-5">
+        <p className="text-[15px] leading-[1.55] text-charcoal">
+          You&rsquo;re showing up for{" "}
+          <span className="font-medium text-ocean">
+            {appeared} of {total}
+          </span>{" "}
+          searches we checked — and there&rsquo;s room for more.
+        </p>
+        <div
+          className="mt-4 flex flex-wrap items-center gap-2"
+          role="img"
+          aria-label={`Appearing in ${appeared} of ${total} searches`}
+        >
+          {terms.map((t) => (
+            <Glyph key={`dot-${t.query}`} found={t.found} className="h-3 w-3" />
+          ))}
+        </div>
+      </div>
+
+      {/* 2) Coverage rows (appear-first; order comes from the action) ---- */}
+      <ul className="mt-5 space-y-px overflow-hidden rounded-xl border border-rule/70">
+        {terms.map((t) => (
+          <li
+            key={t.query}
+            className="flex items-start gap-3.5 bg-white px-4 py-3.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-rule/60"
+          >
+            <Glyph found={t.found} className="mt-[7px]" />
+            <div className="min-w-0">
+              <p className="font-display text-[16px] leading-[1.3] tracking-[-0.01em] text-charcoal">
+                {t.label}
               </p>
-              {q.found ? (
-                <p className="mt-1.5 text-[13.5px] leading-[1.5] text-teal">
-                  You appear{q.position ? ` — result #${q.position}` : ""}
-                  {q.via === "website" ? " (your website)" : q.via === "profile" ? " (your Healing Tides page)" : ""}.
+              {t.found ? (
+                <p className="mt-1 text-[13.5px] leading-[1.5] text-teal">
+                  You&rsquo;re here{t.position ? ` — result #${t.position}` : ""}, via {viaLabel(t.via)}.
                 </p>
               ) : (
                 <>
-                  <p className="mt-1.5 text-[13.5px] leading-[1.5] text-ocean">
-                    Not on the first page yet.
+                  <p className="mt-1 text-[13.5px] leading-[1.5] text-ocean">
+                    Not on the first page yet — an open door.
                   </p>
-                  {q.competitors.length ? (
+                  {t.competitors.length ? (
                     <p className="mt-1 text-[12.5px] leading-[1.5] text-ink-muted">
-                      Also showing up here: {q.competitors.join(" · ")}
+                      A seeker also sees {t.competitors.join(" · ")}.
                     </p>
                   ) : null}
                 </>
               )}
-            </li>
-          ))}
-          <li className="pt-1 text-[12.5px] leading-[1.5] text-ink-muted">
-            A complete, published Healing Tides profile is one of the fastest ways to start
-            showing up for these searches.
+            </div>
           </li>
-        </ul>
+        ))}
+      </ul>
+
+      {/* 3) Demand panels (hidden when empty) --------------------------- */}
+      {questions.length ? (
+        <div className="mt-5 rounded-xl border border-rule/70 bg-sand/40 p-5">
+          <p className="meta text-ink-muted">Questions your people are asking</p>
+          <ul className="mt-3 space-y-2">
+            {questions.map((q) => (
+              <li
+                key={q}
+                className="flex items-start gap-2.5 text-[13.5px] leading-[1.5] text-ink-soft"
+              >
+                <span
+                  aria-hidden
+                  className="mt-[7px] inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-sage"
+                />
+                <span>{q}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
-    </section>
+
+      {relatedSearches.length ? (
+        <div className="mt-4 rounded-xl border border-rule/70 bg-sand/40 p-5">
+          <p className="meta text-ink-muted">Words seekers use for care like yours</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {relatedSearches.map((w) => (
+              <span
+                key={w}
+                className="inline-flex items-center rounded-full border border-rule/80 bg-white px-3 py-1.5 text-[12.5px] leading-none text-ink-soft"
+              >
+                {w}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
