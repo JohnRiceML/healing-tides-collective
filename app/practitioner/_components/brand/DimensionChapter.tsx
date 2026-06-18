@@ -6,14 +6,12 @@ import { InsightCard } from "./InsightCard";
 import { MoonState } from "./MoonState";
 
 /**
- * One dimension of a practitioner's presence, rendered as a calm chapter rather
- * than a graded section. A heading (font-display) with a quiet state word, a plain
- * intro, then the dimension's insights as collapsed InsightCards. The optional
- * children slot is for embeds a page wants to drop inside a chapter (e.g. the live
- * Google-coverage map under "where you're found").
+ * One dimension of a practitioner's presence, rendered as a calm, COLLAPSED chapter so
+ * the page opens grounded and quiet rather than as a wall of five sections. The summary
+ * (moon + name + state word) is always visible; the intro, insights, and any embed
+ * unfold on a gentle tap. The page opens the one chapter that matters most by default.
  *
- * No score, no percentage, no comparison — the moon and the state word carry the
- * read, gently.
+ * Native <details> — no JS, accessible, server-rendered. No score, no comparison.
  */
 
 const WORD: Record<DimensionState, string> = {
@@ -26,33 +24,48 @@ const WORD: Record<DimensionState, string> = {
 export function DimensionChapter({
   dimension,
   children,
+  defaultOpen = false,
 }: {
   dimension: Dimension;
   children?: ReactNode;
+  defaultOpen?: boolean;
 }) {
   return (
-    <section className="rounded-3xl border border-rule/70 bg-white p-6 md:p-7">
-      <header className="flex items-start gap-3">
+    <details
+      open={defaultOpen}
+      className="group rounded-3xl border border-rule/70 bg-white p-6 transition-colors hover:border-rule-strong/30 md:p-7 [&_summary::-webkit-details-marker]:hidden"
+    >
+      <summary className="flex cursor-pointer list-none items-center gap-3">
         <MoonState state={dimension.state} />
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-[17px] leading-[1.3] tracking-[-0.01em] text-charcoal">
+          <span className="font-display block text-[17px] leading-[1.3] tracking-[-0.01em] text-charcoal">
             {dimension.name}
-          </h2>
-          <p className="meta mt-1 text-ink-muted">{WORD[dimension.state]}</p>
+          </span>
+          <span className="meta mt-1 block text-ink-muted">{WORD[dimension.state]}</span>
         </div>
-      </header>
+        <svg
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden
+          className="h-4 w-4 shrink-0 text-ink-muted transition-transform duration-200 group-open:rotate-180"
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
 
-      <p className="mt-3 text-[14px] leading-[1.6] text-ink-soft">{dimension.intro}</p>
+      <div className="mt-4 border-t border-rule/60 pt-5">
+        <p className="text-[14px] leading-[1.6] text-ink-soft">{dimension.intro}</p>
 
-      {dimension.insights.length ? (
-        <div className="mt-5 space-y-3">
-          {dimension.insights.map((insight) => (
-            <InsightCard key={insight.id} insight={insight} />
-          ))}
-        </div>
-      ) : null}
+        {dimension.insights.length ? (
+          <div className="mt-5 space-y-3">
+            {dimension.insights.map((insight) => (
+              <InsightCard key={insight.id} insight={insight} />
+            ))}
+          </div>
+        ) : null}
 
-      {children ? <div className="mt-5">{children}</div> : null}
-    </section>
+        {children ? <div className="mt-5">{children}</div> : null}
+      </div>
+    </details>
   );
 }

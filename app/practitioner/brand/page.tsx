@@ -8,9 +8,10 @@ import { weeklyViewBuckets } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
 import { buildBrand, type BrandSignals } from "@/lib/brand";
 
-import { MoonState } from "../_components/brand/MoonState";
 import { DimensionChapter } from "../_components/brand/DimensionChapter";
 import { VisibilityCard } from "../_components/VisibilityCard";
+
+const LIFT_WORD = { gentle: "Gentle", moderate: "Moderate", deeper: "Deeper" } as const;
 
 export const metadata: Metadata = {
   title: "Your brand — Healing Tides",
@@ -108,39 +109,66 @@ export default async function PractitionerBrandPage() {
         <h1 className="font-display mt-3 text-[clamp(30px,5vw,46px)] font-light leading-[1.04] tracking-[-0.02em] text-charcoal">
           Your brand, cared for
         </h1>
-        <p className="mt-4 max-w-2xl text-[17px] leading-[1.65] text-ink-soft">
-          Your brand isn&rsquo;t a score to chase — it&rsquo;s the way the right person
-          recognizes you when they go looking for care. Here&rsquo;s a calm read of how
-          you show up today, and the small things you might tend next.
-        </p>
-        <p className="mt-4 max-w-2xl text-[15px] leading-[1.65] text-ink-soft">
-          {brand.overall}
+        <p className="mt-4 max-w-2xl text-[16px] leading-[1.65] text-ink-soft">
+          Your brand is simply how the right person recognizes you when they go looking for
+          care. {brand.overall}
         </p>
       </header>
 
-      {/* ── Spine: the five dimensions at a glance ─────────────────────────────── */}
-      <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 border-y border-rule/70 py-5">
-        {brand.dimensions.map((d) => (
-          <span key={d.id} className="inline-flex items-center gap-2.5">
-            <MoonState state={d.state} />
-            <span className="text-[14px] leading-tight text-charcoal">{d.name}</span>
-          </span>
-        ))}
-      </div>
+      {/* ── Where to begin: the one grounded next step ─────────────────────────── */}
+      {brand.nextStep ? (
+        <div className="mt-8 rounded-3xl border border-teal/25 bg-seafoam/25 p-6 md:p-7">
+          <p className="meta text-teal">Where to begin</p>
+          <p className="font-display mt-2 text-[19px] leading-[1.3] text-charcoal">
+            {brand.nextStep.insight.what}
+          </p>
+          <p className="mt-2 max-w-xl text-[14.5px] leading-[1.6] text-ink-soft">
+            {brand.nextStep.insight.whyCare}
+          </p>
+          <p className="mt-3 max-w-xl text-[14.5px] leading-[1.6] text-charcoal">
+            {brand.nextStep.insight.whatNext}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+            {brand.nextStep.insight.ctaHref ? (
+              <Link
+                href={brand.nextStep.insight.ctaHref}
+                className="rounded-full bg-charcoal px-4 py-2 text-[13.5px] font-medium text-sand transition-opacity hover:opacity-90"
+              >
+                {brand.nextStep.insight.ctaLabel ?? "Open my profile"}
+              </Link>
+            ) : null}
+            <span className="text-[13px] text-ink-muted">
+              {LIFT_WORD[brand.nextStep.insight.lift]} · no rush
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-8 rounded-3xl bg-seafoam/25 p-6 md:p-7">
+          <p className="meta text-teal">Where you are</p>
+          <p className="mt-2 max-w-xl text-[15px] leading-[1.65] text-charcoal">
+            Your brand is in good shape — there&rsquo;s nothing pressing to tend. Look through
+            the parts below whenever you&rsquo;re curious about how you show up.
+          </p>
+        </div>
+      )}
 
-      {/* ── Each dimension as a chapter ────────────────────────────────────────── */}
-      <div className="mt-10 space-y-10">
-        {brand.dimensions.map((d) =>
-          d.id === "where_found" ? (
-            // The "where you're found" chapter hosts the on-demand local-search check
-            // (Serper) as its embedded child — coverage + the local map pack live there.
-            <DimensionChapter key={d.id} dimension={d}>
+      {/* ── The five dimensions — collapsed; the one to begin with opens ───────── */}
+      <p className="mt-10 text-[14px] text-ink-muted">
+        The five parts of your brand. Open any one to see where you are and what you might tend.
+      </p>
+      <div className="mt-3 space-y-3.5">
+        {brand.dimensions.map((d) => {
+          const open = d.id === (brand.nextStep?.dimensionId ?? "where_found");
+          return d.id === "where_found" ? (
+            // "Where you're found" hosts the on-demand local-search check (Serper):
+            // the coverage map + local map pack live inside this chapter.
+            <DimensionChapter key={d.id} dimension={d} defaultOpen={open}>
               <VisibilityCard />
             </DimensionChapter>
           ) : (
-            <DimensionChapter key={d.id} dimension={d} />
-          ),
-        )}
+            <DimensionChapter key={d.id} dimension={d} defaultOpen={open} />
+          );
+        })}
       </div>
 
       {/* ── Reassurance + lift legend ──────────────────────────────────────────── */}

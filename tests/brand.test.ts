@@ -251,3 +251,17 @@ describe("buildBrand — overall is a calm sentence (no number, no grade)", () =
     expect(overall.toLowerCase()).toContain("beginning");
   });
 });
+
+describe("buildBrand nextStep (grounding in where they are now)", () => {
+  it("leads with the most foundational gap — the first not_started insight, in order", () => {
+    const { nextStep } = buildBrand(EMPTY);
+    expect(nextStep).not.toBeNull();
+    expect(nextStep?.dimensionId).toBe("who_you_are");
+    expect(nextStep?.insight.state).toBe("not_started");
+    expect(nextStep?.insight.whatNext.length).toBeGreaterThan(0);
+  });
+
+  it("is null when nothing's pressing (a profile in good shape) — then we just tend it", () => {
+    expect(buildBrand(FULL).nextStep).toBeNull();
+  });
+});

@@ -56,9 +56,14 @@ export type BrandSignals = {
   weeklyViews?: { thisWeek: number; total: number };
 };
 
+/** The single most-grounding next step — what to begin with, given where they are now. */
+export type NextStep = { dimensionId: DimensionId; insight: Insight };
+
 export type Brand = {
   dimensions: Dimension[]; // 5 dimensions, fixed order
   overall: string;
+  /** The one foundational step to lead with — or null when nothing's pressing (tend it). */
+  nextStep: NextStep | null;
 };
 
 // The fixed order the product surfaces them in. Exported so tests + UI can assert order.
@@ -454,6 +459,21 @@ function buildOverall(dimensions: Dimension[]): string {
 
 // ── public entry point ──────────────────────────────────────────────────────
 
+/**
+ * The single step to lead with — grounding the page in where they are *now*. The most
+ * foundational gap first: the first `not_started` insight in dimension order, else the
+ * first `forming`. Null when nothing's pressing — then we invite them to simply tend it.
+ */
+function pickNextStep(dimensions: Dimension[]): NextStep | null {
+  for (const rank of ["not_started", "forming"] as DimensionState[]) {
+    for (const d of dimensions) {
+      const insight = d.insights.find((i) => i.state === rank);
+      if (insight) return { dimensionId: d.id, insight };
+    }
+  }
+  return null;
+}
+
 export function buildBrand(signals: BrandSignals): Brand {
   const builders: Record<DimensionId, (s: BrandSignals) => Dimension> = {
     who_you_are: whoYouAre,
@@ -472,5 +492,6 @@ export function buildBrand(signals: BrandSignals): Brand {
   return {
     dimensions,
     overall: buildOverall(dimensions),
+    nextStep: pickNextStep(dimensions),
   };
 }
