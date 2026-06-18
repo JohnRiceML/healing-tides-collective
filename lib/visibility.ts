@@ -8,7 +8,7 @@
 // deterministic and testable.
 
 import { CATEGORIES, specialtyLabel } from "@/app/_lib/taxonomy";
-import type { SerpResult, SerpPage } from "@/lib/serper";
+import type { SerpResult, SerpPage, PlaceResult } from "@/lib/serper";
 
 export type VisibilityIdentity = {
   name: string;
@@ -240,4 +240,41 @@ export function buildCoverage(
   );
 
   return { terms: ordered, appeared, total: ordered.length, questions, relatedSearches };
+}
+
+// ── Map Pack ──────────────────────────────────────────────────────────────
+// Google's local "Map Pack" (the 3-ish business cards above organic results)
+// is a separate surface from the blue-link SERP. We read it from the Places
+// API (lib/serper → searchPlaces) and flag which entry, if any, is the
+// practitioner — by their own website host or a name match in the card title.
+// Pure + deterministic, like the rest of this module: the network call stays
+// in lib/serper so the matching logic is unit-testable.
+
+export type MapPackEntry = PlaceResult & { isYou: boolean };
+
+export type MapPack = {
+  entries: MapPackEntry[];
+  youInPack: boolean;
+};
+
+/**
+ * Tag each Places result as the practitioner or not. An entry isYou when its
+ * website host (via hostOf) equals identity.domain, OR its title contains the
+ * practitioner's name (case-insensitive). youInPack is true when any entry is
+ * theirs. An empty list yields an empty pack ({ entries: [], youInPack: false }).
+ */
+export function evaluateMapPack(
+  places: PlaceResult[],
+  identity: VisibilityIdentity,
+): MapPack {
+  const name = identity.name.trim().toLowerCase();
+
+  const entries: MapPackEntry[] = places.map((place) => {
+    const host = place.website ? hostOf(place.website) : null;
+    const byHost = !!(identity.domain && host && host === identity.domain);
+    const byName = !!(name && place.title.toLowerCase().includes(name));
+    return { ...place, isYou: byHost || byName };
+  });
+
+  return { entries, youInPack: entries.some((e) => e.isYou) };
 }

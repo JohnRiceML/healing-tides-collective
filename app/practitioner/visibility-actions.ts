@@ -1,8 +1,15 @@
 "use server";
 
 import { getPractitioner } from "@/lib/auth";
-import { searchSerpPage, type SerpPage } from "@/lib/serper";
-import { buildCoverageQueries, buildCoverage, hostOf, type Coverage } from "@/lib/visibility";
+import { searchSerpPage, searchPlaces, type SerpPage } from "@/lib/serper";
+import {
+  buildCoverageQueries,
+  buildCoverage,
+  evaluateMapPack,
+  hostOf,
+  type Coverage,
+  type MapPack,
+} from "@/lib/visibility";
 
 export type AuditResult =
   | { ok: false; reason: "unauthenticated" | "not_practitioner" | "no_region" | "unconfigured" }
@@ -40,4 +47,33 @@ export async function runVisibilityAudit(): Promise<AuditResult> {
   }
 
   return { ok: true, coverage: buildCoverage(perTerm, identity) };
+}
+
+export type MapPackResult =
+  | { ok: true; mapPack: MapPack }
+  | { ok: false; reason: "unauthenticated" | "not_practitioner" | "unconfigured" };
+
+/**
+ * The local Google "map pack" (Places 3-pack) for one coverage term — the calm terrain
+ * behind a single search. Per-row disclosure on the visibility card: a seeker expands one
+ * term, we fetch that term's Places results and mark which row (if any) is the practitioner.
+ *
+ * Read-only (getPractitioner never promotes); lazily triggered per row — Serper /places
+ * costs per call, so this only runs when a practitioner opens a specific term.
+ */
+export async function getTermMapPack(query: string): Promise<MapPackResult> {
+  const result = await getPractitioner();
+  if (!result) return { ok: false, reason: "unauthenticated" };
+  if (!result.practitioner) return { ok: false, reason: "not_practitioner" };
+  if (!process.env.SERPER_API_KEY) return { ok: false, reason: "unconfigured" };
+
+  const p = result.practitioner;
+  const identity = {
+    name: (p.displayName ?? "").trim(),
+    domain: p.website ? hostOf(p.website) : null,
+    profilePath: p.slug ? `/practitioners/${p.slug}` : "",
+  };
+
+  const places = await searchPlaces(query);
+  return { ok: true, mapPack: evaluateMapPack(places, identity) };
 }

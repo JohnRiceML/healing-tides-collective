@@ -4,11 +4,12 @@ import {
   buildAuditQueries,
   buildCoverage,
   buildCoverageQueries,
+  evaluateMapPack,
   evaluateQuery,
   hostOf,
   type VisibilityIdentity,
 } from "@/lib/visibility";
-import type { SerpResult, SerpPage } from "@/lib/serper";
+import type { SerpResult, SerpPage, PlaceResult } from "@/lib/serper";
 import { SPECIALTY_OPTIONS } from "@/app/_lib/taxonomy";
 
 const page = (over: Partial<SerpPage> = {}): SerpPage => ({
@@ -263,5 +264,90 @@ describe("buildCoverage", () => {
   it("is empty-safe with no terms", () => {
     const cov = buildCoverage([], id);
     expect(cov).toEqual({ terms: [], appeared: 0, total: 0, questions: [], relatedSearches: [] });
+  });
+});
+
+describe("evaluateMapPack", () => {
+  const id: VisibilityIdentity = {
+    name: "Nora Hollenkamp",
+    domain: "nora-therapy.com",
+    profilePath: "/practitioners/nora-hollenkamp",
+  };
+
+  const place = (over: Partial<PlaceResult>): PlaceResult => ({
+    title: "Some Wellness Studio",
+    address: "123 Main St, Saint Paul, MN",
+    rating: 4.5,
+    ratingCount: 20,
+    website: "https://example.com",
+    category: "Therapist",
+    position: 1,
+    ...over,
+  });
+
+  it("flags the practitioner by their own website host", () => {
+    const pack = evaluateMapPack(
+      [
+        place({ title: "Calm Waters Counseling", website: "https://calm-waters.com", position: 1 }),
+        place({ title: "Nora's Studio", website: "https://www.nora-therapy.com/contact", position: 2 }),
+      ],
+      id,
+    );
+    expect(pack.entries).toHaveLength(2);
+    expect(pack.entries[0].isYou).toBe(false);
+    expect(pack.entries[1].isYou).toBe(true);
+    expect(pack.youInPack).toBe(true);
+  });
+
+  it("flags the practitioner by a name match in the title (case-insensitive)", () => {
+    const pack = evaluateMapPack(
+      [place({ title: "Meet NORA HOLLENKAMP, LICSW", website: "https://elsewhere.com" })],
+      id,
+    );
+    expect(pack.entries[0].isYou).toBe(true);
+    expect(pack.youInPack).toBe(true);
+  });
+
+  it("does not flag entries that match by neither host nor name", () => {
+    const pack = evaluateMapPack(
+      [
+        place({ title: "Riverside Therapy", website: "https://riverside.com", position: 1 }),
+        place({ title: "Lakeside Wellness", website: "https://lakeside.com", position: 2 }),
+      ],
+      id,
+    );
+    expect(pack.entries.every((e) => e.isYou === false)).toBe(true);
+    expect(pack.youInPack).toBe(false);
+  });
+
+  it("youInPack is true when any entry is theirs, false otherwise", () => {
+    const present = evaluateMapPack(
+      [
+        place({ title: "Other Clinic", website: "https://other.com", position: 1 }),
+        place({ title: "Nora — Therapy", website: "https://nora-therapy.com", position: 2 }),
+      ],
+      id,
+    );
+    expect(present.youInPack).toBe(true);
+
+    const absent = evaluateMapPack(
+      [place({ title: "Other Clinic", website: "https://other.com", position: 1 })],
+      id,
+    );
+    expect(absent.youInPack).toBe(false);
+  });
+
+  it("returns an empty pack for an empty list", () => {
+    const pack = evaluateMapPack([], id);
+    expect(pack).toEqual({ entries: [], youInPack: false });
+  });
+
+  it("does not match by host when the place has no website", () => {
+    const pack = evaluateMapPack(
+      [place({ title: "Unrelated Spa", website: null })],
+      id,
+    );
+    expect(pack.entries[0].isYou).toBe(false);
+    expect(pack.youInPack).toBe(false);
   });
 });

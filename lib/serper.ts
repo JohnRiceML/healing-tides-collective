@@ -6,6 +6,7 @@
 // Env: SERPER_API_KEY (set in .env.local + Vercel; rotate via https://serper.dev).
 
 const SERPER_ENDPOINT = "https://google.serper.dev/search";
+const SERPER_PLACES_ENDPOINT = "https://google.serper.dev/places";
 
 export type SerpResult = {
   title: string;
@@ -88,4 +89,53 @@ export async function searchSerp(
 ): Promise<SerpResult[]> {
   const page = await searchSerpPage(query, opts);
   return page.organic;
+}
+
+// Google "places" / local-pack results from the Serper /places endpoint. Used by
+// the map-pack visibility check. Same env-guard + never-throw contract as the SERP
+// helpers: returns [] when the key is missing or the call fails.
+export type PlaceResult = {
+  title: string;
+  address: string | null;
+  rating: number | null;
+  ratingCount: number | null;
+  website: string | null;
+  category: string | null;
+  position: number;
+};
+
+export async function searchPlaces(
+  query: string,
+  opts: { gl?: string } = {},
+): Promise<PlaceResult[]> {
+  const apiKey = process.env.SERPER_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const res = await fetch(SERPER_PLACES_ENDPOINT, {
+      method: "POST",
+      headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ q: query, gl: opts.gl ?? "us" }),
+    });
+    if (!res.ok) {
+      console.error(`[serper] places HTTP ${res.status} for "${query}"`);
+      return [];
+    }
+    const data = (await res.json()) as {
+      places?: Array<Record<string, unknown>>;
+    };
+
+    return (data.places ?? []).map((item, i) => ({
+      title: typeof item.title === "string" ? item.title : "",
+      address: typeof item.address === "string" ? item.address : null,
+      rating: typeof item.rating === "number" ? item.rating : null,
+      ratingCount: typeof item.ratingCount === "number" ? item.ratingCount : null,
+      website: typeof item.website === "string" ? item.website : null,
+      category: typeof item.category === "string" ? item.category : null,
+      position: typeof item.position === "number" ? item.position : i + 1,
+    }));
+  } catch (err) {
+    console.error(`[serper] places error for "${query}"`, err);
+    return [];
+  }
 }

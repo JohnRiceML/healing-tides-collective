@@ -3,12 +3,17 @@
 import { useState, useTransition } from "react";
 
 import { Button } from "@/app/_components/ui";
-import type { Coverage, TermCoverage } from "@/lib/visibility";
-import { runVisibilityAudit } from "../visibility-actions";
+import type { Coverage, MapPack, TermCoverage } from "@/lib/visibility";
+import { getTermMapPack, runVisibilityAudit } from "../visibility-actions";
 
 type AuditResult =
   | { ok: true; coverage: Coverage }
   | { ok: false; reason: "unauthenticated" | "not_practitioner" | "no_region" | "unconfigured" };
+
+type MapPackState =
+  | { status: "looking" }
+  | { status: "ready"; mapPack: MapPack }
+  | { status: "error" };
 
 const REASON_COPY: Record<string, string> = {
   no_region: "Add your location to your profile, then we can check how you show up locally.",
@@ -100,33 +105,7 @@ function CoverageMap({ coverage }: { coverage: Coverage }) {
       {/* 2) Coverage rows (appear-first; order comes from the action) ---- */}
       <ul className="mt-5 space-y-px overflow-hidden rounded-xl border border-rule/70">
         {terms.map((t) => (
-          <li
-            key={t.query}
-            className="flex items-start gap-3.5 bg-white px-4 py-3.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-rule/60"
-          >
-            <Glyph found={t.found} className="mt-[7px]" />
-            <div className="min-w-0">
-              <p className="font-display text-[16px] leading-[1.3] tracking-[-0.01em] text-charcoal">
-                {t.label}
-              </p>
-              {t.found ? (
-                <p className="mt-1 text-[13.5px] leading-[1.5] text-teal">
-                  You&rsquo;re here{t.position ? ` — result #${t.position}` : ""}, via {viaLabel(t.via)}.
-                </p>
-              ) : (
-                <>
-                  <p className="mt-1 text-[13.5px] leading-[1.5] text-ocean">
-                    Not on the first page yet — an open door.
-                  </p>
-                  {t.competitors.length ? (
-                    <p className="mt-1 text-[12.5px] leading-[1.5] text-ink-muted">
-                      A seeker also sees {t.competitors.join(" · ")}.
-                    </p>
-                  ) : null}
-                </>
-              )}
-            </div>
-          </li>
+          <CoverageRow key={t.query} term={t} />
         ))}
       </ul>
 
@@ -165,6 +144,162 @@ function CoverageMap({ coverage }: { coverage: Coverage }) {
             ))}
           </div>
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * One coverage term row, with calm per-row disclosure of the local Google map.
+ * The map pack is fetched lazily — only when this row is first expanded — via a
+ * per-row transition. State is held in a Record keyed by the term's query so a
+ * fetched pack persists if the row is collapsed and reopened.
+ */
+function CoverageRow({ term: t }: { term: TermCoverage }) {
+  const [open, setOpen] = useState(false);
+  const [packs, setPacks] = useState<Record<string, MapPackState>>({});
+  const [pending, start] = useTransition();
+
+  const pack = packs[t.query];
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    // Fetch once, the first time this row opens. Re-opens reuse the cached pack.
+    if (next && !pack) {
+      setPacks((prev) => ({ ...prev, [t.query]: { status: "looking" } }));
+      start(async () => {
+        const res = await getTermMapPack(t.query);
+        setPacks((prev) => ({
+          ...prev,
+          [t.query]: res.ok
+            ? { status: "ready", mapPack: res.mapPack }
+            : { status: "error" },
+        }));
+      });
+    }
+  }
+
+  const panelId = `mappack-${t.query.replace(/\W+/g, "-")}`;
+
+  return (
+    <li className="bg-white px-4 py-3.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-rule/60">
+      <div className="flex items-start gap-3.5">
+        <Glyph found={t.found} className="mt-[7px]" />
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-[16px] leading-[1.3] tracking-[-0.01em] text-charcoal">
+            {t.label}
+          </p>
+          {t.found ? (
+            <p className="mt-1 text-[13.5px] leading-[1.5] text-teal">
+              You&rsquo;re here{t.position ? ` — result #${t.position}` : ""}, via {viaLabel(t.via)}.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-[13.5px] leading-[1.5] text-ocean">
+                Not on the first page yet — an open door.
+              </p>
+              {t.competitors.length ? (
+                <p className="mt-1 text-[12.5px] leading-[1.5] text-ink-muted">
+                  A seeker also sees {t.competitors.join(" · ")}.
+                </p>
+              ) : null}
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={toggle}
+            aria-expanded={open}
+            aria-controls={panelId}
+            className="mt-2 inline-flex items-center gap-1 text-[12.5px] leading-none text-ink-muted underline-offset-2 transition-colors hover:text-ocean hover:underline"
+          >
+            {open ? "hide the local map" : "view the local map"}
+            <span aria-hidden>{open ? "↑" : "→"}</span>
+          </button>
+        </div>
+      </div>
+
+      {open ? (
+        <div id={panelId} className="mt-3 pl-[26px]">
+          {!pack || pack.status === "looking" || pending ? (
+            <p className="text-[12.5px] leading-[1.5] text-ink-muted">looking…</p>
+          ) : pack.status === "error" ? (
+            <p className="text-[12.5px] leading-[1.5] text-ink-muted">
+              Couldn&rsquo;t load the local map just now — try again in a moment.
+            </p>
+          ) : (
+            <TermMapPack mapPack={pack.mapPack} />
+          )}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+/**
+ * The local Google map pack as calm terrain — never a podium. Plain rows: each
+ * practice's name (font-display) over a quiet category + reviews fact. The
+ * practitioner's own row gets a soft seafoam wash and a "You" pill. When they're
+ * not on the map, a calm GBP footer. Reviews are framed once, at section level.
+ */
+function TermMapPack({ mapPack }: { mapPack: MapPack }) {
+  const { entries, youInPack } = mapPack;
+
+  if (!entries.length) {
+    return (
+      <p className="text-[12.5px] leading-[1.5] text-ink-muted">
+        No local map showed up for this search yet.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-[12px] leading-[1.5] text-ink-muted">
+        Reviews are simply how Google learns a practitioner is trusted nearby — not a scoreboard.
+      </p>
+
+      <ul className="mt-3 space-y-px overflow-hidden rounded-lg border border-rule/60">
+        {entries.map((e, i) => {
+          const reviews =
+            e.ratingCount != null && e.rating != null
+              ? `${e.ratingCount} review${e.ratingCount === 1 ? "" : "s"} · ${e.rating}`
+              : e.rating != null
+                ? `${e.rating}`
+                : null;
+          const fact = [e.category, reviews].filter(Boolean).join(" · ");
+          return (
+            <li
+              key={`${e.title}-${i}`}
+              className={`flex items-start justify-between gap-3 px-3.5 py-2.5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-rule/50 ${
+                e.isYou ? "bg-seafoam/30" : "bg-white"
+              }`}
+            >
+              <div className="min-w-0">
+                <p className="font-display text-[15px] leading-[1.3] tracking-[-0.01em] text-charcoal">
+                  {e.title}
+                </p>
+                {fact ? (
+                  <p className="mt-0.5 text-[12px] leading-[1.5] text-ink-muted">{fact}</p>
+                ) : null}
+              </div>
+              {e.isYou ? (
+                <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full bg-teal px-2 py-0.5 text-[11px] font-medium leading-none text-white">
+                  You
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+
+      {!youInPack ? (
+        <p className="mt-3 text-[12.5px] leading-[1.55] text-ink-soft">
+          You&rsquo;re not on the local map for this one yet. A free Google Business Profile is
+          what puts practitioners here — it&rsquo;s the single most useful step, and we can point
+          you to it.
+        </p>
       ) : null}
     </div>
   );

@@ -10,8 +10,8 @@
 
 import { describe, it, expect } from "vitest";
 
-import { searchSerp, searchSerpPage } from "@/lib/serper";
-import { buildAuditQueries, buildCoverageQueries, buildCoverage, evaluateQuery } from "@/lib/visibility";
+import { searchSerp, searchSerpPage, searchPlaces } from "@/lib/serper";
+import { buildAuditQueries, buildCoverageQueries, buildCoverage, evaluateQuery, evaluateMapPack } from "@/lib/visibility";
 
 const hasKey = Boolean(process.env.SERPER_API_KEY);
 
@@ -64,6 +64,18 @@ describe.skipIf(!hasKey)("Serper live integration", () => {
     );
     expect(cov.total).toBeGreaterThan(0);
   }, 30_000);
+
+  it("reads the local Google map pack (3-pack) for a term", async () => {
+    const places = await searchPlaces("trauma therapy Saint Paul, Minnesota");
+    const pack = evaluateMapPack(places, { name: "Psychology Today", domain: "psychologytoday.com", profilePath: "" });
+    // eslint-disable-next-line no-console
+    console.log(
+      `\n[mapPack] ${places.length} places · youInPack=${pack.youInPack}\n` +
+        pack.entries.slice(0, 3).map((e) => `    ${e.isYou ? "● you" : "  ·"} ${e.title} — ${e.ratingCount ?? 0} reviews · ${e.rating ?? "—"} · ${e.category ?? ""}`).join("\n") +
+        "\n",
+    );
+    expect(Array.isArray(places)).toBe(true);
+  }, 20_000);
 
   it("evaluates whether a sample practitioner appears", async () => {
     const query = buildAuditQueries(["anxiety_stress"], "Saint Paul, Minnesota")[0];
