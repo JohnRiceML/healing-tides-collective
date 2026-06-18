@@ -9,9 +9,12 @@ import { getWeeklyViewDates } from "@/lib/presence-data";
 import { buildBrand } from "@/lib/brand";
 import { buildBrandSignals } from "@/lib/brand-signals";
 import { readPresenceScan } from "@/lib/presence-scan";
+import { deriveSeekerLanguage } from "@/lib/seeker-language";
+import { specialtyLabel } from "@/app/_lib/taxonomy";
 
 import { BrandHero } from "../_components/brand/BrandHero";
 import { BrandTiles } from "../_components/brand/BrandTiles";
+import { SeekerLanguageCard } from "../_components/brand/SeekerLanguageCard";
 import { DimensionChapter } from "../_components/brand/DimensionChapter";
 import { VisibilityCard } from "../_components/VisibilityCard";
 
@@ -101,6 +104,22 @@ export default async function PractitionerBrandPage() {
   const firstName = (p.displayName ?? "").trim().split(/\s+/)[0] ?? "";
   const role = typeof fv.title === "string" ? fv.title : "";
 
+  // "What the right people near you are searching" — the seeker's own voice (from the cached
+  // scan) mirrored against the practitioner's own words (bio + values + specialties + their
+  // rich profile text), so the say/search gap is grounded in what they've actually written.
+  const fvText = ["about_you", "ideal_client", "populations", "client_message", "why_healing_tides"]
+    .map((k) => (typeof fv[k] === "string" ? (fv[k] as string) : ""))
+    .join(" ");
+  const profileText = [
+    p.bio ?? "",
+    p.values ?? "",
+    (p.specialties ?? []).map(specialtyLabel).join(" "),
+    fvText,
+  ].join(" ");
+  // Exclude their region so the say/search mirror keys on care language, not the place name
+  // (which shows up in nearly every local search AND in their profile).
+  const seekerLang = deriveSeekerLanguage(scan, profileText, { exclude: [p.region ?? ""] });
+
   return (
     <Shell>
       {/* ── Personal hero: their cover art, photo, name + where their brand is now ─ */}
@@ -164,6 +183,11 @@ export default async function PractitionerBrandPage() {
           </p>
         </div>
       )}
+
+      {/* ── What the right people near you are searching — the understanding surface ─ */}
+      <section className="mt-8">
+        <SeekerLanguageCard lang={seekerLang} lastCheckedLabel={lastCheckedLabel} />
+      </section>
 
       {/* ── Tend each part — the deep, dimension-by-dimension chapters ─────────── */}
       <h2 className="font-display mt-12 text-[22px] leading-tight tracking-[-0.01em] text-charcoal">

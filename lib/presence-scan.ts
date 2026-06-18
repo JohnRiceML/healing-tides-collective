@@ -25,10 +25,20 @@ export type PresenceScan = {
   /** Optional: only set when a /places map-pack actually ran during the scan. */
   inAnyMapPack?: boolean;
   reviewsKnown?: boolean;
+  /** The seeker's own voice, captured live then kept: the questions they ask ("people also
+   *  ask") + the words they actually type ("related searches"). Persisted so the brand center
+   *  can show this understanding on every visit, not just during the live check. */
+  questions?: string[];
+  relatedSearches?: string[];
 };
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+/** Parse an array-of-strings field, or undefined when absent/malformed (stays "not measured"). */
+function strArr(v: unknown): string[] | undefined {
+  return Array.isArray(v) ? v.filter((s): s is string => typeof s === "string") : undefined;
 }
 
 /**
@@ -52,6 +62,8 @@ export function readPresenceScan(fieldValues: unknown): PresenceScan | null {
     knowledgeGraphPresent: raw.knowledgeGraphPresent === true,
     inAnyMapPack: typeof raw.inAnyMapPack === "boolean" ? raw.inAnyMapPack : undefined,
     reviewsKnown: typeof raw.reviewsKnown === "boolean" ? raw.reviewsKnown : undefined,
+    questions: strArr(raw.questions),
+    relatedSearches: strArr(raw.relatedSearches),
   };
 }
 
@@ -89,6 +101,9 @@ export function buildPresenceScan(args: {
     reviewsKnown: sampledMapPacks.some((p) =>
       p.entries.some((e) => e.isYou && e.ratingCount != null && e.ratingCount > 0),
     ),
+    // The seeker's own voice — kept, not discarded, so the brand center can show it always.
+    questions: coverage.questions,
+    relatedSearches: coverage.relatedSearches,
   };
 }
 

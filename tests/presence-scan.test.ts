@@ -55,6 +55,19 @@ describe("readPresenceScan — defensive (never throws, malformed → null)", ()
     expect(got.inAnyMapPack).toBeUndefined();
     expect(got.reviewsKnown).toBeUndefined();
   });
+
+  it("round-trips questions + relatedSearches, and drops non-strings / non-arrays", () => {
+    const fv = {
+      [PRESENCE_SCAN_KEY]: {
+        coverage: { appeared: 1, total: 3 },
+        questions: ["What is EMDR?", 7, null],
+        relatedSearches: "not-an-array",
+      },
+    };
+    const got = readPresenceScan(fv)!;
+    expect(got.questions).toEqual(["What is EMDR?"]);
+    expect(got.relatedSearches).toBeUndefined();
+  });
 });
 
 describe("applyPresenceScan — sets the reserved key, preserves every sibling", () => {
@@ -164,13 +177,16 @@ describe("describeDelta — calm copy, null when nothing encouraging", () => {
 function term(over: Partial<TermCoverage> = {}): TermCoverage {
   return { query: "q", label: "L", found: false, position: null, via: null, competitors: [], ...over };
 }
-function cov(terms: TermCoverage[]): Coverage {
+function cov(
+  terms: TermCoverage[],
+  extra: { questions?: string[]; relatedSearches?: string[] } = {},
+): Coverage {
   return {
     terms,
     appeared: terms.filter((t) => t.found).length,
     total: terms.length,
-    questions: [],
-    relatedSearches: [],
+    questions: extra.questions ?? [],
+    relatedSearches: extra.relatedSearches ?? [],
   };
 }
 function pack(
@@ -204,6 +220,20 @@ describe("buildPresenceScan — the risky aggregation, pure & tested", () => {
     });
     expect(scan.checkedAt).toBe(AT);
     expect(scan.coverage).toEqual({ appeared: 1, total: 2 });
+  });
+
+  it("keeps the seeker's voice — questions + related searches — instead of discarding it", () => {
+    const scan = buildPresenceScan({
+      coverage: cov([term({ found: true })], {
+        questions: ["What is somatic therapy?"],
+        relatedSearches: ["nervous system healing", "trauma therapist near me"],
+      }),
+      perTermKnowledgeGraph: [false],
+      sampledMapPacks: [],
+      checkedAt: AT,
+    });
+    expect(scan.questions).toEqual(["What is somatic therapy?"]);
+    expect(scan.relatedSearches).toEqual(["nervous system healing", "trauma therapist near me"]);
   });
 
   it("foundTerms = the labels of terms that appear, in order", () => {
