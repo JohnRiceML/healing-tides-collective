@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/app/_components/ui";
 import type { Coverage, MapPack, TermCoverage } from "@/lib/visibility";
+import { describeDelta, type PresenceDelta, type PresenceScan } from "@/lib/presence-scan";
 import { getTermMapPack, runVisibilityAudit } from "../visibility-actions";
 
 type AuditResult =
-  | { ok: true; coverage: Coverage }
+  | { ok: true; coverage: Coverage; scan: PresenceScan; delta: PresenceDelta }
   | { ok: false; reason: "unauthenticated" | "not_practitioner" | "no_region" | "unconfigured" };
 
 type MapPackState =
@@ -44,13 +46,23 @@ function Glyph({ found, className = "" }: { found: boolean; className?: string }
   );
 }
 
-export function VisibilityCard() {
+export function VisibilityCard({ lastCheckedLabel }: { lastCheckedLabel?: string }) {
   const [result, setResult] = useState<AuditResult | null>(null);
   const [pending, start] = useTransition();
+  const router = useRouter();
 
   function run() {
-    start(async () => setResult((await runVisibilityAudit()) as AuditResult));
+    start(async () => {
+      const next = (await runVisibilityAudit()) as AuditResult;
+      setResult(next);
+      // A scan caches its result server-side; refresh so the brand page's moon states
+      // (server-rendered above this card) reflect the new reading right away.
+      if (next.ok) router.refresh();
+    });
   }
+
+  // What opened up since the last cached scan — gain-framed, only after a fresh run.
+  const deltaLine = result?.ok ? describeDelta(result.delta) : null;
 
   return (
     <section className="rounded-2xl border border-rule/70 bg-white p-6">
@@ -60,11 +72,18 @@ export function VisibilityCard() {
         a few real searches for your specialty in your area.
       </p>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <Button type="button" onClick={run} disabled={pending}>
-          {pending ? "Checking…" : result?.ok ? "Check again" : "Check my visibility"}
+          {pending ? "Checking…" : result?.ok || lastCheckedLabel ? "Check again" : "Check my visibility"}
         </Button>
+        {!result && lastCheckedLabel ? (
+          <span className="text-[12.5px] text-ink-muted">Last checked {lastCheckedLabel}</span>
+        ) : null}
       </div>
+
+      {deltaLine ? (
+        <p className="mt-3 text-[13.5px] leading-[1.5] text-ocean">{deltaLine}</p>
+      ) : null}
 
       {result && !result.ok ? (
         <p className="mt-4 text-[14px] leading-[1.6] text-ink-soft">

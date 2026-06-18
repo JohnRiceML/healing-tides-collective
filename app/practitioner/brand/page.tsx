@@ -7,6 +7,7 @@ import { clerkEnabled } from "@/lib/clerk-enabled";
 import { weeklyViewBuckets } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
 import { buildBrand, type BrandSignals } from "@/lib/brand";
+import { readPresenceScan, brandSignalsFromScan } from "@/lib/presence-scan";
 
 import { DimensionChapter } from "../_components/brand/DimensionChapter";
 import { VisibilityCard } from "../_components/VisibilityCard";
@@ -79,11 +80,13 @@ export default async function PractitionerBrandPage() {
   const p = result.practitioner;
   const fv = (p.fieldValues ?? {}) as Record<string, unknown>;
 
-  // ── Build the brand signals from this practitioner's own profile only ───────────
-  // No comparison to anyone else. The Serper-backed signals (coverage / map pack /
-  // knowledge graph) are deliberately left UNDEFINED — they're checked on demand from
-  // inside the VisibilityCard embed, never eagerly on this read.
+  // ── Build the brand signals from this practitioner's own profile ────────────────
+  // No comparison to anyone else. The Serper-backed signals (coverage / map pack / knowledge
+  // graph) come from the LAST cached presence scan (run on demand from the VisibilityCard).
+  // Until they run a scan, readPresenceScan → null → brandSignalsFromScan → {}, so those
+  // dimensions keep their calm "not checked yet" invitations. Once scanned, the moon states move.
   const weekly = weeklyViewBuckets(await getWeeklyViewDates(p.id), new Date());
+  const scan = readPresenceScan(fv);
 
   const signals: BrandSignals = {
     published: p.visibility === "PUBLISHED",
@@ -96,10 +99,16 @@ export default async function PractitionerBrandPage() {
     hasRegion: Boolean(p.region?.trim()),
     specialtiesCount: p.specialties?.length ?? 0,
     weeklyViews: { thisWeek: weekly.thisWeek, total: weekly.total },
-    // coverage / inAnyMapPack / knowledgeGraphPresent / reviewsKnown: undefined (on-demand)
+    ...brandSignalsFromScan(scan),
   };
 
   const brand = buildBrand(signals);
+
+  // A calm, absolute "last checked" label (server-formatted → no hydration drift) for the card.
+  const lastCheckedLabel =
+    scan?.checkedAt && !Number.isNaN(Date.parse(scan.checkedAt))
+      ? new Date(scan.checkedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      : undefined;
 
   return (
     <Shell>
@@ -163,7 +172,7 @@ export default async function PractitionerBrandPage() {
             // "Where you're found" hosts the on-demand local-search check (Serper):
             // the coverage map + local map pack live inside this chapter.
             <DimensionChapter key={d.id} dimension={d} defaultOpen={open}>
-              <VisibilityCard />
+              <VisibilityCard lastCheckedLabel={lastCheckedLabel} />
             </DimensionChapter>
           ) : (
             <DimensionChapter key={d.id} dimension={d} defaultOpen={open} />
