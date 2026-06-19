@@ -11,6 +11,7 @@ import { buildBrandSignals } from "@/lib/brand-signals";
 import { readPresenceScan } from "@/lib/presence-scan";
 import { readPresenceHistory, buildMomentum } from "@/lib/presence-history";
 import { deriveSeekerLanguage } from "@/lib/seeker-language";
+import { pickGroundedNextStep } from "@/lib/brand-next-step";
 import { specialtyLabel } from "@/app/_lib/taxonomy";
 
 import { BrandHero } from "../_components/brand/BrandHero";
@@ -125,6 +126,15 @@ export default async function PractitionerBrandPage() {
   // Movement over time — the reason to return. Built from the rolling scan history.
   const momentum = buildMomentum(readPresenceHistory(fv));
 
+  // The grounded "where to begin": once the profile is solid but they're not on the local map, a
+  // free Google Business Profile is a bigger real lever than any remaining profile nudge — so it
+  // leads. Otherwise the framework's most-foundational gap stands.
+  const groundedStep = pickGroundedNextStep(brand.nextStep, {
+    mapChecked: scan?.inAnyMapPack !== undefined,
+    onMap: scan?.inAnyMapPack === true,
+    profileReady: p.visibility === "PUBLISHED" && Boolean(p.bio?.trim()) && Boolean(p.photoUrl?.trim()),
+  });
+
   return (
     <Shell>
       {/* ── Personal hero: their cover art, photo, name + where their brand is now ─ */}
@@ -152,30 +162,41 @@ export default async function PractitionerBrandPage() {
         </div>
       </section>
 
-      {/* ── Where to begin: the one grounded next step ─────────────────────────── */}
-      {brand.nextStep ? (
+      {/* ── Where to begin: the one grounded next step (data-aware) ────────────── */}
+      {groundedStep ? (
         <div className="mt-8 rounded-3xl border border-teal/25 bg-seafoam/25 p-6 md:p-7">
           <p className="meta text-teal">Where to begin</p>
           <p className="font-display mt-2 text-[19px] leading-[1.3] text-charcoal">
-            {brand.nextStep.insight.what}
+            {groundedStep.insight.what}
           </p>
           <p className="mt-2 max-w-xl text-[14.5px] leading-[1.6] text-ink-soft">
-            {brand.nextStep.insight.whyCare}
+            {groundedStep.insight.whyCare}
           </p>
           <p className="mt-3 max-w-xl text-[14.5px] leading-[1.6] text-charcoal">
-            {brand.nextStep.insight.whatNext}
+            {groundedStep.insight.whatNext}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-            {brand.nextStep.insight.ctaHref ? (
-              <Link
-                href={brand.nextStep.insight.ctaHref}
-                className="rounded-full bg-charcoal px-4 py-2 text-[13.5px] font-medium text-sand transition-opacity hover:opacity-90"
-              >
-                {brand.nextStep.insight.ctaLabel ?? "Open my profile"}
-              </Link>
+            {groundedStep.insight.ctaHref ? (
+              groundedStep.insight.ctaHref.startsWith("http") ? (
+                <a
+                  href={groundedStep.insight.ctaHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full bg-charcoal px-4 py-2 text-[13.5px] font-medium text-sand transition-opacity hover:opacity-90"
+                >
+                  {groundedStep.insight.ctaLabel ?? "Open my profile"}
+                </a>
+              ) : (
+                <Link
+                  href={groundedStep.insight.ctaHref}
+                  className="rounded-full bg-charcoal px-4 py-2 text-[13.5px] font-medium text-sand transition-opacity hover:opacity-90"
+                >
+                  {groundedStep.insight.ctaLabel ?? "Open my profile"}
+                </Link>
+              )
             ) : null}
             <span className="text-[13px] text-ink-muted">
-              {LIFT_WORD[brand.nextStep.insight.lift]} · no rush
+              {LIFT_WORD[groundedStep.insight.lift]} · no rush
             </span>
           </div>
         </div>
@@ -210,7 +231,7 @@ export default async function PractitionerBrandPage() {
       </p>
       <div className="mt-4 space-y-3.5">
         {brand.dimensions.map((d) => {
-          const open = d.id === (brand.nextStep?.dimensionId ?? "where_found");
+          const open = d.id === (groundedStep?.dimensionId ?? "where_found");
           return (
             <div key={d.id} id={`dim-${d.id}`} className="scroll-mt-6">
               {d.id === "where_found" ? (
