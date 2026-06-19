@@ -37,6 +37,10 @@ export function hostOf(url: string): string | null {
  * The local-intent queries to audit — up to `limit`, from the practitioner's top
  * specialties + their region. Returns [] when there's no region (a local query needs
  * a place); falls back to "therapist {place}" when no specialties are set yet.
+ *
+ * NOTE: the live brand center uses the RICHER `buildCoverageQueries` (subcategory expansion,
+ * up to 8 terms). This lean 3-query builder is kept only for the gated live Serper integration
+ * test (tests/integration/serper.live.test.ts) — keep them in sync if the query shape changes.
  */
 export function buildAuditQueries(
   specialtyIds: string[],

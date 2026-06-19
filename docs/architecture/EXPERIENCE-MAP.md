@@ -31,6 +31,7 @@ Seekers **browse anonymously** in the listing MVP. Accounts + the guided intake 
 | Sign up | `/join` *(practitioner only)* | creates account | **MVP** |
 | Build / manage profile | `/practitioner` | yes (`role = PRACTITIONER`) | **MVP** |
 | Appear in the directory | `/practitioners/[slug]` | — | **MVP** |
+| Daily: understand & tend your brand | `/practitioner/brand` | yes | **MVP+** — the 5-part framework (who you are / for / found / trusted / remembered) + a live local-search audit + what nearby seekers search + momentum over time. [architecture/BRAND-CENTER.md](BRAND-CENTER.md) |
 | Promotion / tiers / featured | *(dormant `tier`/`featured` hooks exist)* | yes | **later** (revenue) |
 
 ## Accounts: typed by role, never by guessing

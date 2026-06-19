@@ -2,11 +2,12 @@
 //
 // This module turns a set of already-gathered `BrandSignals` into a calm, trauma-informed
 // read of a practitioner's presence. It is the single source of truth for the framework's
-// shape — five dimensions in a fixed order, each with a plain-spoken intro, a worst-truthful
-// state, and 1–3 gentle insights.
+// shape — five dimensions in a fixed order, each with a plain-spoken intro, a 0–100 personal
+// PROGRESS score, a growing-moon state banded from that score, and 1–3 gentle insights.
 //
-// BRAND LAW encoded here: no scores / %, no grades, no comparison to others, never "behind",
-// never a fake AI score. The Lift axis is about energy (gentle / moderate / deeper), not size.
+// BRAND LAW encoded here: the score is PERSONAL PROGRESS — never a grade, never a comparison to
+// others, never "behind", never a fake AI score (the UI also demotes the number off the at-a-glance
+// faces; it's revealed on tap). The Lift axis is about energy (gentle / moderate / deeper), not size.
 // "Why care" is always seeker-centered — who it helps the right person find them. Serper-backed
 // signals (`coverage`, `inAnyMapPack`, `knowledgeGraphPresent`) are OPTIONAL: when undefined we
 // surface a calm "not checked yet" invitation at state `not_started`, never an invented value.
@@ -44,8 +45,9 @@ export type Dimension = {
   insights: Insight[];
 };
 
-/** What a dimension builder returns; buildBrand layers on the score + banded state + `why`. */
-type DimensionCore = Omit<Dimension, "why" | "score">;
+/** What a dimension builder returns: just its name, intro, and insights. buildBrand derives the
+ *  rest — the 0–100 score (from the insights), the moon `state` (banded from that score), and `why`. */
+type DimensionCore = Omit<Dimension, "why" | "score" | "state">;
 
 export type BrandSignals = {
   published: boolean;
@@ -86,31 +88,6 @@ export const DIMENSION_ORDER: DimensionId[] = [
 ];
 
 const PROFILE_CTA = { ctaHref: "/practitioner/edit", ctaLabel: "Open my profile" } as const;
-
-// ── small pure helpers ──────────────────────────────────────────────────────
-
-/** The "worst-truthful" of several states — so a dimension never reads further along
- * than its least-ready part. Order: not_started < forming < on_its_way < settled. */
-const STATE_RANK: Record<DimensionState, number> = {
-  not_started: 0,
-  forming: 1,
-  on_its_way: 2,
-  settled: 3,
-};
-
-function worstOf(states: DimensionState[]): DimensionState {
-  if (states.length === 0) return "not_started";
-  return states.reduce((worst, s) =>
-    STATE_RANK[s] < STATE_RANK[worst] ? s : worst,
-  );
-}
-
-/** Roll the dimension's own state up from its insights' states (worst-truthful). NOTE: a builder's
- * state is provisional — buildBrand REPLACES it with the score-banded state (stateFromScore) so the
- * moon and the number can never contradict. Kept here because DimensionCore needs a state. */
-function stateFromInsights(insights: Insight[]): DimensionState {
-  return worstOf(insights.map((i) => i.state));
-}
 
 // ── progress scoring (0–100) ─────────────────────────────────────────────────
 // A personal PROGRESS read of how formed each part is — never a grade, never a comparison. Each
@@ -214,7 +191,6 @@ function whoYouAre(s: BrandSignals): DimensionCore {
     name: "Who you are",
     intro:
       "This is the part of you a seeker meets first — your voice, your values, your face. It's how someone senses, before a single word is exchanged, whether you're a person they can trust.",
-    state: stateFromInsights(insights),
     insights,
   };
 }
@@ -281,7 +257,6 @@ function whoYoureFor(s: BrandSignals): DimensionCore {
     name: "Who you're for",
     intro:
       "Not everyone is your person — and that's the point. When you name who you're for, the seeker who needs exactly your kind of care can recognize themselves and exhale.",
-    state: stateFromInsights(insights),
     insights,
   };
 }
@@ -377,7 +352,6 @@ function whereFound(s: BrandSignals): DimensionCore {
     name: "Where you're found",
     intro:
       "This is about being findable, not promotional. When a seeker goes looking — on a map, in a search, through a friend — these are the quiet doorways that lead them gently to you.",
-    state: stateFromInsights(insights),
     insights,
   };
 }
@@ -439,7 +413,6 @@ function whyTrusted(s: BrandSignals): DimensionCore {
     name: "Why you're trusted",
     intro:
       "Trust is what lets a seeker take the leap — and most of it is already in your hands: your credentials, a space of your own that carries your name, and how plainly you show up.",
-    state: stateFromInsights(insights),
     insights,
   };
 }
@@ -478,7 +451,6 @@ function howRemembered(s: BrandSignals): DimensionCore {
     name: "How you're remembered",
     intro:
       "This is the slowest, most patient layer — becoming a name the world recognizes. It grows over time, on its own quiet schedule, and there's nothing to force here.",
-    state: stateFromInsights(insights),
     insights,
   };
 }

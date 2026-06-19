@@ -74,6 +74,18 @@ describe("appendSnapshot — rolling window, one point per day", () => {
     expect(h[h.length - 1]?.appeared).toBe(12); // newest kept
     expect(h[0]?.appeared).toBe(5); // oldest five dropped
   });
+
+  it("a same-day re-check AT the cap replaces today's entry without evicting the oldest", () => {
+    let h: PresenceSnapshot[] = [];
+    for (let d = 1; d <= 8; d++) {
+      h = appendSnapshot(h, snap(`2026-06-${String(d).padStart(2, "0")}T10:00:00Z`, d), 8);
+    }
+    expect(h).toHaveLength(8);
+    const h1 = appendSnapshot(h, snap("2026-06-08T18:00:00Z", 99), 8); // same day as the last → replace
+    expect(h1).toHaveLength(8); // still full, no growth
+    expect(h1[h1.length - 1]?.appeared).toBe(99); // today's entry updated
+    expect(h1[0]?.appeared).toBe(1); // oldest NOT evicted (it was only a same-day replace)
+  });
 });
 
 describe("buildMomentum — gain-framed trend", () => {

@@ -48,4 +48,9 @@ describe("pickGroundedNextStep", () => {
       LOCAL_MAP_NEXT_STEP.insight.whatNext;
     expect(/\d/.test(text)).toBe(false);
   });
+
+  it("points to the exact Google Business Profile URL + label (locks it against drift)", () => {
+    expect(LOCAL_MAP_NEXT_STEP.insight.ctaHref).toBe("https://www.google.com/business/");
+    expect(LOCAL_MAP_NEXT_STEP.insight.ctaLabel).toBe("Start a Google Business Profile");
+  });
 });

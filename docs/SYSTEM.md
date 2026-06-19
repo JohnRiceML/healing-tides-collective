@@ -1,6 +1,6 @@
 # Healing Tides Collective — System Map
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-06-19
 
 > **This is a living document** — the canonical "where things live + current status" map. When the code moves, **update this in the same change.** When a doc and the code disagree, **the code wins — and this file gets fixed.** It lists load-bearing *entry points* and subsystems, **not every file** (exact paths drift and mislead — search the code for them). The rules that keep this alive are in [AGENTS.md](../AGENTS.md#the-living-doc-protocol--keep-docs-alive).
 
@@ -27,7 +27,8 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/prototype/*` | Phase 2 clickable prototype (seeker / practitioner / admin / provider / resources / scope) | Prototype — UI only |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |
-| `/practitioner` | Practitioner **profile editor** — Clerk-gated; the full rich form (Nora's "Join the Collective" fields, config-driven via `app/_lib/profile-fields.ts` → `fieldValues` JSON) → Postgres + completeness + **Publish/Unpublish** | 🟢 Live (prod)¹ |
+| `/practitioner` | Practitioner **dashboard** — Clerk-gated; profile strength, "your brand" band, "how people find you" + the editor at `/practitioner/edit` (config-driven via `app/_lib/profile-fields.ts` → `fieldValues` JSON) → Postgres + completeness + **Publish/Unpublish** | 🟢 Live (prod)¹ |
+| `/practitioner/brand` | Practitioner **brand center** — Clerk-gated, read-only; the 5-part framework (who you are / who you're for / where you're found / why you're trusted / how you're remembered) as growing moons + demoted progress scores, a live on-demand Serper visibility audit, the "what seekers near you search" mirror, momentum over time, and a data-aware "Start here" (free Google Business Profile). **Full architecture: [architecture/BRAND-CENTER.md](architecture/BRAND-CENTER.md).** | 🟢 Live (prod)¹ |
 | `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🟢 Live (prod)¹ |
 | `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🟢 Live (prod)¹ |
 | `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🟢 Live (prod)¹ |
@@ -55,11 +56,12 @@ Reference implementation for all four: the sibling **counsel-post** repo (which 
 
 **DB layer — wired** (✅ `tsc` + Vitest pass): `prisma/schema.prisma` (`User` + `Practitioner` + `ProfileView` + enums), `prisma.config.ts` (Prisma 7 CLI config — connection URLs live here, *not* in the schema), `lib/db.ts` (pg-adapter singleton on pooled `DATABASE_URL`), generated client → `lib/generated/prisma` (gitignored, `postinstall: prisma generate`). The `init` migration is **applied to Neon** and the live practitioner listing reads + writes it. The public read layer is `lib/practitioners.ts` (PUBLISHED-only, no-PII selects). **Pending:** rotate the Neon password (exposed in chat during setup) **before launch**; `Seeker`/`Match` await the matching brief.
 
-**Testing — Vitest** (`tests/`, run via `npm test`; part of the quality gate). Covers the security-critical core: the public read layer (`lib/practitioners.ts` — PUBLISHED-only + no-PII selects), the publish/save server actions (auth gate, slug-collision retry, website sanitization), and the pure utils (`lib/slug.ts` / `lib/url.ts` / `lib/completeness.ts`). UI / React Server Components aren't unit-tested yet — see the test-strategy ADR in [planning/decisions-log.md](../planning/decisions-log.md).
+**Testing — Vitest** (`tests/`, run via `npm test`; part of the quality gate; ~266 tests). **Three layers** — unit (`tests/*.test.ts`, Prisma/auth mocked) · flow (`tests/flows/*`, one in-memory mock-db across a real multi-step action sequence) · gated real-DB integration (`tests/integration/*`, `npm run test:integration`). Full guide: **[TESTING.md](TESTING.md).** Covers: the public read layer (`lib/practitioners.ts` — PUBLISHED-only + no-PII), the publish/save/claim/hold server actions, the pure utils, and the **whole brand center** — `brand.ts` (framework shape, score banding + boundaries, the **review-solicitation ethics guard**, no-shame prose), the Serper visibility orchestration (`visibility-audit.test.ts` — clobber-protection + sibling-key preservation), the say/search mirror, momentum history, and the grounded next step. UI / React Server Components aren't unit-tested; they're verified via screenshot in dev (the real pages are Clerk-gated — preview a throwaway public route).
 
 **Auth — wired 2026-05-31** (env-gated; ✅ `tsc`): `lib/clerk-enabled.ts` (the gate boolean — db-free), `lib/auth.ts` (`getCurrentDbUser`, `getOrCreatePractitioner`), `proxy.ts` (Clerk proxy), `<ClerkProvider>` in `app/layout.tsx`. With no Clerk keys it all no-ops so the app still runs. Flow: `/join` (sign-up) → `/practitioner`. **Pending:** add Clerk keys to `.env.local` + enable Google in the Clerk dashboard.
 
 ## Where plans & decisions live
+- **Brand center architecture:** [architecture/BRAND-CENTER.md](architecture/BRAND-CENTER.md) — the 5-part framework, the Serper visibility stack, the reserved `fieldValues` key registry, the scoring + "score demoted" design, and the **review-solicitation ethics rule**. Its honest audit + queued work: [audits/2026-06-19-brand-center-research.md](audits/2026-06-19-brand-center-research.md).
 - **Build tracker (status & roadmap):** [BUILD-TRACKER.md](BUILD-TRACKER.md) — what's shipped vs. what's left, keyed to the June-10 brief, with open decisions. (Supersedes the retired PHASE-2-STATUS.md.)
 - **Next-stage plan:** [docs/architecture/PHASE-2-SYSTEMS.md](architecture/PHASE-2-SYSTEMS.md) — stack, ownership, env contract, open scope questions.
 - **Decisions (ADRs):** [planning/decisions-log.md](../planning/decisions-log.md) — why things are the way they are.

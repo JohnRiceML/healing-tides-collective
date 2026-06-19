@@ -92,4 +92,13 @@ describe("deriveSeekerLanguage — the say/search mirror", () => {
     );
     expect(lang.words[0]?.echoed).toBe(false);
   });
+
+  it("folds accents so an accented search word lines up with its plain spelling", () => {
+    // "résilience" folds to "resilience" — without folding these would never match.
+    const lang = deriveSeekerLanguage(
+      scan({ relatedSearches: ["trauma résilience"] }),
+      "I help with trauma and building resilience.",
+    );
+    expect(lang.words[0]?.echoed).toBe(true);
+  });
 });

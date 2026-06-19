@@ -101,7 +101,7 @@ describe("buildBrand — framework shape", () => {
   });
 });
 
-describe("buildBrand — state thresholds (worst-truthful)", () => {
+describe("buildBrand — dimension state (banded from the 0–100 score)", () => {
   it("reads every dimension as not_started for an empty profile", () => {
     for (const d of buildBrand(EMPTY).dimensions) {
       expect(d.state).toBe("not_started");
@@ -189,6 +189,31 @@ describe("buildBrand — Serper signals are optional (graceful, never invented)"
 
     const known = byId(buildBrand({ ...EMPTY, reviewsKnown: true }).dimensions, "why_trusted");
     expect(known.insights.find((i) => i.id === "trusted-reviews")!.state).toBe("on_its_way");
+  });
+
+  it("ETHICS: never coaches soliciting client reviews (ACA/APA/AAMFT/NASW/NBCC), even no-reviews", () => {
+    const soliciting = [
+      "invite a",
+      "solicit",
+      "would mean a lot",
+      "share their experience",
+      "let happy clients",
+      "ask a client",
+      "ask clients",
+    ];
+    for (const sig of [EMPTY, { ...EMPTY, reviewsKnown: true }]) {
+      const r = byId(buildBrand(sig).dimensions, "why_trusted").insights.find(
+        (i) => i.id === "trusted-reviews",
+      )!;
+      const text = (r.what + " " + r.whyCare + " " + r.whatNext).toLowerCase();
+      for (const phrase of soliciting) expect(text.includes(phrase)).toBe(false);
+    }
+    // the no-reviews path actively PROTECTS the practitioner from the ethics line
+    const noReviews = byId(buildBrand(EMPTY).dimensions, "why_trusted").insights.find(
+      (i) => i.id === "trusted-reviews",
+    )!;
+    expect(noReviews.whatNext.toLowerCase()).toContain("never request");
+    expect(noReviews.whatNext.toLowerCase()).toContain("ethics");
   });
 });
 
@@ -317,5 +342,14 @@ describe("buildBrand — progress scores (personal, never a grade or comparison)
     expect(stateFromScore(38)).toBe("forming");
     expect(stateFromScore(68)).toBe("on_its_way");
     expect(stateFromScore(100)).toBe("settled");
+  });
+
+  it("stateFromScore bands EXACTLY at the thresholds (so an edge score can't drift a moon)", () => {
+    expect(stateFromScore(24)).toBe("not_started");
+    expect(stateFromScore(25)).toBe("forming");
+    expect(stateFromScore(54)).toBe("forming");
+    expect(stateFromScore(55)).toBe("on_its_way");
+    expect(stateFromScore(84)).toBe("on_its_way");
+    expect(stateFromScore(85)).toBe("settled");
   });
 });
