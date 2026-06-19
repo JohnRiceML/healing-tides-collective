@@ -51,8 +51,10 @@ export function BrandHero({
         <ProfileCover seed={seed} design={design} color={color} className="absolute inset-0 h-full w-full" />
       </div>
       <div className="px-6 pb-7 md:px-8 md:pb-8">
-        {/* Only the avatar overlaps the cover band; the name sits cleanly below it. */}
-        <div className="-mt-12">
+        {/* Only the avatar overlaps the cover band; the name sits cleanly below it. relative z-10
+            lifts it into the positioned layer so it sits ON the cover, not behind it (the cover
+            band is `relative`, which would otherwise paint over this static content). */}
+        <div className="relative z-10 -mt-12">
           <Avatar photoUrl={photoUrl} name={fullName} />
         </div>
         <div className="mt-4">
