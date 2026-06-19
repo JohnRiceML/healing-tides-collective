@@ -38,6 +38,10 @@ describe("claim flow: admin mints a link → practitioner reads it → it's clai
     expect(created.ok).toBe(true);
     if (!created.ok) return;
     expect(created.url).toContain("/claim/");
+    // With no RESEND env in the test, the layer is off: the link still mints, the auto-send
+    // is honestly reported as "not configured" (not a failure).
+    expect(created.emailed).toBe(false);
+    expect(created.emailReason).toBe("not_configured");
 
     // It persisted exactly one invite, with a normalized email.
     expect(db().invite.rows()).toHaveLength(1);
@@ -66,6 +70,15 @@ describe("claim flow: admin mints a link → practitioner reads it → it's clai
     h.requireAdmin.mockResolvedValue(aUser({ role: "ADMIN" }));
     const res = await createInvite({ email: "   " });
     expect(res.ok).toBe(false);
+    expect(db().invite.rows()).toHaveLength(0);
+  });
+
+  it("rejects a malformed email (and writes nothing)", async () => {
+    h.requireAdmin.mockResolvedValue(aUser({ role: "ADMIN" }));
+    for (const bad of ["not-an-email", "user@", "@example.com", "a b@example.com"]) {
+      const res = await createInvite({ email: bad });
+      expect(res.ok).toBe(false);
+    }
     expect(db().invite.rows()).toHaveLength(0);
   });
 });

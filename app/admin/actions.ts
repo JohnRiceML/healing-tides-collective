@@ -8,39 +8,64 @@ import { RESERVED_BADGES_KEY, sanitizeGrant } from "@/app/_lib/verification";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
 import { newInviteToken, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
+import { sendEmail, emailConfigured } from "@/lib/email";
+import { claimInviteEmail } from "@/lib/email-templates";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 /**
- * Create a claim invite for a waitlist practitioner. ADMIN-ONLY. Returns the claim
- * URL to share (email wiring is a separate, deferred step — for now copy the link).
+ * Create a claim invite for a waitlist practitioner. ADMIN-ONLY. Persists the invite and,
+ * when the email layer is configured, sends the claim link to them. Always returns the URL
+ * so the admin can copy/resend it by hand — `emailed` says whether the auto-send landed.
+ * Email is best-effort: a send failure never fails the invite (the row is the source of truth).
  * Does NOT create a Practitioner row, so an un-claimed invite never hits the directory.
  */
 export async function createInvite(input: {
   email: string;
   displayName?: string;
   prefill?: InvitePrefill;
-}): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; url: string; emailed: boolean; emailReason?: "not_configured" | "http_error" | "exception" }
+  | { ok: false; error: string }
+> {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Not authorized." };
 
   const email = input.email.trim().toLowerCase();
   if (!email) return { ok: false, error: "An email is required." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "That doesn't look like a valid email address." };
+  }
 
   const token = newInviteToken();
+  const displayName = input.displayName?.trim() || null;
   try {
     await db.invite.create({
       data: {
         token,
         email,
-        displayName: input.displayName?.trim() || null,
+        displayName,
         prefill: (input.prefill ?? {}) as Prisma.InputJsonValue,
       },
     });
   } catch {
     return { ok: false, error: "Couldn't create the invite — please try again." };
   }
+
+  const url = `${SITE_URL}/claim/${token}`;
+
+  let emailed = false;
+  let emailReason: "not_configured" | "http_error" | "exception" | undefined;
+  if (emailConfigured()) {
+    const content = claimInviteEmail({ name: displayName, url });
+    const sent = await sendEmail({ to: email, ...content });
+    emailed = sent.ok;
+    if (!sent.ok) emailReason = sent.reason; // 'http_error' | 'exception' — it tried and failed
+  } else {
+    emailReason = "not_configured"; // email layer is off; the link still works by hand
+  }
+
   revalidatePath("/admin");
-  return { ok: true, url: `${SITE_URL}/claim/${token}` };
+  return { ok: true, url, emailed, emailReason };
 }
 
 /**

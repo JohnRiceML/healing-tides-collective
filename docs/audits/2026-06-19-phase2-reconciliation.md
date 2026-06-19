@@ -3,6 +3,8 @@
 **Date:** 2026-06-19 · **Method:** 5-agent reconciliation workflow (promises lens · claimed-status lens · code-truth lens · blockers lens → synthesis), every claim grounded in a cited file. **Branch:** `feat/practitioner-listing-mvp`, head `77412e2`.
 
 > Companion to [BUILD-TRACKER.md](../BUILD-TRACKER.md) (the living milestone status) and the founding [notes/initial-brief.md](../../notes/initial-brief.md). This doc adds two things the tracker didn't: a **promised-vs-delivered tally against the *founding* brief**, and a **doc-truth audit** — places our own status docs read as more-done than the code supports.
+>
+> **Update (same day):** acting on this audit, the **email layer was built** — `lib/email.ts` (fetch-based Resend, never-throws, env-gated) + pure templates, wired so **claim invites auto-send**. So the "no email layer exists at all" finding (overclaim #2) and "Send invites to waitlist — not-started" are now **partially addressed** (sender ready; reminder/referral triggers still to wire; John owes `RESEND_API_KEY`/`EMAIL_FROM` + domain). BUILD-TRACKER is current; this snapshot is preserved as the pre-fix baseline.
 
 ## Headline
 Phase 1 (the practitioner listing) is genuinely **~80% live and code-verified**. Phase 2 (guided seeker intake, matching, the request-intro flow, billing, the admin command center) is **greenfield — clickable prototypes with zero backend** — and is blocked far more on **Nora's matching brief + a handful of John config/decision items** than on engineering effort.

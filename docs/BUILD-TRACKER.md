@@ -31,7 +31,7 @@
 | **Database** (practitioners, seekers, profiles, applications, matches, messages/events) | 🟡 | Only `User`, `Practitioner`, `ProfileView` exist in `prisma/schema.prisma`. **No `Application`, `Match`, `Message`, `Consultation`, or `Seeker` models** — this is the real foundational gap before M2. |
 | **Google auth + account creation AND deletion (both user types)** | 🟡 | Clerk wired, Google enabled (`/join`, `/sign-in`). The user-facing **"Delete account"** already exists via Clerk's `UserButton` (enable the toggle in the Clerk dashboard — John). What's unresolved is **what deletion does to our data**: today `user.deleted` only *hides* the profile (not erasure). True erasure vs. hide-and-preserve is a legal call — see [decision #7](#open-decisions-brief-changed-the-plan). |
 | **Stripe wired now** (before charging) | 🔴 | No Stripe dependency. **But the schema is already prepped:** `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus` enum (`NONE/TRIALING/ACTIVE/PAST_DUE/CANCELED`), plus dormant `tier` / `featured` / `accountType` on `Practitioner`. So wiring = checkout + webhook + a gating read; **no migration**. See [decision #1](#open-decisions-brief-changed-the-plan). |
-| **Email automation scaffolding** (transactional + follow-up) | 🔴 | No email-send library present at all. ⚠️ Brief specifies Outlook/M365 — that's a *mailbox*, not a sending API. See [decision #2](#open-decisions-brief-changed-the-plan). |
+| **Email automation scaffolding** (transactional + follow-up) | 🟡 | **Send layer WIRED via Resend** (2026-06-19): `lib/email.ts` (fetch-based, never-throws, env-gated — mirrors `serper.ts`) + pure templates in `lib/email-templates.ts`. First flow live: **claim invites auto-send** the claim link (best-effort; admin still gets a copyable link + an honest sent/failed/off status). Decision #2 resolved → Resend. **Still to wire:** completeness-reminder + M2 referral/intro emails (the sender is ready — just add the triggers). John sets `RESEND_API_KEY` + `EMAIL_FROM` + verifies a sending domain. |
 
 ## Milestone 1 — Practitioner profiles + directory (the networking-event deliverable)
 
@@ -112,7 +112,7 @@ claim-flow hardening — **atomic claim** (`updateMany … WHERE claimedAt IS NU
 ## Open decisions — brief changed the plan
 
 1. **Stripe: wire now, or stay parked?** Brief pulls it into M0; schema is ready so it's a contained job (checkout + webhook + gating read, no migration). Trade-off: build it cold now vs. when the ~3–6mo free-intro period actually ends.
-2. **Email path: Microsoft Graph API vs. Resend/Postmark.** Brief says Outlook/M365 (`nora@healingtides.co`) — but you can't *send automated flows from a mailbox*. Either send via **Graph API** (keeps the from-address, more setup) or add a **transactional sender** (faster, new from-domain to verify). Blocks all M1 nudges + M2 referral emails.
+2. ✅ **RESOLVED 2026-06-19 → Resend (built).** Email path: Microsoft Graph API vs. Resend/Postmark. Brief said Outlook/M365 (`nora@healingtides.co`) — but you can't *send automated flows from a mailbox*. **Chosen: a transactional sender (Resend), built as `lib/email.ts`.** Trade-off accepted: the from-address is a verified sending subdomain (e.g. `hello@mail.healingtides.co`), not `nora@` — revisit with Graph later if keeping her real address matters. John still owes `RESEND_API_KEY` + `EMAIL_FROM` + domain verification.
 3. **Claim flow sources from Psychology Today.** Better-specified than "CSV," but PT scraping carries **ToS/legal sensitivity** (a Christie question) and changes Nora's deliverable from "spreadsheet" to "list of PT profile URLs."
 4. **Pricing simplified to ~$30 single tier + 3–6mo free intro** (was $10/$25/$100). Schema supports both, so no rework — just confirm the launch shape. Free-intro window length (3 vs. 6 mo / through Dec) is itself an open call (§13).
 5. **Crisis UX** (§8 open): pause/close chat vs. overlay message — design with Nora.
@@ -135,6 +135,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 - 🔴 **Rotate the leaked Neon + Clerk + Serper credentials** (all shared in chat) before any production push.
 - `SERPER_API_KEY` in `.env.local` + Vercel — powers the practitioner local-visibility audit (returns "not configured" until set). Rotate the one pasted in chat via [serper.dev](https://serper.dev).
 - **Run `npm run db:migrate`** to create the `invites` table (the claim-flow scaffold's schema). Until then the claim/admin-invite code compiles but errors at runtime (table missing) — the rest of the app is unaffected. (Migrations are John-only; the prod classifier blocks the agent from running them.)
+- **`RESEND_API_KEY` + `EMAIL_FROM` in `.env.local` + Vercel**, and verify a sending domain at [resend.com](https://resend.com) — powers the now-wired email layer (claim invites auto-send once set; until then invites still mint a copyable link). `EMAIL_FROM` must be `Name <addr@verified-domain>`.
 - `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel + the Clerk dashboard webhook (`user.updated` + `user.deleted`) — moderation auto-hide 501s until then.
 - `ADMIN_EMAILS` in Vercel — `/admin` is closed until set.
 - Paste the **Neon connection string** into `.env.local` (local dev/migrations blocked).
@@ -177,6 +178,6 @@ The 2026-06-16 brand "shell" (below) grew into the **flagship practitioner surfa
 ## Next up
 
 1. **Account-deletion semantics** — decision-gated ([decision #7](#open-decisions-brief-changed-the-plan), Christie). ~1hr once decided.
-2. **Pick the email path** (decision #2) → wire scaffolding → unblocks completeness *reminder emails* + M2 referrals.
+2. ✅ **Email path picked + send layer built (Resend, 2026-06-19).** Claim invites auto-send. Next email increments (sender's ready, just add triggers): completeness *reminder emails* + M2 referral/intro emails. John sets `RESEND_API_KEY`/`EMAIL_FROM` + verifies the domain to switch it on.
 3. **Stripe** (decision #1) — clean M0 job now while the schema's fresh, if we say go.
 4. Nora-gated: claim flow, matching homework, admin dashboard sketch, license/board URLs.
