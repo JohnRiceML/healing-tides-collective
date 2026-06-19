@@ -9,12 +9,14 @@ import { getWeeklyViewDates } from "@/lib/presence-data";
 import { buildBrand } from "@/lib/brand";
 import { buildBrandSignals } from "@/lib/brand-signals";
 import { readPresenceScan } from "@/lib/presence-scan";
+import { readPresenceHistory, buildMomentum } from "@/lib/presence-history";
 import { deriveSeekerLanguage } from "@/lib/seeker-language";
 import { specialtyLabel } from "@/app/_lib/taxonomy";
 
 import { BrandHero } from "../_components/brand/BrandHero";
 import { BrandTiles } from "../_components/brand/BrandTiles";
 import { SeekerLanguageCard } from "../_components/brand/SeekerLanguageCard";
+import { MomentumCard } from "../_components/brand/MomentumCard";
 import { DimensionChapter } from "../_components/brand/DimensionChapter";
 import { VisibilityCard } from "../_components/VisibilityCard";
 
@@ -120,6 +122,9 @@ export default async function PractitionerBrandPage() {
   // (which shows up in nearly every local search AND in their profile).
   const seekerLang = deriveSeekerLanguage(scan, profileText, { exclude: [p.region ?? ""] });
 
+  // Movement over time — the reason to return. Built from the rolling scan history.
+  const momentum = buildMomentum(readPresenceHistory(fv));
+
   return (
     <Shell>
       {/* ── Personal hero: their cover art, photo, name + where their brand is now ─ */}
@@ -188,6 +193,13 @@ export default async function PractitionerBrandPage() {
       <section className="mt-8">
         <SeekerLanguageCard lang={seekerLang} lastCheckedLabel={lastCheckedLabel} />
       </section>
+
+      {/* ── How your presence is growing — movement over time (the reason to return) ── */}
+      {momentum.checks > 0 ? (
+        <section className="mt-5">
+          <MomentumCard momentum={momentum} />
+        </section>
+      ) : null}
 
       {/* ── Tend each part — the deep, dimension-by-dimension chapters ─────────── */}
       <h2 className="font-display mt-12 text-[22px] leading-tight tracking-[-0.01em] text-charcoal">

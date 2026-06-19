@@ -147,7 +147,11 @@ describe("runVisibilityAudit — signal aggregation into the cached scan", () =>
 
 describe("runVisibilityAudit — persistence preserves reserved sibling keys", () => {
   it("writes __presenceScan to the session id WITHOUT clobbering __hold / __verified", async () => {
-    const fv = { __hold: { message: "held by admin" }, __verified: ["licensed_professional"] };
+    const fv = {
+      __hold: { message: "held by admin" },
+      __holdHistory: [{ action: "hold", by: "admin@x.test", at: "2026-06-01T00:00:00Z" }],
+      __verified: ["licensed_professional"],
+    };
     getPractitioner.mockResolvedValue({ user: { id: "u1" }, practitioner: practitioner(fv) });
     findUnique.mockResolvedValue({ fieldValues: fv });
 
@@ -158,8 +162,14 @@ describe("runVisibilityAudit — persistence preserves reserved sibling keys", (
     expect(call.where).toEqual({ id: "p1" });
     const written = call.data.fieldValues as Record<string, any>;
     expect(written.__hold).toEqual({ message: "held by admin" });
+    expect(written.__holdHistory).toEqual([
+      { action: "hold", by: "admin@x.test", at: "2026-06-01T00:00:00Z" },
+    ]);
     expect(written.__verified).toEqual(["licensed_professional"]);
     expect(written.__presenceScan.foundTerms).toEqual(["Trauma Healing Saint Paul"]);
+    // The rolling history gains a snapshot too (the "growing over time" read).
+    expect(Array.isArray(written.__presenceScanHistory)).toBe(true);
+    expect(written.__presenceScanHistory.at(-1).foundTerms).toEqual(["Trauma Healing Saint Paul"]);
   });
 
   it("merges onto the FRESH re-read, not the stale snapshot (clobber protection)", async () => {

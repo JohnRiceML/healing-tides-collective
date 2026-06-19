@@ -21,6 +21,12 @@ import {
   type PresenceDelta,
   type PresenceScan,
 } from "@/lib/presence-scan";
+import {
+  PRESENCE_HISTORY_KEY,
+  appendSnapshot,
+  readPresenceHistory,
+  snapshotOf,
+} from "@/lib/presence-history";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 // How many coverage terms we also check the local map pack for during a full scan. Bounded so
@@ -100,9 +106,16 @@ export async function runVisibilityAudit(): Promise<AuditResult> {
     });
     const current = fresh?.fieldValues ?? p.fieldValues;
     delta = presenceDelta(readPresenceScan(current), scan);
+    // Persist both the latest scan AND a rolling history snapshot (for the "growing over time"
+    // read). Both reserved `__` keys, written by direct spread so siblings (__hold/__verified/
+    // __holdHistory) survive.
+    const nextFieldValues = {
+      ...applyPresenceScan(current, scan),
+      [PRESENCE_HISTORY_KEY]: appendSnapshot(readPresenceHistory(current), snapshotOf(scan)),
+    };
     await db.practitioner.update({
       where: { id: p.id },
-      data: { fieldValues: applyPresenceScan(current, scan) as Prisma.InputJsonValue },
+      data: { fieldValues: nextFieldValues as Prisma.InputJsonValue },
     });
     revalidatePath("/practitioner/brand");
     revalidatePath("/practitioner");
