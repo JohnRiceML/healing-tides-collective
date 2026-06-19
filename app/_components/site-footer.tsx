@@ -49,19 +49,14 @@ export function SiteFooter() {
           size="wide"
           className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 py-3.5"
         >
-          <Link
-            href="/"
-            className="font-display text-[15px] leading-none tracking-[-0.01em] text-charcoal transition-opacity hover:opacity-70"
-          >
-            Healing Tides
-          </Link>
+          <p className="meta text-ink-muted">© 2026 Healing Tides Collective</p>
           <p className="text-[12px] leading-[1.5] text-ink-muted">
             Not emergency care — in crisis, call or text{" "}
             <a href="tel:988" className="font-medium text-charcoal underline-offset-2 hover:underline">988</a>{" "}
             or see{" "}
             <Link href="/crisis" className="font-medium text-charcoal underline-offset-2 hover:underline">support resources</Link>.
           </p>
-          <p className="meta text-ink-muted">© 2026 Healing Tides Collective</p>
+          <p className="meta text-ink-muted">Care, matched. By a person.</p>
         </Container>
       </footer>
     );
