@@ -456,15 +456,8 @@ export default async function PractitionerHome() {
           </Link>
         </div>
         <Card className="mt-3 !p-6">
-          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-            <span className="font-display leading-none text-charcoal">
-              <span className="text-[26px]">{brand.overallScore}</span>
-              <span className="text-[13px] text-ink-muted"> of 100</span>
-            </span>
-            <span className="text-[14.5px] leading-[1.5] text-ink-soft">{brand.overall}</span>
-          </div>
-          <p className="mt-2 max-w-2xl text-[13px] leading-[1.55] text-ink-muted">
-            How formed each part of your brand is — your own progress, never a grade.
+          <p className="max-w-2xl text-[15px] leading-[1.6] text-ink-soft">
+            How the right person finds and remembers you. {brand.overall}
           </p>
           {brand.nextStep ? (
             <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-xl bg-seafoam/35 px-4 py-3 text-[13.5px] leading-[1.5] text-charcoal">

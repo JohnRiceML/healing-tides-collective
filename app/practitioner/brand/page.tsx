@@ -151,37 +151,22 @@ export default async function PractitionerBrandPage() {
         overall={brand.overall}
       />
 
-      {/* ── The shape of your brand: overall score + the five scored parts ──────── */}
-      <section className="mt-8">
-        <p className="meta text-ink-muted">The shape of your brand</p>
-
-        {/* Guided frame FIRST — anchor what the numbers are (and aren't) before any number lands. */}
-        <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-ink-soft">
-          Your brand is made of five parts. Each has a score showing how{" "}
-          <span className="text-charcoal">formed</span> it is — your own progress, never a grade and
-          never a comparison to other practitioners. Tap any part to see what it measures and the
-          next small step to tend it.
+      {/* ── What this is: the plain-language thesis, so a nervous first-timer is anchored ─ */}
+      <section className="mt-8 rounded-3xl border border-rule/70 bg-white p-6 md:p-7">
+        <p className="font-display text-[17px] leading-[1.4] text-charcoal">
+          This isn&rsquo;t marketing — it&rsquo;s helping the right person find help.
         </p>
-
-        {/* Overall progress — the moon fills to the score, beside the calm sentence. */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-3xl border border-rule/70 bg-white p-5 md:p-6">
-          <MoonState state={stateFromScore(brand.overallScore)} size="lg" fillPct={brand.overallScore} />
-          <span className="font-display leading-none text-charcoal">
-            <span className="text-[38px]">{brand.overallScore}</span>
-            <span className="text-[15px] text-ink-muted"> of 100</span>
-          </span>
-          <span className="min-w-0 flex-1 text-[14px] leading-[1.55] text-ink-soft">{brand.overall}</span>
-        </div>
-
-        <div className="mt-5">
-          <BrandTiles dimensions={brand.dimensions} hrefBase="" />
-        </div>
+        <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-ink-soft">
+          Your &ldquo;brand&rdquo; is simply how the right person recognizes you when they go looking
+          for care. Below is where that&rsquo;s already clear and where one small step would help —
+          your own pace, your own path. There&rsquo;s no grade here, and nothing to do all at once.
+        </p>
       </section>
 
-      {/* ── Where to begin: the one grounded next step (data-aware) ────────────── */}
+      {/* ── Start here: ONE thing, before the five parts (lead with the step; de-overwhelm) ─ */}
       {groundedStep ? (
-        <div className="mt-8 rounded-3xl border border-teal/25 bg-seafoam/25 p-6 md:p-7">
-          <p className="meta text-teal">Where to begin</p>
+        <div className="mt-5 rounded-3xl border border-teal/25 bg-seafoam/25 p-6 md:p-7">
+          <p className="meta text-teal">Start here — just one thing</p>
           <p className="font-display mt-2 text-[19px] leading-[1.3] text-charcoal">
             {groundedStep.insight.what}
           </p>
@@ -217,14 +202,33 @@ export default async function PractitionerBrandPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-8 rounded-3xl bg-seafoam/25 p-6 md:p-7">
+        <div className="mt-5 rounded-3xl bg-seafoam/25 p-6 md:p-7">
           <p className="meta text-teal">Where you are</p>
           <p className="mt-2 max-w-xl text-[15px] leading-[1.65] text-charcoal">
-            Your brand is in good shape — there&rsquo;s nothing pressing to tend. Look through
-            the parts below whenever you&rsquo;re curious about how you show up.
+            Your brand is in good shape — there&rsquo;s nothing pressing right now. Look through the
+            five parts below whenever you&rsquo;re curious about how you show up.
           </p>
         </div>
       )}
+
+      {/* ── The five parts — moons + named stages; the number lives on tap, inside each part ─ */}
+      <section className="mt-8">
+        <p className="meta text-ink-muted">The five parts of your brand</p>
+        <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-ink-soft">
+          Together, these help the right person find and remember you. Each grows at its own pace —
+          explore any one when you&rsquo;re ready. No rush, and never a comparison to anyone else.
+        </p>
+
+        {/* Overall, gently: the moon fills to where things are + the calm sentence — no number on the face. */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl border border-rule/70 bg-white p-5 md:p-6">
+          <MoonState state={stateFromScore(brand.overallScore)} size="lg" fillPct={brand.overallScore} />
+          <span className="min-w-0 flex-1 text-[14.5px] leading-[1.55] text-ink-soft">{brand.overall}</span>
+        </div>
+
+        <div className="mt-5">
+          <BrandTiles dimensions={brand.dimensions} hrefBase="" />
+        </div>
+      </section>
 
       {/* ── What the right people near you are searching — the understanding surface ─ */}
       <section className="mt-8">

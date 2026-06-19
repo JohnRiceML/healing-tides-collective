@@ -45,9 +45,6 @@ export function DimensionChapter({
           </span>
           <span className="meta mt-1 block text-ink-muted">{WORD[dimension.state]}</span>
         </div>
-        <span className="font-display shrink-0 text-[22px] leading-none text-charcoal">
-          {dimension.score}
-        </span>
         <svg
           viewBox="0 0 16 16"
           fill="none"
@@ -59,8 +56,14 @@ export function DimensionChapter({
       </summary>
 
       <div className="mt-4 border-t border-rule/60 pt-5">
+        {/* The number lives HERE, on tap — calm progress, never a grade on the always-visible face. */}
+        <p className="text-[13px] leading-[1.5] text-ink-muted">
+          This part is at{" "}
+          <span className="font-display text-[15px] text-charcoal">{dimension.score}</span> of 100 —{" "}
+          {WORD[dimension.state]}. Your own progress, never a grade.
+        </p>
         {/* The guided layer: what this part is, and why it matters for being found. */}
-        <p className="text-[14px] leading-[1.6] text-ink-soft">{dimension.intro}</p>
+        <p className="mt-3 text-[14px] leading-[1.6] text-ink-soft">{dimension.intro}</p>
         <p className="mt-3 flex flex-wrap items-baseline gap-x-2 text-[13.5px] leading-[1.55] text-charcoal">
           <span className="meta shrink-0 text-teal">Why it matters</span>
           <span className="text-ink-soft">{dimension.why}</span>

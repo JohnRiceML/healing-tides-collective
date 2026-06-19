@@ -388,23 +388,25 @@ function whereFound(s: BrandSignals): DimensionCore {
 function whyTrusted(s: BrandSignals): DimensionCore {
   const insights: Insight[] = [];
 
-  // Reviews — only speak to them as known/unknown, never as a count or rating to chase.
+  // Reviews — READ-ONLY. We NEVER coach soliciting testimonials: ACA/APA/AAMFT/NASW/NBCC ethics
+  // codes prohibit a therapist soliciting reviews from CURRENT or FORMER clients. We acknowledge
+  // reviews that already exist; we never ask the practitioner to request or chase them.
   if (s.reviewsKnown) {
     insights.push({
       id: "trusted-reviews",
-      what: "People have left words about working with you.",
+      what: "People have already left kind words about working with you.",
       whyCare: "A seeker leans on others' experiences to feel safe choosing you.",
-      whatNext: "Let happy clients know a few words would mean a lot, whenever it feels right.",
+      whatNext: "Nothing to do here — let those words quietly speak for you.",
       lift: "gentle",
       state: "on_its_way",
     });
   } else {
     insights.push({
       id: "trusted-reviews",
-      what: "We don't see any reviews tied to you yet.",
-      whyCare: "A few honest words from past clients help a seeker trust the leap.",
-      whatNext: "When the moment feels right, invite a client or two to share their experience.",
-      lift: "moderate",
+      what: "We don't see public reviews tied to you — and that's completely okay.",
+      whyCare: "Trust doesn't rest on reviews; your credentials, your own website, and a clear profile carry it.",
+      whatNext: "Lean on your credentials and website — and never request client reviews; for therapists, that crosses an ethics line.",
+      lift: "gentle",
       state: "not_started",
     });
   }
@@ -436,7 +438,7 @@ function whyTrusted(s: BrandSignals): DimensionCore {
     id: "why_trusted",
     name: "Why you're trusted",
     intro:
-      "Trust is what lets a seeker take the leap. The words others have shared, and the spaces that carry your name, all quietly reassure someone that they're in good hands.",
+      "Trust is what lets a seeker take the leap — and most of it is already in your hands: your credentials, a space of your own that carries your name, and how plainly you show up.",
     state: stateFromInsights(insights),
     insights,
   };

@@ -36,14 +36,8 @@ export function BrandTiles({
       {dimensions.map((d) => {
         const inner = (
           <>
-            <div className="flex items-center justify-between gap-2">
-              <MoonState state={d.state} size={compact ? "sm" : "lg"} fillPct={d.score} />
-              <span
-                className={`font-display leading-none text-charcoal ${compact ? "text-[16px]" : "text-[20px]"}`}
-              >
-                {d.score}
-              </span>
-            </div>
+            {/* The moon fills to where this part is — calm progress, no number on the face. */}
+            <MoonState state={d.state} size={compact ? "sm" : "lg"} fillPct={d.score} />
             <span
               className={`font-display mt-3 block leading-[1.25] tracking-[-0.01em] text-charcoal ${
                 compact ? "text-[14px]" : "text-[15.5px]"
