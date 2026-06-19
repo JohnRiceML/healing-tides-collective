@@ -66,6 +66,36 @@ html::after {
 }
 
 /* ============================================================
+   Embedded Sanity Studio (/studio) — branded frame
+   ------------------------------------------------------------
+   The Studio keeps the HTC header + footer. next-sanity renders the Studio
+   into <div id="sanity"> hard-coded to height:100vh, and Sanity positions its
+   navbar + panes against that fixed viewport. So the Studio must NOT scroll as
+   a normal page element — doing so collides its navbar with the sticky header
+   and clips the panes (the "broken layout on scroll"). Instead we lock /studio
+   to the viewport and lay it out as a flex column: the header and footer keep
+   their natural height, and the Studio fills the space between and scrolls
+   INTERNALLY (how Sanity is designed to work). The body:has() selector matches
+   only the Studio route — #sanity exists nowhere else — so other pages are
+   untouched. */
+body:has(> #sanity[data-ui="NextStudioLayout"]) {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+body:has(> #sanity[data-ui="NextStudioLayout"]) > header,
+body:has(> #sanity[data-ui="NextStudioLayout"]) > footer {
+  flex: 0 0 auto;
+}
+body:has(> #sanity[data-ui="NextStudioLayout"]) > #sanity[data-ui="NextStudioLayout"] {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* ============================================================
    Shared utility classes used across multiple design directions
    ============================================================ */
 

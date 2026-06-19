@@ -39,6 +39,34 @@ export function SiteFooter() {
     return null;
   }
 
+  // The embedded Studio (/studio) is a full-height editing app pinned in a fixed
+  // frame, so the tall marketing footer would crowd the editor. Render a slim
+  // one-row bar instead — brand + the required safety line + copyright.
+  if (pathname.startsWith("/studio")) {
+    return (
+      <footer className="border-t border-rule/70 bg-sand">
+        <Container
+          size="wide"
+          className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 py-3.5"
+        >
+          <Link
+            href="/"
+            className="font-display text-[15px] leading-none tracking-[-0.01em] text-charcoal transition-opacity hover:opacity-70"
+          >
+            Healing Tides
+          </Link>
+          <p className="text-[12px] leading-[1.5] text-ink-muted">
+            Not emergency care — in crisis, call or text{" "}
+            <a href="tel:988" className="font-medium text-charcoal underline-offset-2 hover:underline">988</a>{" "}
+            or see{" "}
+            <Link href="/crisis" className="font-medium text-charcoal underline-offset-2 hover:underline">support resources</Link>.
+          </p>
+          <p className="meta text-ink-muted">© 2026 Healing Tides Collective</p>
+        </Container>
+      </footer>
+    );
+  }
+
   return (
     <footer className="border-t border-rule/70 bg-sand">
       <Container size="wide" className="py-14 md:py-16">
