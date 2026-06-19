@@ -70,6 +70,9 @@ Reference implementation for all four: the sibling **counsel-post** repo (which 
 - **Agent & contributor rules:** [AGENTS.md](../AGENTS.md).
 
 ## ⚠️ Known stale / open
+- **Promised-vs-delivered status:** [BUILD-TRACKER.md](BUILD-TRACKER.md) is the living milestone status; the code-verified reconciliation against the *founding* brief is [audits/2026-06-19-phase2-reconciliation.md](audits/2026-06-19-phase2-reconciliation.md). **Phase 1 (practitioner listing) is ~80% live; Phase 2 (guided Get-Matched, matching, seeker dashboard, billing, command center) is greenfield — prototypes only.** Note the founding brief's framing is *"not a directory"* — the guided matching core that defines the product is not yet started.
+- **Three honest realities the surfaces table can hide** (don't demo as done): (1) the **claim flow is coded but errors at runtime** — the `Invite` model exists but no migration is applied, so `db.invite.*` throws until John runs `db:migrate`; (2) **there is no email layer at all** (no `resend`/`nodemailer`/`graph` dep, no `lib/email.ts`) — invites, nudges, intros are all blocked on it; (3) **`/prototype/*` is mock-only** (Get Matched, the 8-section admin command center render hardcoded `mock.ts`, no backend).
+- **Brand center caveat:** its Serper visibility audit isn't geo-targeted — it scores the server's locale, not the practitioner's city ([architecture/BRAND-CENTER.md](architecture/BRAND-CENTER.md) "Known gaps"). Quality bug, not a launch gate.
 - Brand/product docs (`positioning`, `personas`, `content-strategy`) and the **final Phase 2 data model** await the client **call recap** (`notes/`). Update them when it lands.
 - *(Add freshness flags here as they arise — mark wrong info ⚠️ rather than leaving it unmarked.)*
 
