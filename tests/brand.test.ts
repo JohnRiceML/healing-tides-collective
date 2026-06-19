@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   buildBrand,
+  stateFromScore,
   DIMENSION_ORDER,
   type BrandSignals,
   type Dimension,
@@ -230,6 +231,8 @@ describe("buildBrand — overall is a calm sentence (no number, no grade)", () =
       ...allInsights(brand.dimensions).flatMap((i) => [i.what, i.whyCare, i.whatNext]),
       ...allInsights(fullBrand.dimensions).flatMap((i) => [i.what, i.whyCare, i.whatNext]),
       ...brand.dimensions.map((d) => d.intro),
+      ...brand.dimensions.map((d) => d.why),
+      ...fullBrand.dimensions.map((d) => d.why),
     ]
       .join(" ")
       .toLowerCase();
@@ -263,5 +266,56 @@ describe("buildBrand nextStep (grounding in where they are now)", () => {
 
   it("is null when nothing's pressing (a profile in good shape) — then we just tend it", () => {
     expect(buildBrand(FULL).nextStep).toBeNull();
+  });
+});
+
+describe("buildBrand — progress scores (personal, never a grade or comparison)", () => {
+  it("gives every dimension a score in 0–100 and a plain 'why this matters'", () => {
+    for (const d of buildBrand(FULL).dimensions) {
+      expect(d.score).toBeGreaterThanOrEqual(0);
+      expect(d.score).toBeLessThanOrEqual(100);
+      expect(Number.isInteger(d.score)).toBe(true);
+      expect(d.why.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("overallScore is the 0–100 average of the five parts", () => {
+    const { dimensions, overallScore } = buildBrand({ ...EMPTY, specialtiesCount: 2 });
+    const avg = Math.round(dimensions.reduce((s, d) => s + d.score, 0) / dimensions.length);
+    expect(overallScore).toBe(avg);
+    expect(overallScore).toBeGreaterThanOrEqual(0);
+    expect(overallScore).toBeLessThanOrEqual(100);
+  });
+
+  it("the moon state is ALWAYS the score, banded — they can never contradict", () => {
+    for (const sig of [EMPTY, FULL, { ...EMPTY, specialtiesCount: 2, hasBio: true }]) {
+      for (const d of buildBrand(sig).dimensions) {
+        expect(d.state).toBe(stateFromScore(d.score));
+      }
+    }
+  });
+
+  it("an empty profile scores low across the board; a full one scores high", () => {
+    const empty = buildBrand(EMPTY);
+    const full = buildBrand(FULL);
+    expect(empty.overallScore).toBeLessThan(25); // a hopeful beginning, not a zero
+    expect(empty.overallScore).toBeGreaterThan(0); // never a stark 0 — being here is the start
+    expect(full.overallScore).toBeGreaterThan(empty.overallScore);
+    expect(full.overallScore).toBeGreaterThanOrEqual(75);
+  });
+
+  it("shows partial progress — a part with some pieces done scores above 'just begun'", () => {
+    // bio + values + photo present (modality/completeness low) → who_you_are is partway, not zero.
+    const partial = buildBrand({ ...EMPTY, hasBio: true, hasValues: true, hasPhoto: true });
+    const who = partial.dimensions.find((d) => d.id === "who_you_are")!;
+    expect(who.score).toBeGreaterThan(buildBrand(EMPTY).dimensions[0]!.score);
+  });
+
+  it("stateFromScore bands sensibly (0→not_started … 100→settled)", () => {
+    expect(stateFromScore(0)).toBe("not_started");
+    expect(stateFromScore(8)).toBe("not_started");
+    expect(stateFromScore(38)).toBe("forming");
+    expect(stateFromScore(68)).toBe("on_its_way");
+    expect(stateFromScore(100)).toBe("settled");
   });
 });

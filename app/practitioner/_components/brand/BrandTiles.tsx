@@ -11,7 +11,8 @@ import { MoonState } from "./MoonState";
  *
  * When `hrefBase` is given, each tile links to that dimension (the brand page uses an
  * in-page anchor `#dim-<id>`; the dashboard links into `/practitioner/brand#dim-<id>`).
- * Never a score or a ranking — just the moon, the name, and the calm state word.
+ * Each tile shows the moon (filled to the score), the part's name + calm state word, and its
+ * 0–100 PROGRESS score — personal progress, never a grade or a comparison to other practitioners.
  */
 
 const WORD: Record<DimensionState, string> = {
@@ -35,7 +36,14 @@ export function BrandTiles({
       {dimensions.map((d) => {
         const inner = (
           <>
-            <MoonState state={d.state} size={compact ? "sm" : "lg"} />
+            <div className="flex items-center justify-between gap-2">
+              <MoonState state={d.state} size={compact ? "sm" : "lg"} fillPct={d.score} />
+              <span
+                className={`font-display leading-none text-charcoal ${compact ? "text-[16px]" : "text-[20px]"}`}
+              >
+                {d.score}
+              </span>
+            </div>
             <span
               className={`font-display mt-3 block leading-[1.25] tracking-[-0.01em] text-charcoal ${
                 compact ? "text-[14px]" : "text-[15.5px]"

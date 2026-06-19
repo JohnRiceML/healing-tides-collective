@@ -39,12 +39,17 @@ export function MoonState({
   state,
   label = false,
   size = "sm",
+  fillPct,
 }: {
   state: DimensionState;
   label?: boolean;
   size?: "sm" | "lg";
+  /** When given (a dimension's 0–100 score), the moon fills to it exactly — a true progress dial
+   *  (values outside 0–100 are clamped). Omitted for per-insight moons, which fall back to the
+   *  state's coarse fill. */
+  fillPct?: number;
 }) {
-  const pct = FILL[state];
+  const pct = fillPct != null ? Math.max(0, Math.min(100, fillPct)) : FILL[state];
   const word = WORD[state];
 
   return (

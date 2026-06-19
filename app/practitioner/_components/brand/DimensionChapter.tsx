@@ -8,10 +8,12 @@ import { MoonState } from "./MoonState";
 /**
  * One dimension of a practitioner's presence, rendered as a calm, COLLAPSED chapter so
  * the page opens grounded and quiet rather than as a wall of five sections. The summary
- * (moon + name + state word) is always visible; the intro, insights, and any embed
- * unfold on a gentle tap. The page opens the one chapter that matters most by default.
+ * (moon + name + state word + the part's 0–100 progress score) is always visible; the intro,
+ * the "why it matters", insights, and any embed unfold on a gentle tap. The page opens the one
+ * chapter that matters most by default.
  *
- * Native <details> — no JS, accessible, server-rendered. No score, no comparison.
+ * Native <details> — no JS, accessible, server-rendered. The score is personal progress,
+ * never a grade or a comparison to other practitioners.
  */
 
 const WORD: Record<DimensionState, string> = {
@@ -36,13 +38,16 @@ export function DimensionChapter({
       className="group rounded-3xl border border-rule/70 bg-white p-6 transition-colors hover:border-rule-strong/30 md:p-7 [&_summary::-webkit-details-marker]:hidden"
     >
       <summary className="flex cursor-pointer list-none items-center gap-3">
-        <MoonState state={dimension.state} />
+        <MoonState state={dimension.state} fillPct={dimension.score} />
         <div className="min-w-0 flex-1">
           <span className="font-display block text-[17px] leading-[1.3] tracking-[-0.01em] text-charcoal">
             {dimension.name}
           </span>
           <span className="meta mt-1 block text-ink-muted">{WORD[dimension.state]}</span>
         </div>
+        <span className="font-display shrink-0 text-[22px] leading-none text-charcoal">
+          {dimension.score}
+        </span>
         <svg
           viewBox="0 0 16 16"
           fill="none"
@@ -54,7 +59,12 @@ export function DimensionChapter({
       </summary>
 
       <div className="mt-4 border-t border-rule/60 pt-5">
+        {/* The guided layer: what this part is, and why it matters for being found. */}
         <p className="text-[14px] leading-[1.6] text-ink-soft">{dimension.intro}</p>
+        <p className="mt-3 flex flex-wrap items-baseline gap-x-2 text-[13.5px] leading-[1.55] text-charcoal">
+          <span className="meta shrink-0 text-teal">Why it matters</span>
+          <span className="text-ink-soft">{dimension.why}</span>
+        </p>
 
         {dimension.insights.length ? (
           <div className="mt-5 space-y-3">

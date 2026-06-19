@@ -6,7 +6,7 @@ import { getPractitioner } from "@/lib/auth";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { weeklyViewBuckets } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
-import { buildBrand } from "@/lib/brand";
+import { buildBrand, stateFromScore } from "@/lib/brand";
 import { buildBrandSignals } from "@/lib/brand-signals";
 import { readPresenceScan } from "@/lib/presence-scan";
 import { readPresenceHistory, buildMomentum } from "@/lib/presence-history";
@@ -16,6 +16,7 @@ import { specialtyLabel } from "@/app/_lib/taxonomy";
 
 import { BrandHero } from "../_components/brand/BrandHero";
 import { BrandTiles } from "../_components/brand/BrandTiles";
+import { MoonState } from "../_components/brand/MoonState";
 import { SeekerLanguageCard } from "../_components/brand/SeekerLanguageCard";
 import { MomentumCard } from "../_components/brand/MomentumCard";
 import { DimensionChapter } from "../_components/brand/DimensionChapter";
@@ -150,14 +151,29 @@ export default async function PractitionerBrandPage() {
         overall={brand.overall}
       />
 
-      {/* ── The shape of your brand: five tiles at a glance (the top tiles) ──────── */}
+      {/* ── The shape of your brand: overall score + the five scored parts ──────── */}
       <section className="mt-8">
         <p className="meta text-ink-muted">The shape of your brand</p>
+
+        {/* Guided frame FIRST — anchor what the numbers are (and aren't) before any number lands. */}
         <p className="mt-2 max-w-2xl text-[14px] leading-[1.6] text-ink-soft">
-          Five parts that, together, help the right person find and remember you. Tap any one to
-          tend it.
+          Your brand is made of five parts. Each has a score showing how{" "}
+          <span className="text-charcoal">formed</span> it is — your own progress, never a grade and
+          never a comparison to other practitioners. Tap any part to see what it measures and the
+          next small step to tend it.
         </p>
-        <div className="mt-4">
+
+        {/* Overall progress — the moon fills to the score, beside the calm sentence. */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-3xl border border-rule/70 bg-white p-5 md:p-6">
+          <MoonState state={stateFromScore(brand.overallScore)} size="lg" fillPct={brand.overallScore} />
+          <span className="font-display leading-none text-charcoal">
+            <span className="text-[38px]">{brand.overallScore}</span>
+            <span className="text-[15px] text-ink-muted"> of 100</span>
+          </span>
+          <span className="min-w-0 flex-1 text-[14px] leading-[1.55] text-ink-soft">{brand.overall}</span>
+        </div>
+
+        <div className="mt-5">
           <BrandTiles dimensions={brand.dimensions} hrefBase="" />
         </div>
       </section>

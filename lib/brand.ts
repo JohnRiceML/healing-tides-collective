@@ -35,9 +35,17 @@ export type Dimension = {
   id: DimensionId;
   name: string;
   intro: string;
+  /** Plain-language "why this part matters" — for the guided experience. */
+  why: string;
   state: DimensionState;
+  /** Personal PROGRESS, 0–100 — how formed THIS part of their brand is. Never a grade, never a
+   *  comparison to other practitioners. The moon `state` is just this score, banded. */
+  score: number;
   insights: Insight[];
 };
+
+/** What a dimension builder returns; buildBrand layers on the score + banded state + `why`. */
+type DimensionCore = Omit<Dimension, "why" | "score">;
 
 export type BrandSignals = {
   published: boolean;
@@ -62,6 +70,8 @@ export type NextStep = { dimensionId: DimensionId; insight: Insight };
 export type Brand = {
   dimensions: Dimension[]; // 5 dimensions, fixed order
   overall: string;
+  /** Personal progress across the whole brand, 0–100 (the average of the five parts). */
+  overallScore: number;
   /** The one foundational step to lead with — or null when nothing's pressing (tend it). */
   nextStep: NextStep | null;
 };
@@ -95,15 +105,53 @@ function worstOf(states: DimensionState[]): DimensionState {
   );
 }
 
-/** Roll the dimension's own state up from its insights' states (worst-truthful). */
+/** Roll the dimension's own state up from its insights' states (worst-truthful). NOTE: a builder's
+ * state is provisional — buildBrand REPLACES it with the score-banded state (stateFromScore) so the
+ * moon and the number can never contradict. Kept here because DimensionCore needs a state. */
 function stateFromInsights(insights: Insight[]): DimensionState {
   return worstOf(insights.map((i) => i.state));
 }
 
+// ── progress scoring (0–100) ─────────────────────────────────────────────────
+// A personal PROGRESS read of how formed each part is — never a grade, never a comparison. Each
+// insight contributes its state's worth; the dimension score is their average. "not_started" keeps
+// a small base because being here at all is the start (and a stark 0 would read as judgment). The
+// moon `state` is just this score, banded — so the number and the moon can never contradict.
+
+const STATE_POINTS: Record<DimensionState, number> = {
+  not_started: 8,
+  forming: 38,
+  on_its_way: 68,
+  settled: 100,
+};
+
+function scoreFromInsights(insights: Insight[]): number {
+  if (insights.length === 0) return STATE_POINTS.not_started;
+  const total = insights.reduce((sum, i) => sum + STATE_POINTS[i.state], 0);
+  return Math.round(total / insights.length);
+}
+
+/** The moon state for a score — bands chosen so a single-insight part lands on its own state. */
+export function stateFromScore(score: number): DimensionState {
+  if (score >= 85) return "settled";
+  if (score >= 55) return "on_its_way";
+  if (score >= 25) return "forming";
+  return "not_started";
+}
+
+/** Plain-language "why this part matters for being found" — the guided layer, per dimension. */
+const DIMENSION_WHY: Record<DimensionId, string> = {
+  who_you_are: "It's the first thing a seeker feels — whether you're someone they can trust enough to reach out to.",
+  who_youre_for: "It's how the right person recognizes their own need in your words, and knows you're for them.",
+  where_found: "It's whether someone searching for the kind of care you offer actually finds their way to you.",
+  why_trusted: "It's what helps a nervous seeker feel safe enough to take the first step toward you.",
+  how_remembered: "It's whether your name stays with someone while they're deciding who to reach out to.",
+};
+
 // ── dimension: who you are ──────────────────────────────────────────────────
 // Identity — bio, values, photo, modality, overall completeness.
 
-function whoYouAre(s: BrandSignals): Dimension {
+function whoYouAre(s: BrandSignals): DimensionCore {
   const insights: Insight[] = [];
 
   // Bio — the voice.
@@ -174,7 +222,7 @@ function whoYouAre(s: BrandSignals): Dimension {
 // ── dimension: who you're for ───────────────────────────────────────────────
 // Specialties / areas of focus (+ optional coverage as supporting context).
 
-function whoYoureFor(s: BrandSignals): Dimension {
+function whoYoureFor(s: BrandSignals): DimensionCore {
   const insights: Insight[] = [];
 
   if (s.specialtiesCount === 0) {
@@ -241,7 +289,7 @@ function whoYoureFor(s: BrandSignals): Dimension {
 // ── dimension: where you're found ───────────────────────────────────────────
 // Published + region, plus the OPTIONAL Serper coverage / map-pack / weekly views.
 
-function whereFound(s: BrandSignals): Dimension {
+function whereFound(s: BrandSignals): DimensionCore {
   const insights: Insight[] = [];
 
   // The foundation: is the profile live, with a place attached?
@@ -337,7 +385,7 @@ function whereFound(s: BrandSignals): Dimension {
 // ── dimension: why you're trusted ───────────────────────────────────────────
 // Reviews (known) + website as a place that vouches for them.
 
-function whyTrusted(s: BrandSignals): Dimension {
+function whyTrusted(s: BrandSignals): DimensionCore {
   const insights: Insight[] = [];
 
   // Reviews — only speak to them as known/unknown, never as a count or rating to chase.
@@ -398,7 +446,7 @@ function whyTrusted(s: BrandSignals): Dimension {
 // Knowledge-graph / entity presence. NEVER a fake AI score — undefined/false ⇒
 // a calm "build an entity over time" invitation at not_started.
 
-function howRemembered(s: BrandSignals): Dimension {
+function howRemembered(s: BrandSignals): DimensionCore {
   const insights: Insight[] = [];
 
   if (s.knowledgeGraphPresent === true) {
@@ -475,7 +523,7 @@ function pickNextStep(dimensions: Dimension[]): NextStep | null {
 }
 
 export function buildBrand(signals: BrandSignals): Brand {
-  const builders: Record<DimensionId, (s: BrandSignals) => Dimension> = {
+  const builders: Record<DimensionId, (s: BrandSignals) => DimensionCore> = {
     who_you_are: whoYouAre,
     who_youre_for: whoYoureFor,
     where_found: whereFound,
@@ -483,15 +531,23 @@ export function buildBrand(signals: BrandSignals): Brand {
     how_remembered: howRemembered,
   };
 
-  const dimensions = DIMENSION_ORDER.map((id) => {
+  const dimensions: Dimension[] = DIMENSION_ORDER.map((id) => {
     const dim = builders[id](signals);
     // Defensive: never surface more than 3 insights per dimension.
-    return { ...dim, insights: dim.insights.slice(0, 3) };
+    const insights = dim.insights.slice(0, 3);
+    const score = scoreFromInsights(insights);
+    // The moon is just the score, banded — so the number and the moon can never contradict.
+    return { ...dim, insights, score, state: stateFromScore(score), why: DIMENSION_WHY[id] };
   });
+
+  const overallScore = Math.round(
+    dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length,
+  );
 
   return {
     dimensions,
     overall: buildOverall(dimensions),
+    overallScore,
     nextStep: pickNextStep(dimensions),
   };
 }
