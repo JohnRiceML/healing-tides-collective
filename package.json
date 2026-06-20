@@ -15,7 +15,11 @@
     "sanity:typegen": "sanity schema extract && sanity typegen generate",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:status": "prisma migrate status",
+    "db:migrate:safe": "node scripts/db-safe-migrate.mjs",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:backup": "node scripts/db-backup.mjs",
     "db:studio": "prisma studio"
   },
   "dependencies": {

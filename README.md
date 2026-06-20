@@ -83,8 +83,13 @@ Full env contract: [`docs/architecture/PHASE-2-SYSTEMS.md`](docs/architecture/PH
 ```bash
 npm run sanity:typegen   # regenerate sanity.types.ts from the Sanity schema
 npm run db:studio        # Prisma Studio against Neon
-npm run db:migrate       # create/apply a migration (dev)
+npm run db:status        # show pending migrations + drift (read-only)
+npm run db:migrate:safe -- <name>   # generate + review a migration (applies nothing)
+npm run db:migrate:deploy           # apply reviewed migrations (never resets)
+npm run db:backup        # pg_dump snapshot → backups/ (gitignored)
 ```
+
+**Database changes, migrations, and backups have a runbook: [`docs/DB-OPERATIONS.md`](docs/DB-OPERATIONS.md)** — the safe flow, the dev/prod Neon-branch split, PITR + backups, and the recovery playbook. Migrations are John-only (they touch prod).
 
 ## Routes
 
