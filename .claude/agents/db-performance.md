@@ -14,6 +14,8 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 Keep reads and writes fast as the data grows — especially the **seeker↔practitioner matching** queries, which are the product's hot path.
 
+> **⛔ DB-team prime directive — never lose production data.** Index/DDL changes ship as migrations through the safe flow; an index build can lock a large table (downtime) — coordinate `db-migration-engineer`. The team **authors + reviews**; a human (John) applies to prod. Operating manual: **[docs/DB-OPERATIONS.md](../../docs/DB-OPERATIONS.md)**.
+
 ## What you own
 - Index strategy (for speed), query shapes, connection usage, performance review.
 

@@ -69,3 +69,16 @@ Two layers, cheap and boring on purpose:
 
 ## Who runs these
 Migrations + backups are **John-only** — they touch the production database, and the agent's safety classifier blocks it from running prod migrations (correctly: a reset is unrecoverable). The agent **authors** migrations (schema + the generated SQL) and reviews them; John runs `db:migrate:deploy`. See also [RUNBOOK-prelaunch.md](RUNBOOK-prelaunch.md) for the launch-config checklist.
+
+## The DB expert team (specialist agents)
+This runbook is the operating manual; the **`.claude/agents/db-*` agents** are the experts who apply it. Spin one up for DB work — each carries the prime directive (*never lose production data*) and the author-not-apply boundary:
+
+| Agent | Use it for |
+|---|---|
+| **`db-architect`** (lead) | Data-model / schema shape, naming, relations; routes DB work to the right specialist. Final say on `prisma/schema.prisma`. |
+| **`db-migration-engineer`** | Authoring + reviewing migrations, expand/contract zero-downtime rollouts, failed-migration recovery, testing on a Neon branch. |
+| **`db-reliability`** | Backups, PITR / instant-restore, Neon branching, plan/retention, disaster recovery, env/connection provisioning. |
+| **`db-integrity`** | Constraints, PII / sensitive care-data handling, audit/soft-delete, the `NOT NULL`-on-populated-column traps. |
+| **`db-performance`** | Indexes, query optimization, the matching hot path, lock/scale review on DDL. |
+
+Typical flow: **db-architect** shapes the model → **db-integrity** reviews constraints/sensitivity → **db-performance** advises indexes → **db-migration-engineer** authors the migration (tested on a **db-reliability** Neon branch) → **John** applies it with `db:migrate:deploy`.
