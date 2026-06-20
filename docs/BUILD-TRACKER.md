@@ -140,7 +140,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 - `ADMIN_EMAILS` in Vercel — `/admin` is closed until set.
 - Paste the **Neon connection string** into `.env.local` (local dev/migrations blocked).
 - Production **Clerk instance** (real Google OAuth + verified domain; replaces the dev-mode badge).
-- Neon: bump to **Launch plan** (7-day PITR) + a scheduled `pg_dump`, and add a **dev branch** so local testing never touches the prod/preview DB.
+- ⏳ **POST-LAUNCH MAJOR TODO — Neon dev/prod split.** Add a **dev branch** (clone prod → dev) so local + Preview stop touching real user data, and migrations get tested on a true copy before prod. **Deliberately deferred until after launch** (decision 2026-06-20): pre-launch the DB is mostly test data, so the split earns its keep only once there's real prod data worth cloning. Pair with bumping Neon to **Launch plan** (7-day PITR) + a scheduled `pg_dump`. Setup steps: [DB-OPERATIONS.md](DB-OPERATIONS.md) § Dev / prod separation.
 - **HIPAA scope** research (gates all seeker data work).
 - Business **bank + Stripe payout** setup (separate LLC/EIN — per brief §3).
 - ✅ Done: `feat/practitioner-listing-mvp` merged → `main`; CI (`tsc` + Vitest) gates every push/PR.

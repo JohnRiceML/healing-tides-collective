@@ -26,7 +26,9 @@ npm run db:generate                     # 5. regenerate the Prisma client (CI/po
 
 That's it. The `invites` table, for example, is a pure `CREATE TABLE` — step 2 prints it, the scan says "no destructive statements," step 4 applies it, done.
 
-## Dev / prod separation — the structural fix (recommended)
+## Dev / prod separation — the structural fix (⏳ post-launch major todo)
+> **Decision (2026-06-20): deferred until after launch.** Pre-launch the DB holds mostly test data, so a dev branch isn't earning its keep yet. The moment we have **real prod data worth cloning to dev** (i.e. once we're live), this becomes a priority — set up the dev branch *then* (clone prod → dev), so local/Preview stops touching real user data and migrations get tested on a true copy. Tracked in [BUILD-TRACKER.md](BUILD-TRACKER.md). Until then: one shared DB, and migrations follow the safe flow above with extra care.
+
 Today there is **one shared Neon database** for local dev, Preview, and Production. That means local experiments and migrations run against real data, and admin metrics double-count test traffic (see [the metrics-hygiene note](../README.md)). **Neon branches fix this for free** — a branch is a copy-on-write clone, instant and cheap.
 
 Set it up once (Neon dashboard → Branches, or `neonctl`):
