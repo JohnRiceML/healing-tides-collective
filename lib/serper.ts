@@ -34,7 +34,7 @@ const EMPTY_PAGE: SerpPage = {
 
 export async function searchSerpPage(
   query: string,
-  opts: { num?: number; gl?: string } = {},
+  opts: { num?: number; gl?: string; location?: string } = {},
 ): Promise<SerpPage> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) return { ...EMPTY_PAGE };
@@ -43,7 +43,14 @@ export async function searchSerpPage(
     const res = await fetch(SERPER_ENDPOINT, {
       method: "POST",
       headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ q: query, num: opts.num ?? 10, gl: opts.gl ?? "us" }),
+      // `location` geo-targets the search to the practitioner's locale (e.g. "Saint Paul,
+      // Minnesota, United States"). Omitted when unknown → Google falls back to the `gl` country.
+      body: JSON.stringify({
+        q: query,
+        num: opts.num ?? 10,
+        gl: opts.gl ?? "us",
+        ...(opts.location ? { location: opts.location } : {}),
+      }),
     });
     if (!res.ok) {
       console.error(`[serper] HTTP ${res.status} for "${query}"`);
@@ -106,7 +113,7 @@ export type PlaceResult = {
 
 export async function searchPlaces(
   query: string,
-  opts: { gl?: string } = {},
+  opts: { gl?: string; location?: string } = {},
 ): Promise<PlaceResult[]> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) return [];
@@ -115,7 +122,13 @@ export async function searchPlaces(
     const res = await fetch(SERPER_PLACES_ENDPOINT, {
       method: "POST",
       headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ q: query, gl: opts.gl ?? "us" }),
+      // `location` geo-targets the map pack to the practitioner's locale (their local 3-pack,
+      // not the server's). Omitted when unknown → falls back to the `gl` country.
+      body: JSON.stringify({
+        q: query,
+        gl: opts.gl ?? "us",
+        ...(opts.location ? { location: opts.location } : {}),
+      }),
     });
     if (!res.ok) {
       console.error(`[serper] places HTTP ${res.status} for "${query}"`);

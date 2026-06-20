@@ -68,7 +68,7 @@
 
 | Area | Status | Evidence / reality |
 |---|---|---|
-| **Practitioner brand center** (`/practitioner/brand`) | ✅ 🐞 | The flagship practitioner-retention surface (emerged post-brief): 5-dimension framework + demoted 0–100 progress scores + on-demand Serper visibility audit + seeker-language mirror + momentum. [architecture/BRAND-CENTER.md](architecture/BRAND-CENTER.md). 🐞 Serper not geo-targeted (scores server locale, not the practitioner's city). |
+| **Practitioner brand center** (`/practitioner/brand`) | ✅ | The flagship practitioner-retention surface (emerged post-brief): 5-dimension framework + demoted 0–100 progress scores + on-demand Serper visibility audit + seeker-language mirror + momentum. [architecture/BRAND-CENTER.md](architecture/BRAND-CENTER.md). Serper is now **geo-targeted** to the practitioner's locale (`lib/geo.ts`, fixed 2026-06-19). |
 | **Moderation pillar** (hold/release, audit, Clerk→DB auto-hide on ban/delete) | ✅ | `app/_lib/moderation.ts`, `docs/MODERATION.md`, Clerk webhook. (Config still owed — see below.) |
 | **§12 SEO / AI visibility** | ✅ mostly | **GA4 live & real** (`G-EJZ1TBDT3W` via `@next/third-parties` in `app/layout.tsx`). Sanity blog live (~10 posts). Structured metadata + JSON-LD (Person on profiles, Article/FAQ on posts) verified. **Gaps:** no journal↔directory internal links, no city/specialty pages, no Organization/LocalBusiness schema. |
 | **§7 HIPAA guardrails** | 🅿️ clean | No seeker data is stored *anywhere* yet, so we're compliant by absence. The preferences-only / boolean-insurance / de-identified-referral principles are the design to **enforce when M2 is built**. Gated on John's compliance research. |

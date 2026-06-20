@@ -95,8 +95,12 @@ chapter embeds the live `VisibilityCard`). The dashboard (`app/practitioner/page
 "Your brand" band reusing the same `buildBrandSignals` + `BrandTiles`.
 
 ## Known gaps / queued (founder-deferred — see the research audit)
-1. **Serper is not geo-targeted** — we append region as a string but never pass a geo `location`, so we
-   score the *server's* locale, not the practitioner's. Real correctness bug; capture city+state.
+1. ✅ **FIXED 2026-06-19 — Serper is now geo-targeted.** `lib/geo.ts` `toSerperLocation()` turns the
+   practitioner's free-text region into a Google `location` ("City, State, United States"), passed
+   through `searchSerpPage`/`searchPlaces` so the audit reflects THEIR locale, not the server's. It's
+   conservative — returns `undefined` for a bare city / nickname, and the caller falls back to the
+   city-in-query (no worse than before). *Future:* capture structured city+state on the profile so
+   more regions resolve (a bare "Saint Paul" currently can't be confidently placed → no geo).
 2. Licensure-by-state + telehealth/home-based branch (don't push GBP / score-down a no-address practitioner).
 3. Guided first-run for empty profiles · ungate the seeker-mirror · a GBP walkthrough · an earned
    "you're done here" / "you did it" state.

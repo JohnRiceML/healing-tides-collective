@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getPractitioner } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { searchSerpPage, searchPlaces, type SerpPage } from "@/lib/serper";
+import { toSerperLocation } from "@/lib/geo";
 import {
   buildCoverageQueries,
   buildCoverage,
@@ -70,10 +71,13 @@ export async function runVisibilityAudit(): Promise<AuditResult> {
   if (!process.env.SERPER_API_KEY) return { ok: false, reason: "unconfigured" };
 
   const identity = identityOf(p);
+  // Geo-target the search to the practitioner's locale (not the server's) when we can parse
+  // their region confidently; otherwise undefined → the city-in-query still carries the locale.
+  const location = toSerperLocation(p.region);
 
   const perTerm: Array<{ query: string; label: string; page: SerpPage }> = [];
   for (const q of queries) {
-    const page = await searchSerpPage(q.query, { num: 10 });
+    const page = await searchSerpPage(q.query, { num: 10, location });
     perTerm.push({ query: q.query, label: q.label, page });
   }
 
@@ -83,7 +87,7 @@ export async function runVisibilityAudit(): Promise<AuditResult> {
   // you on the local map" + "do you have reviews" can move too, at a bounded extra cost.
   const sampledMapPacks: MapPack[] = [];
   for (const term of coverage.terms.slice(0, MAP_PACK_SAMPLE)) {
-    sampledMapPacks.push(evaluateMapPack(await searchPlaces(term.query), identity));
+    sampledMapPacks.push(evaluateMapPack(await searchPlaces(term.query, { location }), identity));
   }
 
   // All the signal aggregation lives in the pure (unit-tested) buildPresenceScan.
@@ -147,6 +151,7 @@ export async function getTermMapPack(query: string): Promise<MapPackResult> {
   if (!result.practitioner) return { ok: false, reason: "not_practitioner" };
   if (!process.env.SERPER_API_KEY) return { ok: false, reason: "unconfigured" };
 
-  const places = await searchPlaces(query);
+  const location = toSerperLocation(result.practitioner.region);
+  const places = await searchPlaces(query, { location });
   return { ok: true, mapPack: evaluateMapPack(places, identityOf(result.practitioner)) };
 }
