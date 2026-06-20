@@ -21,9 +21,21 @@ export type EmailMessage = {
   replyTo?: string;
 };
 
-/** True only when both the API key and a from-address are present. */
+/** Pull the bare address out of a "Name <local@domain>" or plain "local@domain" from-field. */
+function extractAddress(from: string): string {
+  const m = from.match(/<([^>]+)>/);
+  return (m ? m[1] : from).trim();
+}
+
+/** A from-field is usable only if it carries a syntactically valid address. Guards against a
+ *  malformed EMAIL_FROM (e.g. "@healingtides.co") that Resend would 422-reject at send time. */
+function fromIsValid(from: string | undefined | null): boolean {
+  return Boolean(from) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(extractAddress(from as string));
+}
+
+/** True only when the API key is present AND EMAIL_FROM carries a valid address. */
 export function emailConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
+  return Boolean(process.env.RESEND_API_KEY) && fromIsValid(process.env.EMAIL_FROM);
 }
 
 /**
@@ -35,6 +47,12 @@ export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) return { ok: false, reason: "not_configured" };
+  if (!fromIsValid(from)) {
+    // A present-but-malformed EMAIL_FROM (e.g. missing the local-part) is treated as
+    // "not configured" — graceful, with a loud log — rather than a doomed Resend 422.
+    console.error(`[email] EMAIL_FROM is malformed ("${from}") — expected "Name <local@domain>" or "local@domain". Not sending.`);
+    return { ok: false, reason: "not_configured" };
+  }
 
   try {
     const res = await fetch(RESEND_ENDPOINT, {

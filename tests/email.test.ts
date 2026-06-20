@@ -67,6 +67,26 @@ describe("emailConfigured / sendEmail — env-gated, never throws", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("treats a MALFORMED EMAIL_FROM as not-configured (no doomed 422 send)", async () => {
+    process.env.RESEND_API_KEY = "re_test";
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    for (const bad of ["@healingtides.co", "healingtides.co", "Healing Tides", "hello@"]) {
+      process.env.EMAIL_FROM = bad;
+      expect(emailConfigured()).toBe(false);
+      expect(await sendEmail(msg)).toEqual({ ok: false, reason: "not_configured" });
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("accepts a valid from — both 'local@domain' and 'Name <local@domain>'", () => {
+    process.env.RESEND_API_KEY = "re_test";
+    process.env.EMAIL_FROM = "hello@healingtides.co";
+    expect(emailConfigured()).toBe(true);
+    process.env.EMAIL_FROM = "Healing Tides Collective <hello@healingtides.co>";
+    expect(emailConfigured()).toBe(true);
+  });
+
   it("posts to Resend and returns the id on success", async () => {
     process.env.RESEND_API_KEY = "re_test";
     process.env.EMAIL_FROM = "HT <hello@mail.healingtides.co>";
