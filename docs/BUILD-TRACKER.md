@@ -72,7 +72,7 @@
 | **Moderation pillar** (hold/release, audit, Clerk→DB auto-hide on ban/delete) | ✅ | `app/_lib/moderation.ts`, `docs/MODERATION.md`, Clerk webhook. (Config still owed — see below.) |
 | **§12 SEO / AI visibility** | ✅ mostly | **GA4 live & real** (`G-EJZ1TBDT3W` via `@next/third-parties` in `app/layout.tsx`). Sanity blog live (~10 posts). Structured metadata + JSON-LD (Person on profiles, Article/FAQ on posts) verified. **Gaps:** no journal↔directory internal links, no city/specialty pages, no Organization/LocalBusiness schema. |
 | **§7 HIPAA guardrails** | 🅿️ clean | No seeker data is stored *anywhere* yet, so we're compliant by absence. The preferences-only / boolean-insurance / de-identified-referral principles are the design to **enforce when M2 is built**. Gated on John's compliance research. |
-| **§6 Credential-verification automation** (board-URL scan → auto-verify) | 🔴 | Needs Nora's license-types + board-URL shortlist. |
+| **§6 Credential verification** (scoped 2026-06-20 → [CREDENTIAL-VALIDATION-SCOPING.md](product/CREDENTIAL-VALIDATION-SCOPING.md)) | 🔴 | **Honest verdict: no MN board has an API → "automatic" isn't real; MVP is admin-ASSISTED** (structured capture + board deep-links + audit trail + honest "verified on DATE" copy), ~2–3 weeks, fits the existing `__verified` system, no migration. True automation = a deferred, legally-gated Phase 2. **Blocking prereq (owed by Nora):** the license-types + priority board shortlist. Candidate to hand to **Greg**. |
 
 ---
 
