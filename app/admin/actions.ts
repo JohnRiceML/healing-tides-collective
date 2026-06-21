@@ -9,7 +9,9 @@ import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/modera
 import { newInviteToken, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
 import { sendEmail, emailConfigured } from "@/lib/email";
-import { claimInviteEmail } from "@/lib/email-templates";
+import { claimInviteEmail, completenessReminderEmail } from "@/lib/email-templates";
+import { selectReminderRecipients, REMINDER_KEY } from "@/lib/completeness-reminders";
+import { getReminderCandidates } from "./_data";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 /**
@@ -110,6 +112,46 @@ export async function revokeInvite(token: string): Promise<{ ok: boolean; error?
   if (res.count === 0) return { ok: false, error: "Couldn't revoke — it may already be claimed." };
   revalidatePath("/admin");
   return { ok: true };
+}
+
+/**
+ * Send a calm "finish your profile" nudge to every under-complete practitioner who's due one
+ * (the pure selectReminderRecipients decides who — under 80%, has email, not held, not reminded in
+ * the last 7 days). ADMIN-TRIGGERED (Nora chooses when). Records the reminder timestamp on a
+ * reserved key so a double-click can't re-spam. Best-effort per recipient; never throws.
+ */
+export async function sendCompletenessReminders(): Promise<
+  | { ok: true; sent: number; eligible: number }
+  | { ok: false; error: string }
+> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+  if (!emailConfigured()) {
+    return { ok: false, error: "Email isn't switched on yet (set RESEND_API_KEY + EMAIL_FROM)." };
+  }
+
+  const recipients = selectReminderRecipients(await getReminderCandidates(), { now: new Date() });
+  const editUrl = `${SITE_URL}/practitioner/edit`;
+
+  let sent = 0;
+  for (const r of recipients) {
+    if (!r.email) continue;
+    const content = completenessReminderEmail({ name: r.displayName, completeness: r.completeness, editUrl });
+    const result = await sendEmail({ to: r.email, ...content });
+    if (!result.ok) continue;
+    // Record the reminder (reserved key, direct spread — re-read fresh to avoid clobbering a
+    // concurrent __hold/save, same pattern as the presence scan).
+    const fresh = await db.practitioner.findUnique({ where: { id: r.id }, select: { fieldValues: true } });
+    const current = (fresh?.fieldValues ?? {}) as Record<string, unknown>;
+    await db.practitioner.update({
+      where: { id: r.id },
+      data: { fieldValues: { ...current, [REMINDER_KEY]: new Date().toISOString() } as Prisma.InputJsonValue },
+    });
+    sent += 1;
+  }
+
+  revalidatePath("/admin");
+  return { ok: true, sent, eligible: recipients.length };
 }
 
 /**

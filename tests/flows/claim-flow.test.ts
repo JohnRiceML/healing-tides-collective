@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import { makeMockDb, type MockDb } from "../helpers/mock-db";
 import { aUser } from "../helpers/factories";
@@ -15,7 +15,7 @@ vi.mock("@/lib/db", () => ({
 vi.mock("@/lib/auth", () => ({ requireAdmin: h.requireAdmin }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { createInvite, resendInvite, revokeInvite } from "@/app/admin/actions";
+import { createInvite, resendInvite, revokeInvite, sendCompletenessReminders } from "@/app/admin/actions";
 import { getAdminInvites } from "@/app/admin/_data";
 import { getInviteByToken, inviteIsClaimable } from "@/lib/invites";
 
@@ -129,5 +129,49 @@ describe("admin invite management: list, resend, revoke", () => {
     expect((await resendInvite("tok_x")).ok).toBe(false);
     expect((await revokeInvite("tok_x")).ok).toBe(false);
     expect(db().invite.rows()).toHaveLength(1);
+  });
+});
+
+describe("completeness reminders (admin-triggered)", () => {
+  const savedEnv = { key: process.env.RESEND_API_KEY, from: process.env.EMAIL_FROM };
+  afterEach(() => {
+    process.env.RESEND_API_KEY = savedEnv.key;
+    process.env.EMAIL_FROM = savedEnv.from;
+    vi.unstubAllGlobals();
+  });
+
+  it("refuses when email isn't configured", async () => {
+    h.requireAdmin.mockResolvedValue(aUser({ role: "ADMIN" }));
+    delete process.env.RESEND_API_KEY;
+    delete process.env.EMAIL_FROM;
+    expect((await sendCompletenessReminders()).ok).toBe(false);
+  });
+
+  it("emails the under-complete, records the cooldown, and won't re-send within the window", async () => {
+    h.requireAdmin.mockResolvedValue(aUser({ role: "ADMIN" }));
+    process.env.RESEND_API_KEY = "re_test";
+    process.env.EMAIL_FROM = "Healing Tides <hello@healingtides.co>";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: "e1" }) }));
+
+    // p1: 40% with an email → eligible. p2: 95% → already complete, skipped.
+    await db().practitioner.create({
+      data: { id: "p1", displayName: "Sam", completeness: 40, fieldValues: {}, user: { email: "sam@example.com" } },
+    });
+    await db().practitioner.create({
+      data: { id: "p2", displayName: "Lee", completeness: 95, fieldValues: {}, user: { email: "lee@example.com" } },
+    });
+
+    const res = await sendCompletenessReminders();
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.eligible).toBe(1);
+      expect(res.sent).toBe(1);
+    }
+    const p1 = db().practitioner.rows().find((r) => r.id === "p1")!;
+    expect(typeof p1.fieldValues.__completenessReminder).toBe("string");
+
+    // a second click is a no-op — p1 is now inside the cooldown window.
+    const again = await sendCompletenessReminders();
+    if (again.ok) expect(again.sent).toBe(0);
   });
 });

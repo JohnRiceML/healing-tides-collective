@@ -7,6 +7,7 @@ import type { ProfileVisibility } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
 import { readHold } from "@/app/_lib/moderation";
 import { readPrefill } from "@/lib/invites";
+import { readLastReminder, type ReminderCandidate } from "@/lib/completeness-reminders";
 
 export type AdminPractitionerRow = {
   id: string;
@@ -51,6 +52,26 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       holdMessage: hold?.message || null,
     };
   });
+}
+
+// Practitioners as completeness-reminder candidates (pre-filtering happens in the pure
+// selectReminderRecipients). ADMIN-ONLY (page/action gate).
+export async function getReminderCandidates(): Promise<ReminderCandidate[]> {
+  const rows = await db.practitioner.findMany({
+    select: {
+      id: true,
+      displayName: true,
+      completeness: true,
+      fieldValues: true,
+      user: { select: { email: true } },
+    },
+  });
+  return rows.map(({ user, fieldValues, ...r }) => ({
+    ...r,
+    email: user?.email ?? null,
+    lastReminderAt: readLastReminder(fieldValues),
+    held: Boolean(readHold(fieldValues)),
+  }));
 }
 
 export type AdminStats = {

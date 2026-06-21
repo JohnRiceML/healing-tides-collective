@@ -41,7 +41,7 @@
 | Directory + filtering, **free at launch** | ✅ | `/practitioners` — search, specialty/modality/region/accepting-new filters, sort. |
 | **"Claim your profile" — auto-pull Psychology Today, one-click pre-fill** | 🟡 | Foundation only: the URL/paste importer (Claude extract, SSRF-guarded) *can* ingest a profile URL. The **tokenized claim flow itself is not built**. ⚠️ source changed from "Nora's CSV" to "PT URLs" — see [decision #3](#open-decisions-brief-changed-the-plan). |
 | Credential capture + **verified badge** | 🟡 | Badge system exists (`__verified` reserved key + admin grant). **Not wired to proof or licensing-board lookup** (§6 automation unbuilt). |
-| **Profile-completeness nudges** ("90% complete" + reminder emails) | 🟡 | Completeness is *computed* (`lib/completeness.ts`); the nudge UI + reminder emails aren't built (emails blocked on M0). |
+| **Profile-completeness nudges** ("90% complete" + reminder emails) | ✅ | In-editor nudge live; **reminder emails built 2026-06-20** — admin-triggered `sendCompletenessReminders` (calm "finish when you're ready" email to <80% practitioners; pure `selectReminderRecipients` with a 7-day cooldown + skips held; reserved `__completenessReminder` key). Needs `EMAIL_FROM` set to actually send. |
 | **Admin panel (basic):** applied / pending / approve-reject / request edits | 🟡 | Have read-only list + badge-grant + hold/release. **No application queue, no approve/reject** — there's no "application" concept yet. |
 
 ## Milestone 2 — Matching + seeker side (~mid-July target)

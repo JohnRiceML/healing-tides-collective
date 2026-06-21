@@ -5,8 +5,11 @@ import { notFound } from "next/navigation";
 import { Container } from "@/app/_components/ui";
 import { requireAdmin } from "@/lib/auth";
 
-import { getAdminInvites, getAdminPractitioners, getAdminStats } from "./_data";
+import { selectReminderRecipients } from "@/lib/completeness-reminders";
+
+import { getAdminInvites, getAdminPractitioners, getAdminStats, getReminderCandidates } from "./_data";
 import { BadgeEditor } from "./BadgeEditor";
+import { CompletenessReminders } from "./CompletenessReminders";
 import { HoldControl } from "./HoldControl";
 import { InviteCreator } from "./InviteCreator";
 import { InvitesList } from "./InvitesList";
@@ -41,11 +44,13 @@ export default async function AdminPage() {
   const admin = await requireAdmin();
   if (!admin) notFound();
 
-  const [stats, rows, invites] = await Promise.all([
+  const [stats, rows, invites, reminderCandidates] = await Promise.all([
     getAdminStats(),
     getAdminPractitioners(),
     getAdminInvites(),
+    getReminderCandidates(),
   ]);
+  const eligibleReminders = selectReminderRecipients(reminderCandidates, { now: new Date() }).length;
 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
@@ -62,8 +67,9 @@ export default async function AdminPage() {
           <Stat label="Total views" value={stats.totalViews} />
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
           <InviteCreator />
+          <CompletenessReminders eligible={eligibleReminders} />
         </div>
 
         <InvitesList invites={invites} />
