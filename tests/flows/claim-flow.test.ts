@@ -15,7 +15,8 @@ vi.mock("@/lib/db", () => ({
 vi.mock("@/lib/auth", () => ({ requireAdmin: h.requireAdmin }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { createInvite } from "@/app/admin/actions";
+import { createInvite, resendInvite, revokeInvite } from "@/app/admin/actions";
+import { getAdminInvites } from "@/app/admin/_data";
 import { getInviteByToken, inviteIsClaimable } from "@/lib/invites";
 
 const db = () => h.db;
@@ -80,5 +81,53 @@ describe("claim flow: admin mints a link → practitioner reads it → it's clai
       expect(res.ok).toBe(false);
     }
     expect(db().invite.rows()).toHaveLength(0);
+  });
+});
+
+describe("admin invite management: list, resend, revoke", () => {
+  beforeEach(() => h.requireAdmin.mockResolvedValue(aUser({ role: "ADMIN" })));
+
+  const tokenOf = (r: { ok: true; url: string } | { ok: false }) =>
+    r.ok ? r.url.split("/claim/")[1] : "";
+
+  it("lists invites with derived status + prefilled region", async () => {
+    await createInvite({ email: "a@example.com", displayName: "Avery", prefill: { region: "Duluth, Minnesota" } });
+    const second = await createInvite({ email: "b@example.com" });
+    await db().invite.updateMany({ where: { token: tokenOf(second) }, data: { claimedAt: new Date() } });
+
+    const list = await getAdminInvites();
+    const byEmail = Object.fromEntries(list.map((i) => [i.email, i]));
+    expect(list).toHaveLength(2);
+    expect(byEmail["a@example.com"].status).toBe("pending");
+    expect(byEmail["a@example.com"].region).toBe("Duluth, Minnesota");
+    expect(byEmail["b@example.com"].status).toBe("claimed");
+  });
+
+  it("resend reports not-configured when email is off; refuses a claimed invite", async () => {
+    const created = await createInvite({ email: "c@example.com" });
+    const token = tokenOf(created);
+    expect(await resendInvite(token)).toEqual({ ok: true, emailed: false, emailReason: "not_configured" });
+
+    await db().invite.updateMany({ where: { token }, data: { claimedAt: new Date() } });
+    expect((await resendInvite(token)).ok).toBe(false); // claimed → nothing to resend
+  });
+
+  it("revoke deletes an UNCLAIMED invite but never a claimed one", async () => {
+    const a = await createInvite({ email: "d@example.com" });
+    const b = await createInvite({ email: "e@example.com" });
+    await db().invite.updateMany({ where: { token: tokenOf(b) }, data: { claimedAt: new Date() } });
+
+    expect((await revokeInvite(tokenOf(a))).ok).toBe(true); // unclaimed → gone
+    expect((await revokeInvite(tokenOf(b))).ok).toBe(false); // claimed → refused
+    expect(db().invite.rows()).toHaveLength(1); // only the claimed one survives
+    expect(db().invite.rows()[0].claimedAt).toBeTruthy();
+  });
+
+  it("a non-admin can neither resend nor revoke (and deletes nothing)", async () => {
+    await db().invite.create({ data: { token: "tok_x", email: "g@example.com" } });
+    h.requireAdmin.mockResolvedValue(null);
+    expect((await resendInvite("tok_x")).ok).toBe(false);
+    expect((await revokeInvite("tok_x")).ok).toBe(false);
+    expect(db().invite.rows()).toHaveLength(1);
   });
 });

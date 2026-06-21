@@ -18,6 +18,12 @@ function matches(row: Row, where: Row): boolean {
     }
     // Only equality on scalars is supported; nested operator objects are out of scope.
     if (v !== null && typeof v === "object") continue;
+    // `null` in a where-clause is "nullish" — matches an absent (undefined) or null field,
+    // mirroring Prisma (a freshly-created row's optional column reads as null in the real DB).
+    if (v === null) {
+      if (row[k] != null) return false;
+      continue;
+    }
     if (row[k] !== v) return false;
   }
   return true;
@@ -62,6 +68,11 @@ function collection(initial: Row[] = []) {
       const i = rows.findIndex((r) => matches(r, where));
       if (i === -1) throw Object.assign(new Error("Record to delete not found."), { code: "P2025" });
       return { ...rows.splice(i, 1)[0] };
+    },
+    deleteMany: async ({ where = {} }: { where?: Row } = {}) => {
+      const before = rows.length;
+      rows = rows.filter((r) => !matches(r, where));
+      return { count: before - rows.length };
     },
   };
   return api;

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import type { ProfileVisibility } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
 import { readHold } from "@/app/_lib/moderation";
+import { readPrefill } from "@/lib/invites";
 
 export type AdminPractitionerRow = {
   id: string;
@@ -58,6 +59,39 @@ export type AdminStats = {
   draft: number;
   totalViews: number;
 };
+
+export type AdminInviteRow = {
+  id: string;
+  token: string;
+  email: string;
+  displayName: string | null;
+  region: string | null;
+  createdAt: Date;
+  claimedAt: Date | null;
+  status: "pending" | "claimed";
+};
+
+// All claim invites, newest first — the waitlist-rollout worklist. ADMIN-ONLY (page gates).
+export async function getAdminInvites(): Promise<AdminInviteRow[]> {
+  const rows = await db.invite.findMany({
+    orderBy: [{ createdAt: "desc" }],
+    select: {
+      id: true,
+      token: true,
+      email: true,
+      displayName: true,
+      prefill: true,
+      createdAt: true,
+      claimedAt: true,
+    },
+  });
+  return rows.map(({ prefill, claimedAt, ...r }) => ({
+    ...r,
+    region: readPrefill(prefill).region ?? null,
+    claimedAt,
+    status: claimedAt ? ("claimed" as const) : ("pending" as const),
+  }));
+}
 
 export async function getAdminStats(): Promise<AdminStats> {
   const [total, published, draft, views] = await Promise.all([

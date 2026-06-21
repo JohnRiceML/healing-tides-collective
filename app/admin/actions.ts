@@ -69,6 +69,50 @@ export async function createInvite(input: {
 }
 
 /**
+ * Re-send the claim email for an existing UNCLAIMED invite. ADMIN-ONLY. Best-effort email (same
+ * contract as createInvite); refuses a claimed invite so a sent welcome can't be re-triggered.
+ */
+export async function resendInvite(
+  token: string,
+): Promise<
+  | { ok: true; emailed: boolean; emailReason?: "not_configured" | "http_error" | "exception" }
+  | { ok: false; error: string }
+> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const invite = await db.invite.findUnique({ where: { token } });
+  if (!invite) return { ok: false, error: "Invite not found." };
+  if (invite.claimedAt) return { ok: false, error: "Already claimed — nothing to resend." };
+
+  const url = `${SITE_URL}/claim/${invite.token}`;
+  let emailed = false;
+  let emailReason: "not_configured" | "http_error" | "exception" | undefined;
+  if (emailConfigured()) {
+    const sent = await sendEmail({ to: invite.email, ...claimInviteEmail({ name: invite.displayName, url }) });
+    emailed = sent.ok;
+    if (!sent.ok) emailReason = sent.reason;
+  } else {
+    emailReason = "not_configured";
+  }
+  return { ok: true, emailed, emailReason };
+}
+
+/**
+ * Revoke an UNCLAIMED invite (delete the row). ADMIN-ONLY. Never deletes a CLAIMED invite — that's
+ * a real claim record — so the `claimedAt: null` guard is load-bearing, not cosmetic.
+ */
+export async function revokeInvite(token: string): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const res = await db.invite.deleteMany({ where: { token, claimedAt: null } });
+  if (res.count === 0) return { ok: false, error: "Couldn't revoke — it may already be claimed." };
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+/**
  * Grant/revoke a practitioner's verification badges. ADMIN-ONLY. Writes the reserved
  * `__verified` key inside the practitioner's fieldValues, preserving all of their own
  * fields. The practitioner's save path can never touch this key (see mergeFieldValues).

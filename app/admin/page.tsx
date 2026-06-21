@@ -5,10 +5,11 @@ import { notFound } from "next/navigation";
 import { Container } from "@/app/_components/ui";
 import { requireAdmin } from "@/lib/auth";
 
-import { getAdminPractitioners, getAdminStats } from "./_data";
+import { getAdminInvites, getAdminPractitioners, getAdminStats } from "./_data";
 import { BadgeEditor } from "./BadgeEditor";
 import { HoldControl } from "./HoldControl";
 import { InviteCreator } from "./InviteCreator";
+import { InvitesList } from "./InvitesList";
 
 export const metadata: Metadata = {
   title: "Admin — Healing Tides Collective",
@@ -40,7 +41,11 @@ export default async function AdminPage() {
   const admin = await requireAdmin();
   if (!admin) notFound();
 
-  const [stats, rows] = await Promise.all([getAdminStats(), getAdminPractitioners()]);
+  const [stats, rows, invites] = await Promise.all([
+    getAdminStats(),
+    getAdminPractitioners(),
+    getAdminInvites(),
+  ]);
 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
@@ -60,6 +65,8 @@ export default async function AdminPage() {
         <div className="mt-8">
           <InviteCreator />
         </div>
+
+        <InvitesList invites={invites} />
 
         {rows.length === 0 ? (
           <p className="mt-12 text-[15px] text-ink-soft">No practitioners yet.</p>
