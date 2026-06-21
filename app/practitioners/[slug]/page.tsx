@@ -151,16 +151,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 function jsonLd(p: PractitionerProfile) {
+  const fv = (p.fieldValues ?? {}) as Record<string, unknown>;
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Person",
     name: p.displayName,
     url: `${SITE_URL}/practitioners/${p.slug}`,
+    // Entity-graph signal: ties each practitioner to the directory for search + AI understanding.
+    memberOf: { "@type": "Organization", name: "Healing Tides Collective", url: SITE_URL },
   };
+  if (p.title) data.jobTitle = p.title;
   if (p.bio) data.description = p.bio.replace(/\s+/g, " ").trim();
   if (p.photoUrl) data.image = p.photoUrl;
   if (p.specialties.length > 0) data.knowsAbout = p.specialties.map((id) => specialtyLabel(id));
   if (p.region) data.areaServed = p.region;
+  const languages = arrify(fv.languages);
+  if (languages.length > 0) data.knowsLanguage = languages;
+  // NOTE: credentials are intentionally NOT emitted as schema `hasCredential` — they're
+  // unverified self-claims, and structured data would imply more authority than we've verified.
+  // They surface as plain profile text until the credential-validation system verifies them.
   return data;
 }
 
