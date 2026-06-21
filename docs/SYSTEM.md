@@ -7,6 +7,8 @@
 ## What the product is
 A guided "Get Matched" platform for finding clinical + holistic care — therapy, acupuncture, reiki, movement, trauma-informed support. Not a directory; a decision-making tool. Founder: **Nora L. Hollenkamp, MSW, LICSW**. Domain `healingtides.co`. Hosting: Vercel.
 
+> **🗺️ Scope: MINNESOTA-ONLY (v1).** Practitioners, seekers, matching, credential verification, and the local-visibility audit are all scoped to Minnesota for now. This is a deliberate constraint, not a gap — keep it apparent across the system (credential boards are MN; the geo audit defaults a bare city to MN — `lib/geo.ts`; out-of-state seekers get a "we're growing" message, not a match — UX TBD with Nora). Multi-state is a future expansion; when it lands, drop the MN defaults + add a state field to intake.
+
 ## Status at a glance
 | Phase | What | State |
 |---|---|---|

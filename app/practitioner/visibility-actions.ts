@@ -71,9 +71,10 @@ export async function runVisibilityAudit(): Promise<AuditResult> {
   if (!process.env.SERPER_API_KEY) return { ok: false, reason: "unconfigured" };
 
   const identity = identityOf(p);
-  // Geo-target the search to the practitioner's locale (not the server's) when we can parse
-  // their region confidently; otherwise undefined → the city-in-query still carries the locale.
-  const location = toSerperLocation(p.region);
+  // Geo-target the search to the practitioner's locale (not the server's). MN-only product, so a
+  // bare city ("Saint Paul") safely resolves to Minnesota; otherwise undefined → the city-in-query
+  // still carries the locale.
+  const location = toSerperLocation(p.region, { defaultState: "Minnesota" });
 
   const perTerm: Array<{ query: string; label: string; page: SerpPage }> = [];
   for (const q of queries) {
@@ -151,7 +152,7 @@ export async function getTermMapPack(query: string): Promise<MapPackResult> {
   if (!result.practitioner) return { ok: false, reason: "not_practitioner" };
   if (!process.env.SERPER_API_KEY) return { ok: false, reason: "unconfigured" };
 
-  const location = toSerperLocation(result.practitioner.region);
+  const location = toSerperLocation(result.practitioner.region, { defaultState: "Minnesota" });
   const places = await searchPlaces(query, { location });
   return { ok: true, mapPack: evaluateMapPack(places, identityOf(result.practitioner)) };
 }

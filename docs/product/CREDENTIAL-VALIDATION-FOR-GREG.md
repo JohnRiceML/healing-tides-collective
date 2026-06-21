@@ -3,7 +3,9 @@
 **For:** Greg (incoming dev) · **Date:** 2026-06-21 · **Owner sign-off:** John (build) + Nora (founder/clinical) + Christie (legal)
 **Full scope + research:** [CREDENTIAL-VALIDATION-SCOPING.md](CREDENTIAL-VALIDATION-SCOPING.md) — read it for the per-credential breakdown, legal posture, and risks. This doc is the *how to build it here* hand-off.
 
-Healing Tides is a calm, Minnesota-first wellness/therapy **practitioner directory** (Next.js 16 + Prisma 7 → Neon Postgres, on Vercel). When a practitioner claims a license/credential, we want to **verify it** and show a trustworthy badge. You're building that.
+Healing Tides is a calm wellness/therapy **practitioner directory** (Next.js 16 + Prisma 7 → Neon Postgres, on Vercel). When a practitioner claims a license/credential, we want to **verify it** and show a trustworthy badge. You're building that.
+
+> **🗺️ Scope: MINNESOTA ONLY (v1).** Build the credential taxonomy + board lookups for **Minnesota boards only** — don't generalize to other states yet. State is effectively always `MN`; you can default it rather than ask. Multi-state is a future expansion (see `docs/SYSTEM.md` § Scope). This keeps the board list small (3–5 MN boards) and the legal posture clear.
 
 ---
 

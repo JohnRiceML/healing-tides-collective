@@ -62,7 +62,7 @@
 | **Full admin command center** (§9) | 🔴 | Only the basic read/badge/hold surface exists. |
 | **Email automation flows live** (outreach, nudges, newsletters) | 🔴 | Blocked on M0 email decision. |
 | **Tiered pricing + group-practice tier** (§10) | 🔴 | Schema pre-models it — `AccountType` enum already has `GROUP_PRACTICE` + `TREATMENT_CENTER`; `tier`/`featured` dormant. |
-| **Out-of-state handling** (§11: MN-only; waitlist for other states; crisis still → 988) | 🔴 | No geography gating anywhere; region is free-text. |
+| **Out-of-state handling** (§11: MN-only; waitlist for other states; crisis still → 988) | 🟡 | **MINNESOTA-ONLY is now the explicit v1 scope** ([SYSTEM.md § Scope](SYSTEM.md); geo audit defaults a bare city to MN; credentials = MN boards). Still TODO: the seeker-facing out-of-state UX (soft "we're growing" message vs. waitlist) — Nora's call on aggressiveness. |
 
 ## Cross-cutting
 

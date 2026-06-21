@@ -37,7 +37,10 @@ function titleCase(s: string): string {
  *  - "State, United States"        when only a state is given
  *  - undefined                     when not confident (a bare city, a nickname, empty)
  */
-export function toSerperLocation(region: string | null | undefined): string | undefined {
+export function toSerperLocation(
+  region: string | null | undefined,
+  opts: { defaultState?: string } = {},
+): string | undefined {
   if (!region) return undefined;
   // Drop a trailing country so "Saint Paul, MN, USA" normalizes like "Saint Paul, MN".
   const cleaned = region.replace(/,?\s*(u\.?s\.?a\.?|united states)\s*$/i, "").trim();
@@ -52,7 +55,11 @@ export function toSerperLocation(region: string | null | undefined): string | un
     return undefined; // last token isn't a state we recognize → don't guess
   }
 
-  // A single token: a state alone gives state-level geo; a bare city we can't place.
+  // A single token: a state alone gives state-level geo. A bare city we can only place if a
+  // default state is supplied — Healing Tides is MINNESOTA-ONLY for now, so the caller passes
+  // "Minnesota" and "Saint Paul" resolves to Saint Paul, MN. Drop the default when we go multi-state.
   const state = canonicalState(parts[0]);
-  return state ? `${state}, United States` : undefined;
+  if (state) return `${state}, United States`;
+  if (opts.defaultState) return `${titleCase(parts[0])}, ${opts.defaultState}, United States`;
+  return undefined;
 }

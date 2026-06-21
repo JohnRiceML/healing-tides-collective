@@ -2,6 +2,8 @@
 
 **Status:** SCOPING (2026-06-20). A 4-lens research pass (credential landscape · legal/trust · architecture). Intended as a hand-off so a dev (Greg) can start without re-discovering the hard parts. Companion to the existing manual badge system ([verification.md](verification.md), `app/_lib/verification.ts`).
 
+> **🗺️ Scope: MINNESOTA ONLY (v1)** — every board, lookup, and credential type below is MN-specific by design (see [SYSTEM.md § Scope](../SYSTEM.md)). Multi-state is a future expansion, not a gap.
+
 ---
 
 ## ⚠️ The honest verdict (read this first)
