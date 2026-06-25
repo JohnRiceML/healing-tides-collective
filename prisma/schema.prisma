@@ -50,6 +50,9 @@ model User {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  // Last time this user was signed in & active (touched, throttled, on auth resolve).
+  // Powers the admin "who's active" read. Nullable: backfills naturally as people return.
+  lastSeenAt DateTime? @map("last_seen_at")
 
   practitioner Practitioner?
 

@@ -5,7 +5,8 @@
 //
 // Security: unauthenticated endpoint, verified by the Svix signature (CLERK_WEBHOOK_SIGNING_SECRET).
 // Setup: add the secret to env, then in the Clerk dashboard create a webhook to
-//   POST https://<your-domain>/api/webhooks/clerk  subscribed to user.updated + user.deleted.
+//   POST https://<your-domain>/api/webhooks/clerk  subscribed to user.updated + user.deleted
+//   (+ session.created to power the admin "last seen / who's active" read).
 //
 // Soft, never destructive: we hide, we don't delete — data + audit survive (an admin can
 // Release later from /admin).
@@ -51,6 +52,17 @@ export async function POST(req: Request) {
 
   const data = evt.data ?? {};
   const clerkUserId = typeof data.id === "string" ? data.id : null;
+
+  // session.created = a fresh sign-in → stamp "last seen" for the admin activity read.
+  // (Session payloads carry `user_id`, not `id`.) updateMany so an out-of-order webhook
+  // with no User row yet is a harmless no-op rather than a throw.
+  if (evt.type === "session.created") {
+    const sessionUserId = typeof data.user_id === "string" ? data.user_id : null;
+    if (sessionUserId) {
+      await db.user.updateMany({ where: { clerkUserId: sessionUserId }, data: { lastSeenAt: new Date() } });
+    }
+    return new Response("ok", { status: 200 });
+  }
 
   // Hide on delete, or on an update that flips the account to banned/locked.
   const bannedOrLocked = data.banned === true || data.locked === true;

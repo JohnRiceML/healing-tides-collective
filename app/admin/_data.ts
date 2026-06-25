@@ -55,7 +55,7 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
         createdAt: true,
         updatedAt: true,
         fieldValues: true,
-        user: { select: { email: true } },
+        user: { select: { email: true, lastSeenAt: true } },
       },
     }),
     db.profileView.groupBy({ by: ["practitionerId"], where: { viewedAt: { gte: since7 } }, _count: { _all: true } }),
@@ -78,9 +78,7 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       views7: count7.get(r.id) ?? 0,
       views30: count30.get(r.id) ?? 0,
       lastViewedAt: lastView.get(r.id) ?? null,
-      // TODO(last-seen): once the User.lastSeenAt migration is applied, select
-      // user.lastSeenAt above and pass it here to sharpen the activity read.
-      lastSeenAt: null,
+      lastSeenAt: user?.lastSeenAt ?? null,
     };
   });
 }
