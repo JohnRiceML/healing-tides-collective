@@ -84,4 +84,47 @@ describe("computeAdminOverview", () => {
     );
     expect(o.queue.credentialsToVerify).toBe(2);
   });
+
+  it("derives publish rate, avg completeness, and credential counts", () => {
+    const v = { status: "verified" as const, by: "x", at: "", notes: "", credentials: [] };
+    const o = computeAdminOverview(
+      [
+        row({ visibility: "PUBLISHED", completeness: 90, credentials: ["LICSW"], credentialVerification: v }),
+        row({ visibility: "DRAFT", completeness: 50, credentials: ["LMFT"], credentialVerification: null }),
+      ],
+      { now: NOW, invitesPending: 0, dueReminders: 0 },
+    );
+    expect(o.publishedRate).toBe(50);
+    expect(o.avgCompleteness).toBe(70);
+    expect(o.credentials).toEqual({ stated: 2, verified: 1 });
+  });
+
+  it("flags views trend 'up' when this week beats the monthly pace", () => {
+    const o = computeAdminOverview([row({ views7: 20, views30: 24 })], { now: NOW, invitesPending: 0, dueReminders: 0 });
+    expect(o.viewsTrend).toBe("up"); // pace = 24/4 = 6; 20 > 6*1.2
+  });
+
+  it("produces plain-language insights (+ an empty-state insight for no rows)", () => {
+    const empty = computeAdminOverview([], { now: NOW, invitesPending: 0, dueReminders: 0 });
+    expect(empty.insights).toHaveLength(1);
+    expect(empty.insights[0].text).toMatch(/No practitioners/);
+
+    const o = computeAdminOverview([row({ visibility: "PUBLISHED" }), row({ visibility: "PUBLISHED" })], {
+      now: NOW,
+      invitesPending: 0,
+      dueReminders: 0,
+    });
+    expect(o.insights[0].text).toContain("2 of 2 profiles are live (100%)");
+  });
+
+  it("picks the top-viewed published profile", () => {
+    const o = computeAdminOverview(
+      [
+        row({ displayName: "Maya", visibility: "PUBLISHED", views30: 12 }),
+        row({ displayName: "Theo", visibility: "PUBLISHED", views30: 4 }),
+      ],
+      { now: NOW, invitesPending: 0, dueReminders: 0 },
+    );
+    expect(o.topViewed).toEqual({ name: "Maya", views: 12 });
+  });
 });
