@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { AdminOverview as Overview } from "./overview";
 
 function Metric({
@@ -5,19 +7,31 @@ function Metric({
   value,
   tone = "default",
   sub,
+  href,
 }: {
   label: string;
   value: number;
   tone?: "default" | "attention";
   sub?: string;
+  href?: string;
 }) {
   const attention = tone === "attention" && value > 0;
-  return (
-    <div className={`rounded-2xl border px-5 py-4 ${attention ? "border-teal/40 bg-seafoam/30" : "border-rule bg-white"}`}>
+  const inner = (
+    <>
       <div className={`font-display text-[28px] leading-none ${attention ? "text-teal" : "text-charcoal"}`}>{value}</div>
       <div className="meta mt-2 text-ink-muted">{label}</div>
       {sub ? <div className="mt-1 text-[12px] leading-[1.4] text-ink-muted">{sub}</div> : null}
-    </div>
+    </>
+  );
+  const cls = `block rounded-2xl border px-5 py-4 ${
+    attention ? "border-teal/40 bg-seafoam/30" : "border-rule bg-white"
+  } ${href ? "transition-colors hover:border-teal/50" : ""}`;
+  return href ? (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={cls}>{inner}</div>
   );
 }
 
@@ -45,19 +59,25 @@ export function AdminOverview({ overview }: { overview: Overview }) {
 
       <p className="meta mt-6 text-ink-muted">Needs your attention</p>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric label="Invites pending" value={q.invitesPending} tone="attention" />
-        <Metric label="Credentials to verify" value={q.credentialsToVerify} tone="attention" />
-        <Metric label="Due a nudge" value={q.dueReminders} tone="attention" />
-        <Metric label="On hold" value={q.onHold} tone="attention" />
+        <Metric label="Invites pending" value={q.invitesPending} tone="attention" href="/admin/practitioners" />
+        <Metric label="Credentials to verify" value={q.credentialsToVerify} tone="attention" href="/admin/practitioners" />
+        <Metric label="Due a nudge" value={q.dueReminders} tone="attention" href="/admin/practitioners" />
+        <Metric label="On hold" value={q.onHold} tone="attention" href="/admin/practitioners" />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-dashed border-rule bg-sand/30 px-5 py-4">
-        <p className="meta text-ink-muted">Seekers &amp; matching</p>
+      <Link
+        href="/admin/seekers"
+        className="mt-6 block rounded-2xl border border-dashed border-rule bg-sand/30 px-5 py-4 transition-colors hover:border-ink-muted/50"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <p className="meta text-ink-muted">Seekers &amp; matching</p>
+          <span className="text-[13px] text-ink-soft">View →</span>
+        </div>
         <p className="mt-1 max-w-prose text-[14px] leading-[1.6] text-ink-soft">
-          Nothing here yet — seekers browse anonymously and &ldquo;Get matched&rdquo; still emails you. This
-          panel lights up when we build seeker intake + matching (the next phase).
+          No data yet — seekers browse anonymously and &ldquo;Get matched&rdquo; emails you. Lights up with
+          the matching build.
         </p>
-      </div>
+      </Link>
     </section>
   );
 }
