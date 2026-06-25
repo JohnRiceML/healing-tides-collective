@@ -11,6 +11,7 @@ import { completenessOf } from "@/lib/completeness";
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
 import { extractProfileFromSources } from "./extract-actions";
+import { readImportUrl } from "@/app/_lib/import-url";
 import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
 import { describeSource, type ImportData } from "./_extract/types";
 import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
@@ -63,8 +64,11 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const heldMsg = held ? holdMessage(practitioner.fieldValues) : "";
 
   // AI "drop your links / paste a bio → draft" assist — fills the form for review; never saves/publishes.
+  // A profile link (e.g. Psychology Today) saved on their invite → pre-seed the importer so
+  // claiming → "Build my profile" is one tap. They trigger it themselves (their own profile).
+  const savedImportUrl = readImportUrl(practitioner.fieldValues);
   const [paste, setPaste] = useState("");
-  const [links, setLinks] = useState("");
+  const [links, setLinks] = useState(savedImportUrl ?? "");
   const [importView, setImportView] = useState<ImportView | null>(null);
   const [importCollapsed, setImportCollapsed] = useState(false);
   const [extracting, startExtract] = useTransition();
@@ -76,7 +80,7 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const [photoBusy, startPhoto] = useTransition();
   // New (post-signup) profiles get the import-first welcome, auto-expanded.
   const isNew = practitioner.completeness === 0 && !practitioner.displayName;
-  const [importOpen, setImportOpen] = useState(isNew);
+  const [importOpen, setImportOpen] = useState(isNew || Boolean(savedImportUrl));
 
   // Live "match strength" — recomputed from the form on every keystroke / import, so
   // the bar fills as fields get addressed (not only on Save).
@@ -473,6 +477,12 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
                     Drop a link or two — your website, your Psychology Today profile — and we&rsquo;ll draft
                     your profile for you. Or paste a bio. Nothing is saved until you review and hit Save.
                   </p>
+                  {savedImportUrl ? (
+                    <p className="rounded-xl border border-teal/30 bg-white/70 px-3 py-2 text-[13px] leading-[1.5] text-charcoal">
+                      We saved your Psychology Today link — it&rsquo;s ready below. Just press{" "}
+                      <span className="font-medium">Build my profile</span>.
+                    </p>
+                  ) : null}
                   <Field label="Your links" hint="One per line — website, Psychology Today, etc.">
                     <TextArea value={links} onChange={(e) => setLinks(e.target.value)} placeholder={"https://your-website.com\nhttps://psychologytoday.com/…"} className="min-h-[80px]" />
                   </Field>

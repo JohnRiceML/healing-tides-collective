@@ -44,6 +44,23 @@ describe("claimInviteEmail — calm, honest, safe", () => {
     // and it actively reassures
     expect(m.text.toLowerCase()).toContain("no rush");
   });
+
+  it("includes step-by-step instructions and names the sign-up email when given", () => {
+    const m = claimInviteEmail({ name: "Maya", url, email: "maya@example.com" });
+    expect(m.text.toLowerCase()).toContain("how to claim");
+    expect(m.text.toLowerCase()).toContain("finish claiming");
+    expect(m.text).toContain("maya@example.com"); // the email-match step names the address
+    expect(m.html).toContain("maya@example.com");
+  });
+
+  it("mentions the one-tap Psychology Today import ONLY when an importUrl is present", () => {
+    const withImport = claimInviteEmail({ name: "Maya", url, email: "maya@example.com", importUrl: "https://www.psychologytoday.com/x" });
+    expect(withImport.text.toLowerCase()).toContain("psychology today");
+    expect(withImport.html.toLowerCase()).toContain("psychology today");
+
+    const without = claimInviteEmail({ name: "Maya", url, email: "maya@example.com" });
+    expect(without.text.toLowerCase()).not.toContain("psychology today");
+  });
 });
 
 describe("emailConfigured / sendEmail — env-gated, never throws", () => {

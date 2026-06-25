@@ -23,6 +23,8 @@ export function escapeHtml(s: string): string {
 export function claimInviteEmail(input: {
   name?: string | null;
   url: string;
+  email?: string | null;
+  importUrl?: string | null;
   fromName?: string;
 }): EmailContent {
   const first = (input.name ?? "").trim();
@@ -32,8 +34,17 @@ export function claimInviteEmail(input: {
   const fromHtml = escapeHtml(from);
   const url = input.url;
   const urlHtml = escapeHtml(url);
+  const emailAddr = (input.email ?? "").trim();
+  const emailText = emailAddr ? `this email (${emailAddr})` : "the email this was sent to";
+  const emailHtml = emailAddr ? `this email (<strong>${escapeHtml(emailAddr)}</strong>)` : "the email this was sent to";
+  const hasImport = Boolean((input.importUrl ?? "").trim());
 
   const subject = "Your place on Healing Tides is ready when you are";
+
+  const importLineText = hasImport
+    ? `Already listed on Psychology Today? Once you're in, you can bring your details across ` +
+      `in one tap — we've saved your link, so there's nothing to copy.`
+    : "";
 
   const text = [
     `Hi ${nameText},`,
@@ -41,10 +52,11 @@ export function claimInviteEmail(input: {
     `We've saved you a spot on Healing Tides — a calm, trauma-informed directory that ` +
       `helps the right people find practitioners like you.`,
     ``,
-    `Your profile is started and waiting. When you're ready, you can claim it, add your ` +
-      `own words, and decide exactly what to share:`,
-    ``,
-    url,
+    `How to claim your profile:`,
+    `1. Open your private link: ${url}`,
+    `2. Sign up (or sign in) with ${emailText} — that's how we know the spot is yours.`,
+    `3. On your dashboard, choose "Finish claiming." Your profile is already started and waiting.`,
+    ...(importLineText ? [``, importLineText] : []),
     ``,
     `There's no rush, and nothing is published until you choose to. If this isn't for ` +
       `you, you can simply ignore this note.`,
@@ -58,9 +70,17 @@ export function claimInviteEmail(input: {
     `<div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px 28px;color:#2f2f2f;line-height:1.6">`,
     `<p style="margin:0 0 16px;font-size:16px">Hi ${nameHtml},</p>`,
     `<p style="margin:0 0 16px;font-size:16px">We've saved you a spot on Healing Tides — a calm, trauma-informed directory that helps the right people find practitioners like you.</p>`,
-    `<p style="margin:0 0 24px;font-size:16px">Your profile is started and waiting. When you're ready, you can claim it, add your own words, and decide exactly what to share.</p>`,
+    `<p style="margin:0 0 8px;font-size:16px">How to claim your profile:</p>`,
+    `<ol style="margin:0 0 24px;padding-left:20px;font-size:15px;color:#2f2f2f">`,
+    `<li style="margin:0 0 8px">Open your private link (the button below).</li>`,
+    `<li style="margin:0 0 8px">Sign up — or sign in — with ${emailHtml}. That's how we know the spot is yours.</li>`,
+    `<li style="margin:0 0 8px">On your dashboard, choose &ldquo;Finish claiming.&rdquo; Your profile is already started and waiting.</li>`,
+    `</ol>`,
     `<p style="margin:0 0 24px"><a href="${urlHtml}" style="display:inline-block;background:#5f8f8b;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:15px">Claim your profile</a></p>`,
     `<p style="margin:0 0 24px;font-size:13px;color:#6b6b6b">Or paste this link into your browser:<br><span style="word-break:break-all">${urlHtml}</span></p>`,
+    ...(hasImport
+      ? [`<p style="margin:0 0 24px;font-size:14px;color:#6b6b6b">Already listed on Psychology Today? Once you're in, you can bring your details across in one tap — we've saved your link, so there's nothing to copy.</p>`]
+      : []),
     `<p style="margin:0 0 16px;font-size:14px;color:#6b6b6b">There's no rush, and nothing is published until you choose to. If this isn't for you, you can simply ignore this note.</p>`,
     `<p style="margin:24px 0 0;font-size:16px">Warmly,<br>${fromHtml}</p>`,
     `</div></div>`,

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { Button, TextInput } from "@/app/_components/ui";
+import type { InvitePrefill } from "@/lib/invites";
 import { createInvite } from "./actions";
 
 /**
@@ -15,6 +16,9 @@ export function InviteCreator() {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [region, setRegion] = useState("");
+  const [title, setTitle] = useState("");
+  const [website, setWebsite] = useState("");
+  const [ptUrl, setPtUrl] = useState("");
   const [url, setUrl] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<"sent" | "failed" | "unconfigured" | null>(null);
@@ -29,11 +33,16 @@ export function InviteCreator() {
     setEmailStatus(null);
     setCopied(false);
     const toEmail = email.trim();
+    const prefill: InvitePrefill = {};
+    if (region.trim()) prefill.region = region.trim();
+    if (title.trim()) prefill.title = title.trim();
+    if (website.trim()) prefill.website = website.trim();
+    if (ptUrl.trim()) prefill.importUrl = ptUrl.trim();
     start(async () => {
       const res = await createInvite({
         email,
         displayName: displayName || undefined,
-        prefill: region ? { region } : undefined,
+        prefill: Object.keys(prefill).length ? prefill : undefined,
       });
       if (res.ok) {
         setUrl(res.url);
@@ -46,6 +55,9 @@ export function InviteCreator() {
         setEmail("");
         setDisplayName("");
         setRegion("");
+        setTitle("");
+        setWebsite("");
+        setPtUrl("");
       } else {
         setError(res.error);
       }
@@ -56,15 +68,19 @@ export function InviteCreator() {
     <section className="rounded-2xl border border-rule/70 bg-white p-6">
       <p className="meta text-ink-muted">Invite a practitioner</p>
       <p className="mt-2 max-w-prose text-[14px] leading-[1.6] text-ink-soft">
-        Mint a claim link from a waitlist entry. If email is switched on it's sent for you;
+        Mint a claim link from a waitlist entry. If email is switched on it&apos;s sent for you;
         otherwise copy the link and send it however you like. When they sign up through it,
-        their profile is pre-filled.
+        their profile is pre-filled — and if you add their Psychology Today link, they can pull
+        in the rest with one tap after claiming.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <TextInput type="email" placeholder="Email (required)" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Invitee email" />
         <TextInput placeholder="Name (optional)" value={displayName} onChange={(e) => setDisplayName(e.target.value)} aria-label="Invitee name" />
         <TextInput placeholder="Location (optional)" value={region} onChange={(e) => setRegion(e.target.value)} aria-label="Invitee location" />
+        <TextInput placeholder="Title, e.g. LICSW (optional)" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Invitee title" />
+        <TextInput placeholder="Website (optional)" value={website} onChange={(e) => setWebsite(e.target.value)} aria-label="Invitee website" />
+        <TextInput placeholder="Psychology Today link (optional)" value={ptUrl} onChange={(e) => setPtUrl(e.target.value)} aria-label="Psychology Today profile link" />
       </div>
 
       <div className="mt-4">

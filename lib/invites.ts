@@ -9,12 +9,17 @@ import { randomBytes } from "node:crypto";
 
 import { db } from "@/lib/db";
 
-/** Prefill carried from Nora's CSV → shown on the claim page → applied on claim. */
+/** Prefill carried from Nora's waitlist → shown on the claim page → applied on claim.
+ *  `importUrl` is the practitioner's existing profile link (e.g. Psychology Today) — NOT a
+ *  profile field: it's carried to them so THEY can one-tap import their own profile after
+ *  claiming (we never fetch it on their behalf pre-claim). */
 export type InvitePrefill = {
   region?: string;
   title?: string;
   website?: string;
   specialties?: string[];
+  bio?: string;
+  importUrl?: string;
 };
 
 /** Opaque, unguessable token for the /claim/[token] URL (24 url-safe chars). */
@@ -22,10 +27,26 @@ export function newInviteToken(): string {
   return randomBytes(18).toString("base64url");
 }
 
+// IMPORT_URL_KEY + readImportUrl live in the client-safe app/_lib/import-url (this module
+// imports the server-only db, so the editor can't import from here). Re-exported so server
+// callers + tests can keep importing them from "@/lib/invites".
+export { IMPORT_URL_KEY, readImportUrl } from "@/app/_lib/import-url";
+
 /** A practitioner-safe view of an invite's prefill (never trusts the JSON blob shape). */
 export function readPrefill(prefill: unknown): InvitePrefill {
   const p = (prefill ?? {}) as Record<string, unknown>;
   const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+  // Only keep http(s) URLs — a stored importUrl must be safe to render + hand to the importer.
+  const httpUrl = (v: unknown) => {
+    const s = str(v);
+    if (!s) return undefined;
+    try {
+      const u = new URL(s);
+      return u.protocol === "http:" || u.protocol === "https:" ? s : undefined;
+    } catch {
+      return undefined;
+    }
+  };
   return {
     region: str(p.region),
     title: str(p.title),
@@ -33,6 +54,8 @@ export function readPrefill(prefill: unknown): InvitePrefill {
     specialties: Array.isArray(p.specialties)
       ? p.specialties.filter((s): s is string => typeof s === "string" && s.trim() !== "")
       : undefined,
+    bio: str(p.bio),
+    importUrl: httpUrl(p.importUrl),
   };
 }
 
@@ -53,6 +76,7 @@ export type ClaimUpdate = {
   website?: string;
   specialties?: string[];
   title?: string; // lives in fieldValues
+  bio?: string;
 };
 
 /**
@@ -66,6 +90,7 @@ export function buildClaimUpdate(
     region?: string | null;
     website?: string | null;
     specialties?: string[];
+    bio?: string | null;
     fieldValues?: unknown;
   },
   invite: { displayName?: string | null; prefill?: unknown },
@@ -78,6 +103,7 @@ export function buildClaimUpdate(
   if (empty(p.region) && prefill.region) out.region = prefill.region;
   if (empty(p.website) && prefill.website) out.website = prefill.website;
   if ((p.specialties?.length ?? 0) === 0 && prefill.specialties?.length) out.specialties = prefill.specialties;
+  if (empty(p.bio) && prefill.bio) out.bio = prefill.bio;
 
   const existingTitle = (p.fieldValues as Record<string, unknown> | null | undefined)?.title;
   if (empty(typeof existingTitle === "string" ? existingTitle : "") && prefill.title) out.title = prefill.title;

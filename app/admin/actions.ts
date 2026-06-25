@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { RESERVED_BADGES_KEY, sanitizeGrant } from "@/app/_lib/verification";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
-import { newInviteToken, type InvitePrefill } from "@/lib/invites";
+import { newInviteToken, readPrefill, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
 import { sendEmail, emailConfigured } from "@/lib/email";
 import { claimInviteEmail, completenessReminderEmail } from "@/lib/email-templates";
@@ -58,7 +58,7 @@ export async function createInvite(input: {
   let emailed = false;
   let emailReason: "not_configured" | "http_error" | "exception" | undefined;
   if (emailConfigured()) {
-    const content = claimInviteEmail({ name: displayName, url });
+    const content = claimInviteEmail({ name: displayName, url, email, importUrl: readPrefill(input.prefill).importUrl });
     const sent = await sendEmail({ to: email, ...content });
     emailed = sent.ok;
     if (!sent.ok) emailReason = sent.reason; // 'http_error' | 'exception' — it tried and failed
@@ -91,7 +91,10 @@ export async function resendInvite(
   let emailed = false;
   let emailReason: "not_configured" | "http_error" | "exception" | undefined;
   if (emailConfigured()) {
-    const sent = await sendEmail({ to: invite.email, ...claimInviteEmail({ name: invite.displayName, url }) });
+    const sent = await sendEmail({
+      to: invite.email,
+      ...claimInviteEmail({ name: invite.displayName, url, email: invite.email, importUrl: readPrefill(invite.prefill).importUrl }),
+    });
     emailed = sent.ok;
     if (!sent.ok) emailReason = sent.reason;
   } else {

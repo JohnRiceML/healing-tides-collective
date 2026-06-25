@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 // lib/invites imports @/lib/db (throws without DATABASE_URL); we only test pure helpers.
 vi.mock("@/lib/db", () => ({ db: {} }));
 
-import { newInviteToken, readPrefill, inviteIsClaimable, buildClaimUpdate } from "@/lib/invites";
+import { newInviteToken, readPrefill, inviteIsClaimable, buildClaimUpdate, readImportUrl } from "@/lib/invites";
 
 describe("newInviteToken", () => {
   it("produces a url-safe token (no +/= chars) of stable length", () => {
@@ -65,5 +65,40 @@ describe("buildClaimUpdate (fill-if-empty)", () => {
   it("fills only the gaps", () => {
     const out = buildClaimUpdate({ displayName: "Dr. Jordan", region: "", website: null, specialties: ["anxiety"], fieldValues: {} }, invite);
     expect(out).toEqual({ region: "Saint Paul, MN", website: "jordan.com", title: "LICSW" });
+  });
+});
+
+describe("readPrefill — bio + importUrl", () => {
+  it("keeps a bio and an http(s) importUrl", () => {
+    const p = readPrefill({ bio: " Warm trauma therapist. ", importUrl: "https://www.psychologytoday.com/us/therapists/jordan" });
+    expect(p.bio).toBe("Warm trauma therapist.");
+    expect(p.importUrl).toBe("https://www.psychologytoday.com/us/therapists/jordan");
+  });
+  it("rejects a non-http(s) importUrl (no javascript:/garbage/other schemes)", () => {
+    expect(readPrefill({ importUrl: "javascript:alert(1)" }).importUrl).toBeUndefined();
+    expect(readPrefill({ importUrl: "not a url" }).importUrl).toBeUndefined();
+    expect(readPrefill({ importUrl: "ftp://x.com" }).importUrl).toBeUndefined();
+  });
+});
+
+describe("buildClaimUpdate — bio fill-if-empty", () => {
+  const invite = { displayName: "Jordan Lake", prefill: { bio: "Warm trauma therapist." } };
+  it("fills an empty bio from the invite", () => {
+    expect(buildClaimUpdate({ bio: "", fieldValues: {} }, invite).bio).toBe("Warm trauma therapist.");
+  });
+  it("never overwrites a bio the practitioner already wrote", () => {
+    expect(buildClaimUpdate({ bio: "My own words.", fieldValues: {} }, invite).bio).toBeUndefined();
+  });
+});
+
+describe("readImportUrl (reserved __importUrl key)", () => {
+  it("reads the carried import link", () => {
+    expect(readImportUrl({ __importUrl: "https://x.com/p" })).toBe("https://x.com/p");
+  });
+  it("is null when absent, blank, or wrong-shaped", () => {
+    expect(readImportUrl({})).toBeNull();
+    expect(readImportUrl({ __importUrl: "  " })).toBeNull();
+    expect(readImportUrl(null)).toBeNull();
+    expect(readImportUrl("nope")).toBeNull();
   });
 });

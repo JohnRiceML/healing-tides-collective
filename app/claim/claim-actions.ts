@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
 import { getCurrentDbUser, getOrCreatePractitioner } from "@/lib/auth";
-import { getInviteByToken, inviteIsClaimable, buildClaimUpdate } from "@/lib/invites";
+import { getInviteByToken, inviteIsClaimable, buildClaimUpdate, readPrefill, IMPORT_URL_KEY } from "@/lib/invites";
 import { mergeFieldValues } from "@/app/_lib/verification";
 import { completenessOf } from "@/lib/completeness";
 import { safeWebsite } from "@/lib/url";
@@ -87,22 +87,33 @@ async function applyClaim(token: string): Promise<ClaimResult> {
   const p = result.practitioner;
 
   const fill = buildClaimUpdate(p, invite);
+  const prefill = readPrefill(invite.prefill);
   const data: Prisma.PractitionerUpdateInput = {};
   if (fill.displayName) data.displayName = fill.displayName;
   if (fill.region) data.region = fill.region;
+  if (fill.bio) data.bio = fill.bio;
   if (fill.website) {
     const safe = safeWebsite(fill.website);
     if (safe) data.website = safe;
   }
   if (fill.specialties) data.specialties = fill.specialties;
-  if (fill.title) {
-    data.fieldValues = mergeFieldValues(p.fieldValues, { title: fill.title }) as Prisma.InputJsonValue;
+
+  // fieldValues: practitioner-safe merge for `title`, then the reserved __importUrl (their
+  // own profile link, for the editor's one-tap self-import) via DIRECT spread — mergeFieldValues
+  // strips `__` keys, so it can't carry a reserved key.
+  let nextFieldValues = fill.title
+    ? (mergeFieldValues(p.fieldValues, { title: fill.title }) as Record<string, unknown>)
+    : null;
+  if (prefill.importUrl) {
+    const base = nextFieldValues ?? ((p.fieldValues ?? {}) as Record<string, unknown>);
+    nextFieldValues = { ...base, [IMPORT_URL_KEY]: prefill.importUrl };
   }
+  if (nextFieldValues) data.fieldValues = nextFieldValues as Prisma.InputJsonValue;
 
   if (Object.keys(data).length > 0) {
     data.completeness = completenessOf({
       displayName: data.displayName ?? p.displayName,
-      bio: p.bio,
+      bio: data.bio ?? p.bio,
       values: p.values,
       modality: p.modality,
       region: data.region ?? p.region,
