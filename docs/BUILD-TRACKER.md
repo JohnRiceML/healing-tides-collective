@@ -42,7 +42,7 @@
 | **"Claim your profile" — auto-pull Psychology Today, one-click pre-fill** | 🟡 | Foundation only: the URL/paste importer (Claude extract, SSRF-guarded) *can* ingest a profile URL. The **tokenized claim flow itself is not built**. ⚠️ source changed from "Nora's CSV" to "PT URLs" — see [decision #3](#open-decisions-brief-changed-the-plan). |
 | Credential capture + **verified badge** | 🟡 | Badge system exists (`__verified` reserved key + admin grant). **Not wired to proof or licensing-board lookup** (§6 automation unbuilt). |
 | **Profile-completeness nudges** ("90% complete" + reminder emails) | ✅ | In-editor nudge live; **reminder emails built 2026-06-20** — admin-triggered `sendCompletenessReminders` (calm "finish when you're ready" email to <80% practitioners; pure `selectReminderRecipients` with a 7-day cooldown + skips held; reserved `__completenessReminder` key). Needs `EMAIL_FROM` set to actually send. |
-| **Admin panel (basic):** applied / pending / approve-reject / request edits | 🟡 | Have read-only list + badge-grant + hold/release. **No application queue, no approve/reject** — there's no "application" concept yet. |
+| **Admin panel (basic):** applied / pending / approve-reject / request edits | 🟡 | Have read-only list + badge-grant + hold/release, **plus a practitioner-activity read** (2026-06-25): New/Active/Quiet/Dormant chips, recent views (7d/30d) + last-viewed, sortable columns — sign-in tracking built but gated on a migration (see Recently shipped). **No application queue, no approve/reject** — there's no "application" concept yet. |
 
 ## Milestone 2 — Matching + seeker side (~mid-July target)
 
@@ -136,7 +136,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 - `SERPER_API_KEY` in `.env.local` + Vercel — powers the practitioner local-visibility audit (returns "not configured" until set). Rotate the one pasted in chat via [serper.dev](https://serper.dev).
 - **Create the `invites` table** via the safe flow: `npm run db:migrate:safe -- add_invites` (generates + prints the SQL — additive `CREATE TABLE`, no data risk) → `npm run db:migrate:deploy` (applies; can never reset). Until then the claim/admin-invite code compiles but errors at runtime (table missing) — the rest of the app is unaffected. Migrations are John-only (the prod classifier blocks the agent). Full process: **[DB-OPERATIONS.md](DB-OPERATIONS.md)**.
 - **`RESEND_API_KEY` + `EMAIL_FROM` in `.env.local` + Vercel**, and verify a sending domain at [resend.com](https://resend.com) — powers the now-wired email layer (claim invites auto-send once set; until then invites still mint a copyable link). `EMAIL_FROM` must be `Name <addr@verified-domain>`.
-- `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel + the Clerk dashboard webhook (`user.updated` + `user.deleted`) — moderation auto-hide 501s until then.
+- `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel + the Clerk dashboard webhook (`user.updated` + `user.deleted` + `session.created` for the admin last-seen / who's-active read) — moderation auto-hide 501s until then.
 - `ADMIN_EMAILS` in Vercel — `/admin` is closed until set.
 - Paste the **Neon connection string** into `.env.local` (local dev/migrations blocked).
 - Production **Clerk instance** (real Google OAuth + verified domain; replaces the dev-mode badge).
@@ -148,6 +148,14 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 ---
 
 ## Recently shipped
+
+### 2026-06-25 — admin practitioner-activity read ("who's active" + traction)
+Answers Nora's June-10 ask for a dashboard to "monitor activity, trends, and gaps." The `/admin` practitioner table now shows engagement and traction at a glance, sortable.
+- ✅ **Activity chip** per practitioner — New / Active / Quiet / Dormant, from their last profile edit. Pure + unit-tested (`app/_lib/activity.ts` + `classifyActivity`/`relativeShort`, 11 tests in `tests/activity.test.ts`).
+- ✅ **Recent views** — 7-day / 30-day counts (grouped reads over `profile_views`; `viewedAt` indexed) + **last-viewed** ("seen 4d ago"). No migration.
+- ✅ **Sortable columns** — name / activity / completeness / views (`app/admin/PractitionersTable.tsx`; `now` passed from the server page so relative times don't drift on hydration).
+- 🟡 **Sign-in tracking** (`User.lastSeenAt`) — stamped on Clerk `session.created`, deliberately NOT on render, so the read-only `getPractitioner` GET path stays write-free (the role-fork contract). Sharpens the Activity read once on; the classifier already accepts it. **To activate, in order:** (1) `npm run db:migrate:safe -- add_user_last_seen` → review → `npm run db:migrate:deploy` (additive `ALTER TABLE "users" ADD COLUMN "last_seen_at" TIMESTAMP(3)` — zero data loss); (2) subscribe `session.created` on the Clerk webhook; (3) merge `feat/last-seen-tracking`. Until then `lastSeenAt` is null and the read falls back to last-edit — no breakage.
+- **Verified:** `tsc` + **311 tests** + `npm run build` + secret-scan all green. **State:** on feature branches — `feat/admin-activity` (Part A, no migration) and `feat/last-seen-tracking` (Part A + B). Pushed to origin; **not yet merged to `main`** (Part B needs the migration first).
 
 ### 2026-06-18 → 19 — brand center evolution + a hardening pass
 The 2026-06-16 brand "shell" (below) grew into the **flagship practitioner surface**. Canonical architecture: **[architecture/BRAND-CENTER.md](architecture/BRAND-CENTER.md)** + the score-demotion/ethics **ADR** in [planning/decisions-log.md](../planning/decisions-log.md). In brief:
