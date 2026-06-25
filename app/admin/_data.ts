@@ -5,6 +5,7 @@
 import { db } from "@/lib/db";
 import type { ProfileVisibility } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
+import { readVerification, type VerificationAttempt } from "@/app/_lib/credentials";
 import { readHold } from "@/app/_lib/moderation";
 import { readPrefill } from "@/lib/invites";
 import { readLastReminder, type ReminderCandidate } from "@/lib/completeness-reminders";
@@ -26,11 +27,20 @@ export type AdminPractitionerRow = {
   lastSeenAt: Date | null; // last sign-in — null until last-seen tracking lands (migration)
   email: string | null;
   verificationBadges: string[];
+  credentials: string[]; // stated credentials/licensure (free-text tags)
+  credentialVerification: VerificationAttempt | null; // last admin verification, if any
   held: boolean; // currently on an admin hold
   holdMessage: string | null; // practitioner-facing reason (if held)
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toStrings = (v: unknown): string[] =>
+  Array.isArray(v)
+    ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "")
+    : typeof v === "string" && v.trim()
+      ? [v.trim()]
+      : [];
 
 export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
   const now = Date.now();
@@ -73,6 +83,8 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       ...r,
       email: user?.email ?? null,
       verificationBadges: grantedBadgesFrom(fieldValues),
+      credentials: toStrings((fieldValues as Record<string, unknown> | null)?.credentials),
+      credentialVerification: readVerification(fieldValues),
       held: Boolean(hold),
       holdMessage: hold?.message || null,
       views7: count7.get(r.id) ?? 0,

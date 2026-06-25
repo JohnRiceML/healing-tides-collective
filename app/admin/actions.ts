@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { RESERVED_BADGES_KEY, sanitizeGrant } from "@/app/_lib/verification";
+import { RESERVED_BADGES_KEY, sanitizeGrant, grantedBadgesFrom } from "@/app/_lib/verification";
+import { VERIFICATION_KEY, type VerificationStatus } from "@/app/_lib/credentials";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
 import { newInviteToken, readPrefill, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
@@ -155,6 +156,66 @@ export async function sendCompletenessReminders(): Promise<
 
   revalidatePath("/admin");
   return { ok: true, sent, eligible: recipients.length };
+}
+
+/**
+ * Record an admin-assisted credential verification. ADMIN-ONLY. Writes the due-diligence
+ * audit (who/when/notes/what-was-seen) under the reserved `__credentialVerification` key, and
+ * — on "verified" — grants the `licensed_professional` badge; on "not_found" removes it.
+ * Notes are required (the legal record). All reserved keys are written by direct spread so a
+ * practitioner save can never forge them.
+ */
+export async function recordCredentialVerification(
+  practitionerId: string,
+  input: { status: VerificationStatus; notes: string },
+): Promise<{ ok: true; status: VerificationStatus } | { ok: false; error: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const notes = input.notes.trim();
+  if (!notes) return { ok: false, error: "Add a short note on what you saw — it's the record." };
+
+  const current = await db.practitioner.findUnique({
+    where: { id: practitionerId },
+    select: { fieldValues: true },
+  });
+  if (!current) return { ok: false, error: "Practitioner not found." };
+
+  const existing = (current.fieldValues ?? {}) as Record<string, unknown>;
+  const rawCreds = existing.credentials;
+  const stated = Array.isArray(rawCreds)
+    ? rawCreds.filter((c): c is string => typeof c === "string")
+    : typeof rawCreds === "string" && rawCreds.trim()
+      ? [rawCreds.trim()]
+      : [];
+
+  const attempt = {
+    status: input.status,
+    by: admin.email?.trim() || "admin",
+    at: new Date().toISOString(),
+    notes,
+    credentials: stated,
+  };
+
+  // Badge follows the verdict: verified → grant licensed_professional; not_found → remove it;
+  // pending → leave existing badges untouched. Other badges (founding, etc.) are preserved.
+  const granted = new Set(grantedBadgesFrom(existing));
+  if (input.status === "verified") granted.add("licensed_professional");
+  if (input.status === "not_found") granted.delete("licensed_professional");
+  const nextBadges = sanitizeGrant([...granted]);
+
+  const next = { ...existing, [VERIFICATION_KEY]: attempt, [RESERVED_BADGES_KEY]: nextBadges };
+  try {
+    await db.practitioner.update({
+      where: { id: practitionerId },
+      data: { fieldValues: next as Prisma.InputJsonValue },
+    });
+  } catch {
+    return { ok: false, error: "Couldn't save — please try again." };
+  }
+  revalidatePath("/admin");
+  revalidatePath("/practitioners", "layout"); // the badge shows publicly
+  return { ok: true, status: input.status };
 }
 
 /**

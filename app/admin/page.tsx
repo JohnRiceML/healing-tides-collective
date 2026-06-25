@@ -8,6 +8,7 @@ import { selectReminderRecipients } from "@/lib/completeness-reminders";
 
 import { getAdminInvites, getAdminPractitioners, getAdminStats, getReminderCandidates } from "./_data";
 import { CompletenessReminders } from "./CompletenessReminders";
+import { CredentialVerification } from "./CredentialVerification";
 import { InviteCreator } from "./InviteCreator";
 import { InvitesList } from "./InvitesList";
 import { PractitionersTable } from "./PractitionersTable";
@@ -64,6 +65,8 @@ export default async function AdminPage() {
         </div>
 
         <InvitesList invites={invites} />
+
+        <CredentialVerification rows={rows} />
 
         <PractitionersTable rows={rows} now={new Date()} />
 
