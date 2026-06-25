@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { SanityLive } from "@/sanity/lib/live";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import { AccountButton } from "@/app/_components/account-button";
+import { FeedbackWidget } from "@/app/_components/FeedbackWidget";
 import { SiteNav } from "@/app/_components/site-nav";
 import { SiteFooter } from "@/app/_components/site-footer";
 import { SITE_URL } from "@/lib/site";
@@ -92,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SanityLive />
           </>
         )}
+        <FeedbackWidget />
       </body>
       <GoogleAnalytics gaId="G-EJZ1TBDT3W" />
     </html>

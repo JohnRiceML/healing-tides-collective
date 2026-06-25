@@ -125,7 +125,8 @@ export function AdminOverview({ overview }: { overview: Overview }) {
       {/* Needs attention */}
       <div>
         <p className="meta text-ink-muted">Needs your attention</p>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <Metric label="New feedback" value={q.newFeedback} tone="attention" href="/admin/feedback" />
           <Metric label="Invites pending" value={q.invitesPending} tone="attention" href="/admin/practitioners" />
           <Metric label="Credentials to verify" value={q.credentialsToVerify} tone="attention" href="/admin/practitioners" />
           <Metric label="Due a nudge" value={q.dueReminders} tone="attention" href="/admin/practitioners" />

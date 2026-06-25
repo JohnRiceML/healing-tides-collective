@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { RESERVED_BADGES_KEY, sanitizeGrant, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VERIFICATION_KEY, type VerificationStatus } from "@/app/_lib/credentials";
+import { isValidStatus, type FeedbackStatus } from "@/lib/feedback";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
 import { newInviteToken, readPrefill, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
@@ -311,4 +312,34 @@ export async function setProfileHold(
   revalidatePath("/practitioners", "layout"); // directory + every profile under it
   revalidatePath("/practitioner"); // the held practitioner's own editor banner
   return { ok: true, held: input.held };
+}
+
+/**
+ * Triage a feedback item through the fix-loop. ADMIN-ONLY. Sets the status + an optional note,
+ * and stamps resolvedAt when it reaches a closed state (FIXED / WONT_FIX).
+ */
+export async function setFeedbackStatus(
+  id: string,
+  input: { status: string; adminNote?: string },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+  if (!isValidStatus(input.status)) return { ok: false, error: "Unknown status." };
+
+  const resolved = input.status === "FIXED" || input.status === "WONT_FIX";
+  try {
+    await db.feedback.update({
+      where: { id },
+      data: {
+        status: input.status as FeedbackStatus,
+        adminNote: input.adminNote?.trim() || null,
+        resolvedAt: resolved ? new Date() : null,
+      },
+    });
+  } catch {
+    return { ok: false, error: "Couldn't update — please try again." };
+  }
+  revalidatePath("/admin/feedback");
+  revalidatePath("/admin");
+  return { ok: true };
 }

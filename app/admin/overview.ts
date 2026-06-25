@@ -13,7 +13,7 @@ export type AdminOverview = {
   activity: Record<ActivityState, number>; // new / active / quiet / dormant
   traction: { totalViews: number; views7: number; views30: number };
   /** The "needs your attention" queue — actionable counts. */
-  queue: { invitesPending: number; credentialsToVerify: number; dueReminders: number; onHold: number };
+  queue: { invitesPending: number; credentialsToVerify: number; dueReminders: number; onHold: number; newFeedback: number };
   publishedRate: number; // 0–100
   avgCompleteness: number; // 0–100
   credentials: { stated: number; verified: number };
@@ -25,8 +25,9 @@ export type AdminOverview = {
 
 export function computeAdminOverview(
   rows: AdminPractitionerRow[],
-  opts: { now: Date; invitesPending: number; dueReminders: number },
+  opts: { now: Date; invitesPending: number; dueReminders: number; newFeedback?: number },
 ): AdminOverview {
+  const newFeedback = opts.newFeedback ?? 0;
   const activity: Record<ActivityState, number> = { new: 0, active: 0, quiet: 0, dormant: 0 };
   let published = 0,
     drafts = 0,
@@ -84,13 +85,20 @@ export function computeAdminOverview(
     viewsTrend,
     avgCompleteness,
     topViewed,
+    newFeedback,
   });
 
   return {
     practitioners: { total, published, drafts, onHold, needsReview },
     activity,
     traction: { totalViews, views7, views30 },
-    queue: { invitesPending: opts.invitesPending, credentialsToVerify, dueReminders: opts.dueReminders, onHold },
+    queue: {
+      invitesPending: opts.invitesPending,
+      credentialsToVerify,
+      dueReminders: opts.dueReminders,
+      onHold,
+      newFeedback,
+    },
     publishedRate,
     avgCompleteness,
     credentials: { stated: statedCreds, verified: verifiedCreds },
@@ -111,11 +119,20 @@ function buildInsights(d: {
   viewsTrend: "up" | "steady" | "quiet";
   avgCompleteness: number;
   topViewed: { name: string; views: number } | null;
+  newFeedback: number;
 }): Insight[] {
-  if (d.total === 0) {
+  if (d.total === 0 && d.newFeedback === 0) {
     return [{ tone: "neutral", text: "No practitioners yet — invites and claims will populate this dashboard." }];
   }
   const out: Insight[] = [];
+
+  if (d.newFeedback > 0) {
+    out.push({
+      tone: "attention",
+      text: `${d.newFeedback} new piece${d.newFeedback === 1 ? "" : "s"} of feedback to triage.`,
+    });
+  }
+  if (d.total === 0) return out;
 
   out.push({
     tone: d.publishedRate >= 50 ? "good" : "neutral",

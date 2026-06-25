@@ -155,3 +155,39 @@ model Invite {
   @@index([email])
   @@map("invites")
 }
+
+enum FeedbackKind {
+  BUG
+  IDEA
+  PRAISE
+  OTHER
+}
+
+enum FeedbackStatus {
+  NEW
+  TRIAGED
+  PLANNED
+  FIXED
+  WONT_FIX
+}
+
+// Site-wide feedback from anyone (seekers + practitioners). Intentionally lightweight +
+// mostly anonymous — only what the person volunteers (message + optional email) plus the page
+// and an optional signed-in user id for context. The admin triages it through to FIXED — the
+// fix-loop that records what we ship in response.
+model Feedback {
+  id         String         @id @default(cuid())
+  message    String
+  kind       FeedbackKind   @default(OTHER)
+  email      String? // optional — only if they want a reply
+  path       String? // the page it came from
+  userId     String?        @map("user_id") // signed-in user, if any (informational; no FK so anon stays simple)
+  status     FeedbackStatus @default(NEW)
+  adminNote  String?        @map("admin_note") // the triage / fix note
+  createdAt  DateTime       @default(now()) @map("created_at")
+  resolvedAt DateTime?      @map("resolved_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("feedback")
+}

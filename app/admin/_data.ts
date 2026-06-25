@@ -164,3 +164,35 @@ export async function getAdminStats(): Promise<AdminStats> {
   ]);
   return { total, published, draft, totalViews: views._sum.viewCount ?? 0 };
 }
+
+export type AdminFeedbackRow = {
+  id: string;
+  message: string;
+  kind: string;
+  email: string | null;
+  path: string | null;
+  userId: string | null;
+  status: string;
+  adminNote: string | null;
+  createdAt: Date;
+  resolvedAt: Date | null;
+};
+
+// All feedback, newest first. ADMIN-ONLY. Resilient: if the table isn't migrated yet it
+// returns [] rather than 500-ing the admin.
+export async function getFeedback(): Promise<AdminFeedbackRow[]> {
+  try {
+    return await db.feedback.findMany({ orderBy: [{ createdAt: "desc" }], take: 500 });
+  } catch {
+    return [];
+  }
+}
+
+// Count of un-triaged feedback for the Overview "needs attention" tile. Resilient → 0.
+export async function countNewFeedback(): Promise<number> {
+  try {
+    return await db.feedback.count({ where: { status: "NEW" } });
+  } catch {
+    return 0;
+  }
+}
