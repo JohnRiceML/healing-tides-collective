@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { classifyActivity, relativeShort, type ActivityState } from "@/app/_lib/activity";
 import { BadgeEditor } from "./BadgeEditor";
 import { HoldControl } from "./HoldControl";
 import type { AdminPractitionerRow } from "./_data";
@@ -22,21 +23,94 @@ const FILTERS: { id: string; label: string }[] = [
   { id: "NEEDS_REVIEW", label: "Needs review" },
 ];
 
-export function PractitionersTable({ rows }: { rows: AdminPractitionerRow[] }) {
+// Calm chips for the engagement read — no red anywhere (brand line). "Dormant" uses a
+// soft ocean to invite a gentle nudge, never to alarm.
+const ACTIVITY_CHIP: Record<ActivityState, string> = {
+  new: "bg-sage/30 text-ocean",
+  active: "bg-teal/15 text-teal",
+  quiet: "bg-charcoal/5 text-ink-muted",
+  dormant: "bg-ocean/10 text-ocean",
+};
+
+type SortKey = "name" | "activity" | "complete" | "views";
+type SortDir = "asc" | "desc";
+
+/** Row + its derived activity, so we can sort/render without recomputing. */
+type DerivedRow = AdminPractitionerRow & { activityLabel: string; activityState: ActivityState; lastSignalAt: Date };
+
+function SortHeader({
+  label,
+  col,
+  sort,
+  onSort,
+  className = "",
+}: {
+  label: string;
+  col: SortKey;
+  sort: { key: SortKey; dir: SortDir };
+  onSort: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sort.key === col;
+  return (
+    <th className={`px-5 py-3 font-medium ${className}`}>
+      <button
+        type="button"
+        onClick={() => onSort(col)}
+        className={`inline-flex items-center gap-1 ${active ? "text-charcoal" : "hover:text-charcoal"}`}
+        aria-label={`Sort by ${label}`}
+      >
+        {label}
+        <span className="text-[10px] leading-none">{active ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
+}
+
+export function PractitionersTable({ rows, now }: { rows: AdminPractitionerRow[]; now: Date }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "activity", dir: "desc" });
 
-  const filtered = useMemo(() => {
+  const onSort = (key: SortKey) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "name" ? "asc" : "desc" }));
+
+  const derived: DerivedRow[] = useMemo(
+    () =>
+      rows.map((r) => {
+        const a = classifyActivity({ createdAt: r.createdAt, updatedAt: r.updatedAt, lastSeenAt: r.lastSeenAt, now });
+        return { ...r, activityLabel: a.label, activityState: a.state, lastSignalAt: a.lastSignalAt };
+      }),
+    [rows, now],
+  );
+
+  const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const filtered = derived.filter((r) => {
       if (status !== "all" && r.visibility !== status) return false;
       if (!needle) return true;
-      return (
-        (r.displayName ?? "").toLowerCase().includes(needle) ||
-        (r.email ?? "").toLowerCase().includes(needle)
-      );
+      return (r.displayName ?? "").toLowerCase().includes(needle) || (r.email ?? "").toLowerCase().includes(needle);
     });
-  }, [rows, q, status]);
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      switch (sort.key) {
+        case "name":
+          cmp = (a.displayName ?? "").localeCompare(b.displayName ?? "");
+          break;
+        case "complete":
+          cmp = a.completeness - b.completeness;
+          break;
+        case "views":
+          cmp = a.views30 - b.views30;
+          break;
+        case "activity":
+          cmp = a.lastSignalAt.getTime() - b.lastSignalAt.getTime();
+          break;
+      }
+      return cmp * dir;
+    });
+  }, [derived, q, status, sort]);
 
   if (rows.length === 0) {
     return <p className="mt-12 text-[15px] text-ink-soft">No practitioners yet.</p>;
@@ -68,29 +142,29 @@ export function PractitionersTable({ rows }: { rows: AdminPractitionerRow[] }) {
           ))}
         </div>
         <span className="ml-auto text-[13px] text-ink-muted">
-          {filtered.length} of {rows.length}
+          {visible.length} of {rows.length}
         </span>
       </div>
 
-      {filtered.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="mt-8 text-[15px] text-ink-soft">No practitioners match that.</p>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-2xl border border-rule bg-white">
-          <table className="w-full min-w-[1040px] text-left text-[14px]">
+          <table className="w-full min-w-[1080px] text-left text-[14px]">
             <thead className="border-b border-rule text-ink-muted">
               <tr>
-                <th className="px-5 py-3 font-medium">Name</th>
+                <SortHeader label="Name" col="name" sort={sort} onSort={onSort} />
                 <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Complete</th>
-                <th className="px-5 py-3 font-medium">Views</th>
-                <th className="px-5 py-3 font-medium">Updated</th>
+                <SortHeader label="Activity" col="activity" sort={sort} onSort={onSort} />
+                <SortHeader label="Complete" col="complete" sort={sort} onSort={onSort} />
+                <SortHeader label="Views" col="views" sort={sort} onSort={onSort} />
                 <th className="px-5 py-3 font-medium">Verification</th>
                 <th className="px-5 py-3 font-medium">Visibility</th>
                 <th className="px-5 py-3 font-medium" aria-label="actions" />
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r) => {
+              {visible.map((r) => {
                 const s = STATUS[r.visibility] ?? STATUS.DRAFT;
                 return (
                   <tr key={r.id} className="border-b border-rule/60 last:border-0">
@@ -115,9 +189,22 @@ export function PractitionersTable({ rows }: { rows: AdminPractitionerRow[] }) {
                     <td className="px-5 py-3">
                       <span className={`rounded-full px-2.5 py-1 text-[12px] ${s.className}`}>{s.label}</span>
                     </td>
+                    <td className="px-5 py-3">
+                      <span className={`rounded-full px-2.5 py-1 text-[12px] ${ACTIVITY_CHIP[r.activityState]}`}>
+                        {r.activityLabel}
+                      </span>
+                      <div className="mt-1 text-[12px] text-ink-muted">{relativeShort(r.lastSignalAt, now)}</div>
+                    </td>
                     <td className="px-5 py-3 text-ink-soft">{r.completeness}%</td>
-                    <td className="px-5 py-3 text-ink-soft">{r.viewCount}</td>
-                    <td className="px-5 py-3 text-ink-muted">{r.updatedAt.toISOString().slice(0, 10)}</td>
+                    <td className="px-5 py-3">
+                      <div className="text-charcoal">
+                        {r.views30}
+                        <span className="text-ink-muted"> · 30d</span>
+                      </div>
+                      <div className="text-[12px] text-ink-muted">
+                        {r.viewCount} total · seen {relativeShort(r.lastViewedAt, now)}
+                      </div>
+                    </td>
                     <td className="px-5 py-3">
                       <BadgeEditor practitionerId={r.id} current={r.verificationBadges} />
                     </td>

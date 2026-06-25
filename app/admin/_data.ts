@@ -15,33 +15,58 @@ export type AdminPractitionerRow = {
   slug: string | null;
   visibility: ProfileVisibility;
   completeness: number;
-  viewCount: number;
+  viewCount: number; // lifetime
+  views7: number; // profile views in the last 7 days
+  views30: number; // profile views in the last 30 days
+  lastViewedAt: Date | null; // most recent seeker view (audience traction)
   region: string | null;
   featured: boolean;
-  updatedAt: Date;
+  createdAt: Date;
+  updatedAt: Date; // last profile edit (a practitioner-engagement signal)
+  lastSeenAt: Date | null; // last sign-in — null until last-seen tracking lands (migration)
   email: string | null;
   verificationBadges: string[];
   held: boolean; // currently on an admin hold
   holdMessage: string | null; // practitioner-facing reason (if held)
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
-  const rows = await db.practitioner.findMany({
-    orderBy: [{ updatedAt: "desc" }],
-    select: {
-      id: true,
-      displayName: true,
-      slug: true,
-      visibility: true,
-      completeness: true,
-      viewCount: true,
-      region: true,
-      featured: true,
-      updatedAt: true,
-      fieldValues: true,
-      user: { select: { email: true } },
-    },
-  });
+  const now = Date.now();
+  const since7 = new Date(now - 7 * DAY_MS);
+  const since30 = new Date(now - 30 * DAY_MS);
+
+  // One practitioner read + three lightweight grouped reads over profile_views
+  // (viewedAt is indexed). The grouped reads give recent-window counts + last-viewed
+  // without pulling every view row.
+  const [rows, v7, v30, lastViewed] = await Promise.all([
+    db.practitioner.findMany({
+      orderBy: [{ updatedAt: "desc" }],
+      select: {
+        id: true,
+        displayName: true,
+        slug: true,
+        visibility: true,
+        completeness: true,
+        viewCount: true,
+        region: true,
+        featured: true,
+        createdAt: true,
+        updatedAt: true,
+        fieldValues: true,
+        user: { select: { email: true } },
+      },
+    }),
+    db.profileView.groupBy({ by: ["practitionerId"], where: { viewedAt: { gte: since7 } }, _count: { _all: true } }),
+    db.profileView.groupBy({ by: ["practitionerId"], where: { viewedAt: { gte: since30 } }, _count: { _all: true } }),
+    db.profileView.groupBy({ by: ["practitionerId"], _max: { viewedAt: true } }),
+  ]);
+
+  const count7 = new Map(v7.map((r) => [r.practitionerId, r._count._all]));
+  const count30 = new Map(v30.map((r) => [r.practitionerId, r._count._all]));
+  const lastView = new Map(lastViewed.map((r) => [r.practitionerId, r._max.viewedAt]));
+
   return rows.map(({ user, fieldValues, ...r }) => {
     const hold = readHold(fieldValues);
     return {
@@ -50,6 +75,12 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       verificationBadges: grantedBadgesFrom(fieldValues),
       held: Boolean(hold),
       holdMessage: hold?.message || null,
+      views7: count7.get(r.id) ?? 0,
+      views30: count30.get(r.id) ?? 0,
+      lastViewedAt: lastView.get(r.id) ?? null,
+      // TODO(last-seen): once the User.lastSeenAt migration is applied, select
+      // user.lastSeenAt above and pass it here to sharpen the activity read.
+      lastSeenAt: null,
     };
   });
 }

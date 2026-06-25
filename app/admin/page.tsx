@@ -65,7 +65,7 @@ export default async function AdminPage() {
 
         <InvitesList invites={invites} />
 
-        <PractitionersTable rows={rows} />
+        <PractitionersTable rows={rows} now={new Date()} />
 
         <p className="mt-8 max-w-3xl text-[13px] leading-[1.6] text-ink-muted">
           <strong className="font-medium text-ink-soft">Visibility:</strong> &ldquo;Hold&rdquo; hides a

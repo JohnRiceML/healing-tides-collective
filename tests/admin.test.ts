@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Clerk + the DB before importing the modules under test.
 const { auth, currentUser } = vi.hoisted(() => ({ auth: vi.fn(), currentUser: vi.fn() }));
-const { findUnique, create, count, aggregate, findMany } = vi.hoisted(() => ({
+const { findUnique, create, count, aggregate, findMany, groupBy } = vi.hoisted(() => ({
   findUnique: vi.fn(),
   create: vi.fn(),
   count: vi.fn(),
   aggregate: vi.fn(),
   findMany: vi.fn(),
+  groupBy: vi.fn(),
 }));
 vi.mock("@clerk/nextjs/server", () => ({ auth, currentUser }));
 vi.mock("@/lib/clerk-enabled", () => ({ clerkEnabled: true }));
@@ -15,6 +16,7 @@ vi.mock("@/lib/db", () => ({
   db: {
     user: { findUnique, create },
     practitioner: { count, aggregate, findMany },
+    profileView: { groupBy },
   },
 }));
 
@@ -22,7 +24,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getAdminStats, getAdminPractitioners } from "@/app/admin/_data";
 
 beforeEach(() => {
-  for (const m of [auth, currentUser, findUnique, create, count, aggregate, findMany]) m.mockReset();
+  for (const m of [auth, currentUser, findUnique, create, count, aggregate, findMany, groupBy]) m.mockReset();
 });
 
 describe("requireAdmin — the /admin gate", () => {
@@ -85,7 +87,7 @@ describe("admin data", () => {
     expect((await getAdminStats()).totalViews).toBe(0);
   });
 
-  it("getAdminPractitioners flattens the related user email", async () => {
+  it("getAdminPractitioners flattens the related user email + derives recent-view counts", async () => {
     findMany.mockResolvedValue([
       {
         id: "p1",
@@ -96,12 +98,22 @@ describe("admin data", () => {
         viewCount: 3,
         region: null,
         featured: false,
+        createdAt: new Date(0),
         updatedAt: new Date(0),
         user: { email: "a@b.com" },
       },
     ]);
+    // groupBy is called 3× (7d count, 30d count, lifetime last-viewed) — resolve each.
+    groupBy
+      .mockResolvedValueOnce([{ practitionerId: "p1", _count: { _all: 2 } }]) // 7d
+      .mockResolvedValueOnce([{ practitionerId: "p1", _count: { _all: 5 } }]) // 30d
+      .mockResolvedValueOnce([{ practitionerId: "p1", _max: { viewedAt: new Date(1000) } }]); // last viewed
     const rows = await getAdminPractitioners();
     expect(rows[0].email).toBe("a@b.com");
     expect(rows[0]).not.toHaveProperty("user");
+    expect(rows[0].views7).toBe(2);
+    expect(rows[0].views30).toBe(5);
+    expect(rows[0].lastViewedAt).toEqual(new Date(1000));
+    expect(rows[0].lastSeenAt).toBeNull();
   });
 });
