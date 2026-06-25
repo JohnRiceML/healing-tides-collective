@@ -6,7 +6,9 @@ import { requireAdmin } from "@/lib/auth";
 
 import { selectReminderRecipients } from "@/lib/completeness-reminders";
 
-import { getAdminInvites, getAdminPractitioners, getAdminStats, getReminderCandidates } from "./_data";
+import { getAdminInvites, getAdminPractitioners, getReminderCandidates } from "./_data";
+import { computeAdminOverview } from "./overview";
+import { AdminOverview } from "./AdminOverview";
 import { CompletenessReminders } from "./CompletenessReminders";
 import { CredentialVerification } from "./CredentialVerification";
 import { InviteCreator } from "./InviteCreator";
@@ -21,45 +23,33 @@ export const metadata: Metadata = {
 // Auth-gated + reads the DB per request.
 export const dynamic = "force-dynamic";
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-rule bg-white px-5 py-4">
-      <div className="font-display text-[28px] leading-none text-charcoal">{value}</div>
-      <div className="meta mt-2 text-ink-muted">{label}</div>
-    </div>
-  );
-}
-
 export default async function AdminPage() {
   // Gate: only ADMIN users. Everyone else (signed-out or not admin) gets a 404,
   // which also keeps the route's existence hidden.
   const admin = await requireAdmin();
   if (!admin) notFound();
 
-  const [stats, rows, invites, reminderCandidates] = await Promise.all([
-    getAdminStats(),
+  const now = new Date();
+  const [rows, invites, reminderCandidates] = await Promise.all([
     getAdminPractitioners(),
     getAdminInvites(),
     getReminderCandidates(),
   ]);
-  const eligibleReminders = selectReminderRecipients(reminderCandidates, { now: new Date() }).length;
+  const eligibleReminders = selectReminderRecipients(reminderCandidates, { now }).length;
+  const invitesPending = invites.filter((i) => i.status === "pending").length;
+  const overview = computeAdminOverview(rows, { now, invitesPending, dueReminders: eligibleReminders });
 
   return (
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
       <Container size="wide" className="py-14 md:py-20">
         <p className="meta text-ink-muted">Admin</p>
         <h1 className="font-display mt-3 text-[clamp(28px,5vw,44px)] font-light tracking-[-0.02em]">
-          Practitioners
+          Overview
         </h1>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Total" value={stats.total} />
-          <Stat label="Published" value={stats.published} />
-          <Stat label="Drafts" value={stats.draft} />
-          <Stat label="Total views" value={stats.totalViews} />
-        </div>
+        <AdminOverview overview={overview} />
 
-        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <div className="mt-10 grid gap-4 lg:grid-cols-2">
           <InviteCreator />
           <CompletenessReminders eligible={eligibleReminders} />
         </div>
@@ -68,7 +58,7 @@ export default async function AdminPage() {
 
         <CredentialVerification rows={rows} />
 
-        <PractitionersTable rows={rows} now={new Date()} />
+        <PractitionersTable rows={rows} now={now} />
 
         <p className="mt-8 max-w-3xl text-[13px] leading-[1.6] text-ink-muted">
           <strong className="font-medium text-ink-soft">Visibility:</strong> &ldquo;Hold&rdquo; hides a
