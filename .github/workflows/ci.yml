@@ -1,8 +1,11 @@
 name: CI
 
-# Type-check + run the Vitest suite on every push and PR — mirrors the local
-# quality gate in AGENTS.md (`npx tsc --noEmit` + `npm test`). No secrets or DB
-# needed: the tests mock the DB, Clerk auth, and Next's cache.
+# Two gates on every push and PR:
+#   check     — type-check + the mocked Vitest suite (fast, no infra). Mirrors AGENTS.md.
+#   db-backed — the real-Postgres integration + Playwright E2E tiers, run against an EMBEDDED
+#               Postgres (downloaded into node_modules by `npm ci`) + Chromium. No secrets or
+#               external database needed: the app boots Clerk-off against a throwaway DB
+#               (see scripts/test-with-db.mjs + docs/TESTING.md).
 on:
   push:
   pull_request:
@@ -26,3 +29,30 @@ jobs:
         run: npx tsc --noEmit
       - name: Tests
         run: npm test
+
+  db-backed:
+    name: integration + e2e (real Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Integration (real Postgres via embedded-postgres)
+        run: npm run test:integration:db
+      - name: E2E (real Postgres + Chromium)
+        run: npm run test:e2e:db
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
