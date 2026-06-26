@@ -4,24 +4,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Container, DLRow } from "@/app/_components/ui";
-import { getPractitionerBySlug, type PractitionerProfile } from "@/lib/practitioners";
+import { getPractitionerBySlug } from "@/lib/practitioners";
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
 import { PROFILE_SECTIONS, optionLabel } from "@/app/_lib/profile-fields";
 import { safeWebsite } from "@/lib/url";
-import { SITE_URL } from "@/lib/site";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
+import { arrify, buildProfileMetadata, profileJsonLd } from "./seo";
 import { ProfileCover } from "../_components/ProfileCover";
 import { GetMatchedBar } from "../_components/GetMatchedBar";
 import { ViewBeacon } from "./ViewBeacon";
 import { SaveProfileButton } from "./SaveProfileButton";
 import { ExpandableValue } from "./ExpandableValue";
 
-// ── tiny field helpers ────────────────────────────────────────────────────────
-function arrify(v: unknown): string[] {
-  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string" && x.trim() !== "").map((s) => s.trim());
-  if (typeof v === "string" && v.trim()) return v.split(",").map((s) => s.trim()).filter(Boolean);
-  return [];
-}
+// ── tiny field helpers (arrify lives in ./seo, shared with the metadata builders) ──
 function fstr(v: unknown): string | null {
   if (typeof v === "string" && v.trim()) return v.trim();
   if (Array.isArray(v) && typeof v[0] === "string" && v[0].trim()) return v[0].trim();
@@ -53,12 +48,6 @@ function Leaf({ className = "" }: IconProps) {
       <path d="M8 16c2-3 5-6 9-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
-}
-
-/** First sentence (or a trimmed lead) of free text, for meta descriptions. */
-function leadFrom(text: string, max = 160): string {
-  const clean = text.replace(/\s+/g, " ").trim();
-  return clean.length <= max ? clean : `${clean.slice(0, max - 1).trimEnd()}…`;
 }
 
 function initialOf(name: string): string {
@@ -133,44 +122,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!p) {
     return { title: "Practitioner not found — Healing Tides Collective", description: "This practitioner profile isn't here." };
   }
-  const source = p.bio?.trim() || p.values?.trim() || "";
-  const description = source ? leadFrom(source) : `${p.displayName} — a practitioner in the Healing Tides Collective.`;
-  const url = `${SITE_URL}/practitioners/${p.slug}`;
-  return {
-    title: `${p.displayName} — Healing Tides Collective`,
-    description,
-    alternates: { canonical: url },
-    openGraph: {
-      title: `${p.displayName} — Healing Tides Collective`,
-      description,
-      url,
-      type: "profile",
-      ...(p.photoUrl ? { images: [{ url: p.photoUrl, alt: p.displayName }] } : {}),
-    },
-  };
-}
-
-function jsonLd(p: PractitionerProfile) {
-  const fv = (p.fieldValues ?? {}) as Record<string, unknown>;
-  const data: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: p.displayName,
-    url: `${SITE_URL}/practitioners/${p.slug}`,
-    // Entity-graph signal: ties each practitioner to the directory for search + AI understanding.
-    memberOf: { "@type": "Organization", name: "Healing Tides Collective", url: SITE_URL },
-  };
-  if (p.title) data.jobTitle = p.title;
-  if (p.bio) data.description = p.bio.replace(/\s+/g, " ").trim();
-  if (p.photoUrl) data.image = p.photoUrl;
-  if (p.specialties.length > 0) data.knowsAbout = p.specialties.map((id) => specialtyLabel(id));
-  if (p.region) data.areaServed = p.region;
-  const languages = arrify(fv.languages);
-  if (languages.length > 0) data.knowsLanguage = languages;
-  // NOTE: credentials are intentionally NOT emitted as schema `hasCredential` — they're
-  // unverified self-claims, and structured data would imply more authority than we've verified.
-  // They surface as plain profile text until the credential-validation system verifies them.
-  return data;
+  return buildProfileMetadata(p);
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
@@ -228,7 +180,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       <script
         type="application/ld+json"
         // Escape `<` so a practitioner's name/bio can't break out of the script tag.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(p)).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd(p)).replace(/</g, "\\u003c") }}
       />
 
       <Container size="wide" className="pb-16 pt-6 md:pb-24 md:pt-8">

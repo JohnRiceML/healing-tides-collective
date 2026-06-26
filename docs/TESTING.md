@@ -17,8 +17,10 @@ Roughly **369 tests**: 328 unit + 17 flow + 9 integration + 15 E2E. Gates on eve
 > *object shape*, not that Postgres honours it. The tiers that prove user-facing flows against
 > a real DB+browser (3 and 4) **skip green** unless a test DB is wired (see below). Treat a
 > skipped security/PII spec as a red, not a green. Current independent audit:
-> [docs/audits](audits/) — strong on the data-integrity + authorization core; the open gaps
-> are the Clerk webhook, SEO metadata, and wiring a CI test DB so tiers 3–4 actually execute.
+> [docs/audits](audits/) — strong on the data-integrity + authorization core. The Clerk webhook
+> (signature gate + ban→HIDDEN) and the profile SEO metadata/JSON-LD are now covered; the main
+> remaining gap is wiring a CI test DB so tiers 3–4 run on every push (`npm run test:e2e:db` /
+> `test:integration:db` need no external DB).
 
 ## Tier 2 — flow tests (the scalable part)
 
