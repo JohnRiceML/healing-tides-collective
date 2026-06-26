@@ -120,7 +120,8 @@ model Practitioner {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  views ProfileView[]
+  views   ProfileView[]
+  matches Match[]
 
   @@index([visibility])
   @@map("practitioners")
@@ -192,4 +193,87 @@ model Feedback {
   @@index([status])
   @@index([createdAt])
   @@map("feedback")
+}
+
+// ── Milestone 2: the seeker loop ─────────────────────────────────────────────
+// The app supports Nora's judgment, it doesn't replace it: matching STAYS HUMAN (see the
+// Phase-2 scope). A seeker submits an intake; Nora reads the free-text story and hand-picks a
+// shortlist (Match rows); the shortlist is emailed back (Phase 3).
+//
+// HIPAA posture (compliant-by-design; final sign-off is John/Christie's): MINIMAL PII — just a
+// name + email to send the shortlist. Preferences only. Insurance is a BOOLEAN, never a plan or
+// member id. No seeker account required. The free-text `story` is the sensitive field (it may
+// carry health context) — it lives only in our DB (Neon, encrypted at rest) and is never shown
+// to a practitioner until Nora chooses to.
+
+enum SeekerIntakeStatus {
+  NEW
+  REVIEWING
+  MATCHED
+  CLOSED
+}
+
+model SeekerIntake {
+  id String @id @default(cuid())
+
+  // Minimal contact — needed only to send the curated shortlist back.
+  name  String
+  email String
+
+  // The heart of it — what Nora reads, in the seeker's own words.
+  story String
+
+  // Structured preferences — all optional ("none of this is binding"); they narrow candidates.
+  lookingFor       String[] @default([]) // high-level care types (Therapy, Reiki, …)
+  specialties      String[] @default([]) // taxonomy category ids (areas of focus) → practitioner.specialties
+  region           String?
+  format           String? // in-person / virtual / either (modality preference)
+  ageGroup         String?  @map("age_group") // who the care is for
+  genderPreference String?  @map("gender_preference")
+  usesInsurance    Boolean? @map("uses_insurance") // boolean only — never a plan / member id
+  budgetNote       String?  @map("budget_note") // their own words, optional
+  availability     String?
+  urgency          String?
+
+  // Config-driven extras — Nora's final questions slot in here, migration-free (mirrors Practitioner.fieldValues).
+  fieldValues Json? @map("field_values")
+
+  // Signed-in user id, if any (most seekers are anonymous — informational, no FK).
+  userId String? @map("user_id")
+
+  status    SeekerIntakeStatus @default(NEW)
+  adminNote String?            @map("admin_note") // Nora's internal note
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  matches Match[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("seeker_intakes")
+}
+
+enum MatchStatus {
+  SUGGESTED // on Nora's shortlist, not yet sent
+  SENT // included in the shortlist emailed to the seeker
+  DECLINED // Nora removed it
+}
+
+// One practitioner Nora hand-picked for a seeker's intake (a shortlist is several of these).
+// The de-identified practitioner ping + the seeker email land in Phase 3.
+model Match {
+  id             String       @id @default(cuid())
+  seekerIntakeId String       @map("seeker_intake_id")
+  seekerIntake   SeekerIntake @relation(fields: [seekerIntakeId], references: [id], onDelete: Cascade)
+  practitionerId String       @map("practitioner_id")
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  status MatchStatus @default(SUGGESTED)
+  reason String? // Nora's "why I thought of them" sentence
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([seekerIntakeId, practitionerId]) // a practitioner appears once per intake
+  @@index([seekerIntakeId])
+  @@map("matches")
 }

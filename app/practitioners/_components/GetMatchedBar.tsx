@@ -2,7 +2,10 @@
 // you scroll (sticky), then settles at the end. Click-through sides so it never blocks
 // the cards/links behind it. Shared by the directory and the individual profile pages.
 
-const MATCH_MAILTO = "mailto:hello@healingtides.co?subject=Help%20me%20find%20a%20fit";
+import Link from "next/link";
+
+// The real seeker intake — Nora reads it + sends back a curated shortlist (was a mailto).
+const MATCH_HREF = "/get-matched";
 
 function Leaf({ className = "" }: { className?: string }) {
   return (
@@ -39,12 +42,12 @@ export function GetMatchedBar({
         <p className="flex-1 text-[13.5px] leading-[1.4] text-ink-soft sm:text-[14px]">
           <span className="text-charcoal">{title}</span> {body}
         </p>
-        <a
-          href={MATCH_MAILTO}
+        <Link
+          href={MATCH_HREF}
           className="inline-flex shrink-0 items-center justify-center rounded-full bg-charcoal px-4 py-2.5 text-[13px] font-medium text-sand transition-colors hover:bg-charcoal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/40 focus-visible:ring-offset-2 focus-visible:ring-offset-sand sm:px-5"
         >
           {cta}
-        </a>
+        </Link>
       </div>
     </div>
   );

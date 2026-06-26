@@ -205,3 +205,65 @@ export async function countNewFeedback(): Promise<number> {
     return 0;
   }
 }
+
+// ── Seeker intakes (M2) ──────────────────────────────────────────────────────
+export type AdminSeekerRow = {
+  id: string;
+  name: string;
+  email: string;
+  story: string;
+  lookingFor: string[];
+  specialties: string[];
+  region: string | null;
+  format: string | null;
+  ageGroup: string | null;
+  genderPreference: string | null;
+  usesInsurance: boolean | null;
+  budgetNote: string | null;
+  availability: string | null;
+  urgency: string | null;
+  status: string;
+  createdAt: Date;
+  matchCount: number; // practitioners already on Nora's shortlist (Phase 2)
+};
+
+// All seeker intakes, newest first. ADMIN-ONLY. Resilient: returns [] until the table is migrated.
+export async function getSeekerIntakes(): Promise<AdminSeekerRow[]> {
+  try {
+    const rows = await db.seekerIntake.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      take: 500,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        story: true,
+        lookingFor: true,
+        specialties: true,
+        region: true,
+        format: true,
+        ageGroup: true,
+        genderPreference: true,
+        usesInsurance: true,
+        budgetNote: true,
+        availability: true,
+        urgency: true,
+        status: true,
+        createdAt: true,
+        _count: { select: { matches: true } },
+      },
+    });
+    return rows.map(({ _count, ...r }) => ({ ...r, matchCount: _count.matches }));
+  } catch {
+    return [];
+  }
+}
+
+// New (un-reviewed) intakes for the Overview "needs attention" tile. Resilient → 0.
+export async function countNewIntakes(): Promise<number> {
+  try {
+    return await db.seekerIntake.count({ where: { status: "NEW" } });
+  } catch {
+    return 0;
+  }
+}
