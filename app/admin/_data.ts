@@ -172,6 +172,8 @@ export type AdminFeedbackRow = {
   email: string | null;
   path: string | null;
   userId: string | null;
+  role: string | null;
+  screenshotUrl: string | null;
   status: string;
   adminNote: string | null;
   createdAt: Date;

@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 
-import { validateFeedback, isValidStatus, feedbackStatusLabel, isOpenStatus, kindLabel } from "@/lib/feedback";
+import { validateFeedback, isValidStatus, feedbackStatusLabel, isOpenStatus, kindLabel, roleLabel } from "@/lib/feedback";
 
 describe("validateFeedback", () => {
   it("accepts + normalizes a good submission", () => {
     const r = validateFeedback({ message: "  The filter is broken  ", kind: "bug", email: "Me@Example.com ", path: "/practitioners" });
     expect(r).toEqual({
       ok: true,
-      value: { message: "The filter is broken", kind: "BUG", email: "me@example.com", path: "/practitioners" },
+      value: { message: "The filter is broken", kind: "BUG", email: "me@example.com", path: "/practitioners", screenshotUrl: null },
     });
   });
 
@@ -35,6 +35,13 @@ describe("validateFeedback", () => {
       expect(r.value.path?.length).toBe(300);
     }
   });
+
+  it("keeps an https screenshot URL and drops a non-https one", () => {
+    const ok = validateFeedback({ message: "see attached", screenshotUrl: "https://x.blob.vercel-storage.com/a.png" });
+    expect(ok.ok && ok.value.screenshotUrl).toBe("https://x.blob.vercel-storage.com/a.png");
+    const bad = validateFeedback({ message: "see attached", screenshotUrl: "http://x/a.png" });
+    expect(bad.ok && bad.value.screenshotUrl).toBeNull();
+  });
 });
 
 describe("status + kind helpers", () => {
@@ -49,5 +56,11 @@ describe("status + kind helpers", () => {
   });
   it("labels kinds", () => {
     expect(kindLabel("BUG")).toBe("Something's broken");
+  });
+  it("labels sender roles (falls back to Visitor)", () => {
+    expect(roleLabel("PRACTITIONER")).toBe("Practitioner");
+    expect(roleLabel("SEEKER")).toBe("Seeker");
+    expect(roleLabel("ADMIN")).toBe("Admin");
+    expect(roleLabel(null)).toBe("Visitor");
   });
 });

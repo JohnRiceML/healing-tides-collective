@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { FEEDBACK_STATUSES, feedbackStatusLabel, kindLabel } from "@/lib/feedback";
+import { FEEDBACK_STATUSES, feedbackStatusLabel, kindLabel, roleLabel } from "@/lib/feedback";
 import { setFeedbackStatus } from "./actions";
 import type { AdminFeedbackRow } from "./_data";
 
@@ -35,6 +35,7 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
     <li className="rounded-xl border border-rule/70 bg-white p-4">
       <div className="flex flex-wrap items-center gap-2 text-[12px]">
         <span className="rounded-full bg-sand px-2.5 py-0.5 text-ink-soft">{kindLabel(row.kind)}</span>
+        <span className="rounded-full bg-charcoal/5 px-2.5 py-0.5 text-ink-muted">{roleLabel(row.role)}</span>
         <span className={`rounded-full px-2.5 py-0.5 ${STATUS_CHIP[status] ?? "bg-charcoal/5 text-ink-muted"}`}>
           {feedbackStatusLabel(status)}
         </span>
@@ -46,6 +47,12 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
       {row.email ? (
         <a href={`mailto:${row.email}`} className="mt-1 inline-block text-[13px] text-teal underline-offset-2 hover:underline">
           {row.email}
+        </a>
+      ) : null}
+      {row.screenshotUrl ? (
+        <a href={row.screenshotUrl} target="_blank" rel="noreferrer" className="mt-2 block w-fit">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={row.screenshotUrl} alt="Attached screenshot" className="max-h-36 rounded-lg border border-rule" />
         </a>
       ) : null}
 

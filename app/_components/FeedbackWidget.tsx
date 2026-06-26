@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { usePathname } from "next/navigation";
 
 import { FEEDBACK_KINDS, MAX_FEEDBACK_MESSAGE } from "@/lib/feedback";
-import { submitFeedback } from "@/app/feedback/actions";
+import { submitFeedback, uploadFeedbackScreenshot } from "@/app/feedback/actions";
 
 type Phase = "idle" | "done" | "error";
 
@@ -14,9 +14,13 @@ export function FeedbackWidget() {
   const [kind, setKind] = useState<string>("");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
+  const [shotUrl, setShotUrl] = useState<string | null>(null);
+  const [shotUploading, setShotUploading] = useState(false);
+  const [shotError, setShotError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // The admin has its own Feedback queue; the Sanity studio is a separate surface.
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/studio")) return null;
@@ -25,14 +29,36 @@ export function FeedbackWidget() {
     setKind("");
     setMessage("");
     setEmail("");
+    setShotUrl(null);
+    setShotError(null);
     setPhase("idle");
     setError(null);
+  }
+
+  async function onShotChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setShotError(null);
+    setShotUploading(true);
+    const fd = new FormData();
+    fd.append("screenshot", file);
+    const res = await uploadFeedbackScreenshot(fd);
+    setShotUploading(false);
+    if (res.ok) setShotUrl(res.url);
+    else setShotError(res.error);
   }
 
   function send() {
     setError(null);
     start(async () => {
-      const res = await submitFeedback({ message, kind: kind || undefined, email: email || undefined, path: pathname ?? undefined });
+      const res = await submitFeedback({
+        message,
+        kind: kind || undefined,
+        email: email || undefined,
+        path: pathname ?? undefined,
+        screenshotUrl: shotUrl || undefined,
+      });
       if (res.ok) setPhase("done");
       else {
         setError(res.error);
@@ -46,10 +72,11 @@ export function FeedbackWidget() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Send feedback"
-        className="fixed left-0 top-1/2 z-[190] -translate-y-1/2 rounded-r-xl bg-charcoal/90 px-2 py-3 text-[13px] tracking-wide text-sand shadow-md transition-colors hover:bg-charcoal [writing-mode:vertical-rl] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+        aria-label="Share feedback"
+        className="group fixed left-0 top-1/2 z-[190] flex -translate-y-1/2 items-center gap-1.5 rounded-r-2xl bg-teal py-4 pl-2 pr-2.5 text-sand shadow-[0_12px_30px_-12px_rgba(31,58,95,0.5)] transition-all duration-200 hover:bg-teal hover:pr-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/50"
       >
-        Feedback
+        <span aria-hidden className="text-[13px] leading-none">♥</span>
+        <span className="text-[13px] font-medium tracking-[0.04em] [writing-mode:vertical-rl]">Feedback</span>
       </button>
     );
   }
@@ -57,12 +84,12 @@ export function FeedbackWidget() {
   return (
     <div
       role="dialog"
-      aria-label="Send feedback"
-      className="fixed bottom-4 left-4 z-[200] w-[min(92vw,340px)] rounded-2xl border border-rule bg-white p-5 shadow-[0_18px_50px_-24px_rgba(31,58,95,0.35)] sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2"
+      aria-label="Share feedback"
+      className="fixed bottom-4 left-4 z-[200] max-h-[85vh] w-[min(92vw,340px)] overflow-y-auto rounded-2xl border border-rule bg-white p-5 shadow-[0_20px_55px_-22px_rgba(31,58,95,0.4)] sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="font-display text-[17px] leading-tight text-charcoal">
-          {phase === "done" ? "Thank you" : "Share feedback"}
+        <p className="font-display text-[18px] leading-tight text-charcoal">
+          {phase === "done" ? "Thank you ♥" : "We'd love your thoughts"}
         </p>
         <button
           type="button"
@@ -71,7 +98,7 @@ export function FeedbackWidget() {
             if (phase === "done") reset();
           }}
           aria-label="Close feedback"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-ink-muted hover:bg-sand/70 hover:text-charcoal"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-sand/70 hover:text-charcoal"
         >
           ×
         </button>
@@ -92,6 +119,10 @@ export function FeedbackWidget() {
         </div>
       ) : (
         <>
+          <p className="mt-1 text-[13px] leading-[1.55] text-ink-soft">
+            Found something off, or have an idea? We&rsquo;re listening.
+          </p>
+
           <div className="mt-3 flex flex-wrap gap-1.5">
             {FEEDBACK_KINDS.map((k) => (
               <button
@@ -113,7 +144,7 @@ export function FeedbackWidget() {
             maxLength={MAX_FEEDBACK_MESSAGE}
             placeholder="What's on your mind?"
             aria-label="Your feedback"
-            className="mt-3 min-h-[96px] w-full rounded-xl border border-rule bg-white px-3 py-2 text-[14px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
+            className="mt-3 min-h-[92px] w-full rounded-xl border border-rule bg-white px-3 py-2 text-[14px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
           />
 
           <input
@@ -124,6 +155,30 @@ export function FeedbackWidget() {
             aria-label="Your email (optional)"
             className="mt-2 h-10 w-full rounded-xl border border-rule bg-white px-3 text-[14px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
           />
+
+          {/* Screenshot attach */}
+          <input ref={fileRef} type="file" accept="image/*" onChange={onShotChange} className="hidden" />
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {shotUrl ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-teal/30 bg-seafoam/30 px-2.5 py-1 text-[12.5px] text-teal">
+                <img src={shotUrl} alt="" className="h-5 w-5 rounded object-cover" />
+                Screenshot attached
+                <button type="button" aria-label="Remove screenshot" onClick={() => setShotUrl(null)} className="text-ink-muted hover:text-charcoal">
+                  ×
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={shotUploading}
+                className="rounded-full border border-rule px-3 py-1.5 text-[12.5px] text-ink-soft hover:bg-sand/60 disabled:opacity-50"
+              >
+                {shotUploading ? "Uploading…" : "Attach a screenshot"}
+              </button>
+            )}
+          </div>
+          {shotError ? <p className="mt-1 text-[12px] text-ocean">{shotError}</p> : null}
 
           {error ? <p role="alert" className="mt-2 text-[13px] text-ocean">{error}</p> : null}
 
@@ -136,7 +191,7 @@ export function FeedbackWidget() {
             {pending ? "Sending…" : "Send"}
           </button>
           <p className="mt-2 text-[11.5px] leading-[1.5] text-ink-muted">
-            Goes straight to the team. No account needed.
+            Goes straight to the team. No account needed — we&rsquo;ll note your page automatically.
           </p>
         </>
       )}

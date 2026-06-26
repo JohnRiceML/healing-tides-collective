@@ -182,6 +182,8 @@ model Feedback {
   email      String? // optional — only if they want a reply
   path       String? // the page it came from
   userId     String?        @map("user_id") // signed-in user, if any (informational; no FK so anon stays simple)
+  role       String? // who sent it — ANONYMOUS / SEEKER / PRACTITIONER / ADMIN (resolved server-side)
+  screenshotUrl String?     @map("screenshot_url") // optional attached screenshot (Vercel Blob)
   status     FeedbackStatus @default(NEW)
   adminNote  String?        @map("admin_note") // the triage / fix note
   createdAt  DateTime       @default(now()) @map("created_at")

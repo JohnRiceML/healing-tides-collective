@@ -25,8 +25,14 @@ const KIND_SET = new Set<string>(FEEDBACK_KINDS.map((k) => k.value));
 const STATUS_SET = new Set<string>(FEEDBACK_STATUSES.map((s) => s.value));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type FeedbackInput = { message: string; kind?: string; email?: string; path?: string };
-export type CleanFeedback = { message: string; kind: FeedbackKind; email: string | null; path: string | null };
+export type FeedbackInput = { message: string; kind?: string; email?: string; path?: string; screenshotUrl?: string };
+export type CleanFeedback = {
+  message: string;
+  kind: FeedbackKind;
+  email: string | null;
+  path: string | null;
+  screenshotUrl: string | null;
+};
 
 /** Validate + normalize a submission. Pure — the action persists the returned value. */
 export function validateFeedback(
@@ -47,7 +53,34 @@ export function validateFeedback(
   const pathRaw = (input.path ?? "").trim();
   const path = pathRaw ? pathRaw.slice(0, 300) : null;
 
-  return { ok: true, value: { message, kind, email, path } };
+  // Screenshot URL is set by our own upload action (a Vercel Blob https URL); keep only https.
+  const shotRaw = (input.screenshotUrl ?? "").trim();
+  let screenshotUrl: string | null = null;
+  if (shotRaw) {
+    try {
+      if (new URL(shotRaw).protocol === "https:") screenshotUrl = shotRaw;
+    } catch {
+      /* a bad URL just means no screenshot — never block the submission */
+    }
+  }
+
+  return { ok: true, value: { message, kind, email, path, screenshotUrl } };
+}
+
+/** Friendly label for the captured sender role. */
+export function roleLabel(role: string | null | undefined): string {
+  switch (role) {
+    case "PRACTITIONER":
+      return "Practitioner";
+    case "SEEKER":
+      return "Seeker";
+    case "ADMIN":
+      return "Admin";
+    case "SIGNED_IN":
+      return "Signed in";
+    default:
+      return "Visitor";
+  }
 }
 
 export function isValidStatus(status: string): boolean {
