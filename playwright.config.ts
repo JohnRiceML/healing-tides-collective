@@ -55,6 +55,12 @@ export default defineConfig({
       E2E_AUTH_BYPASS: "1",
       ADMIN_EMAILS: "e2e-admin@healingtides.test",
       ANTHROPIC_API_KEY: "", // keep E2E offline — never reach Claude
+      // Sanity backs /journal + /studio (NOT exercised by E2E), but sanity/env.ts asserts these
+      // at import time and the root layout pulls it in — so the app won't boot without them in
+      // CI (no .env.local). Self-contained dummies; never queried by any E2E spec.
+      NEXT_PUBLIC_SANITY_PROJECT_ID: "e2etest",
+      NEXT_PUBLIC_SANITY_DATASET: "production",
+      NEXT_PUBLIC_SANITY_API_VERSION: "2026-05-07",
     },
   },
 });
