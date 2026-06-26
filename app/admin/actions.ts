@@ -343,3 +343,18 @@ export async function setFeedbackStatus(
   revalidatePath("/admin");
   return { ok: true };
 }
+
+/** Permanently delete a feedback item (spam / handled / noise). ADMIN-ONLY. Unlike invites
+ *  there's no claim to protect, so a hard delete is fine. Resilient. */
+export async function deleteFeedback(id: string): Promise<{ ok: boolean; error?: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+  try {
+    await db.feedback.delete({ where: { id } });
+  } catch {
+    return { ok: false, error: "Couldn't delete — it may already be gone." };
+  }
+  revalidatePath("/admin/feedback");
+  revalidatePath("/admin");
+  return { ok: true };
+}

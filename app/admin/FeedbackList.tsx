@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 
 import { FEEDBACK_STATUSES, feedbackStatusLabel, kindLabel, roleLabel } from "@/lib/feedback";
-import { setFeedbackStatus } from "./actions";
+import { deleteFeedback, setFeedbackStatus } from "./actions";
 import type { AdminFeedbackRow } from "./_data";
 
 const STATUS_CHIP: Record<string, string> = {
@@ -19,6 +19,8 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
   const [note, setNote] = useState(row.adminNote ?? "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [removed, setRemoved] = useState(false);
   const [pending, start] = useTransition();
 
   function save() {
@@ -31,6 +33,20 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
     });
   }
 
+  function remove() {
+    setError(null);
+    start(async () => {
+      const res = await deleteFeedback(row.id);
+      if (res.ok) setRemoved(true);
+      else {
+        setError(res.error ?? "Couldn't delete.");
+        setConfirming(false);
+      }
+    });
+  }
+
+  if (removed) return null;
+
   return (
     <li className="rounded-xl border border-rule/70 bg-white p-4">
       <div className="flex flex-wrap items-center gap-2 text-[12px]">
@@ -39,7 +55,7 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
         <span className={`rounded-full px-2.5 py-0.5 ${STATUS_CHIP[status] ?? "bg-charcoal/5 text-ink-muted"}`}>
           {feedbackStatusLabel(status)}
         </span>
-        <span className="text-ink-muted">{row.createdAt.toISOString().slice(0, 10)}</span>
+        <span className="text-ink-muted">{row.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC</span>
         {row.path ? <span className="text-ink-muted">· {row.path}</span> : null}
       </div>
 
@@ -86,6 +102,30 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
         </button>
         {saved ? <span className="text-[12px] text-teal">Saved ✓</span> : null}
         {error ? <span className="text-[12px] text-ocean">{error}</span> : null}
+        {confirming ? (
+          <span className="ml-auto inline-flex items-center gap-2 text-[12px]">
+            <span className="text-ink-soft">Delete?</span>
+            <button
+              type="button"
+              onClick={remove}
+              disabled={pending}
+              className="rounded-full bg-ocean/10 px-2.5 py-1 text-ocean hover:bg-ocean/20 disabled:opacity-50"
+            >
+              Yes, delete
+            </button>
+            <button type="button" onClick={() => setConfirming(false)} className="rounded-full px-2 py-1 text-ink-muted hover:text-charcoal">
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            className="ml-auto rounded-full px-2.5 py-1 text-[12px] text-ink-muted hover:text-ocean"
+          >
+            Delete
+          </button>
+        )}
       </div>
     </li>
   );
@@ -93,7 +133,19 @@ function FeedbackItem({ row }: { row: AdminFeedbackRow }) {
 
 export function FeedbackList({ rows }: { rows: AdminFeedbackRow[] }) {
   const [filter, setFilter] = useState("all");
-  const filtered = useMemo(() => (filter === "all" ? rows : rows.filter((r) => r.status === filter)), [rows, filter]);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (filter !== "all" && r.status !== filter) return false;
+        const day = r.createdAt.toISOString().slice(0, 10); // YYYY-MM-DD compares lexicographically
+        if (from && day < from) return false;
+        if (to && day > to) return false;
+        return true;
+      }),
+    [rows, filter, from, to],
+  );
   const FILTERS = [{ id: "all", label: "All" }, ...FEEDBACK_STATUSES.map((s) => ({ id: s.value, label: s.label }))];
 
   if (rows.length === 0) {
@@ -122,6 +174,41 @@ export function FeedbackList({ rows }: { rows: AdminFeedbackRow[] }) {
         <span className="ml-auto text-[13px] text-ink-muted">
           {filtered.length} of {rows.length}
         </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-ink-muted">
+        <label className="flex items-center gap-1.5">
+          From
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            aria-label="From date"
+            className="h-9 rounded-full border border-rule bg-white px-3 text-[13px] text-charcoal focus:border-teal focus:outline-none"
+          />
+        </label>
+        <label className="flex items-center gap-1.5">
+          To
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            aria-label="To date"
+            className="h-9 rounded-full border border-rule bg-white px-3 text-[13px] text-charcoal focus:border-teal focus:outline-none"
+          />
+        </label>
+        {from || to ? (
+          <button
+            type="button"
+            onClick={() => {
+              setFrom("");
+              setTo("");
+            }}
+            className="rounded-full border border-rule px-3 py-1.5 text-[13px] text-ink-soft hover:bg-sand/60"
+          >
+            Clear dates
+          </button>
+        ) : null}
       </div>
 
       {filtered.length === 0 ? (
