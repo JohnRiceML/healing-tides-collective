@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { Container } from "@/app/_components/ui";
 import { getPractitioner } from "@/lib/auth";
-import { clerkEnabled } from "@/lib/clerk-enabled";
+import { authEnabled } from "@/lib/clerk-enabled";
 
 import { ProfileEditor } from "../ProfileEditor";
 
@@ -26,7 +26,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default async function EditProfilePage() {
-  if (!clerkEnabled) {
+  if (!authEnabled) {
     return (
       <Shell>
         <p className="text-ink-soft">

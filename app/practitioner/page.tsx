@@ -7,7 +7,7 @@ import { Button, Card, Container, LinkButton } from "@/app/_components/ui";
 import { getPractitioner } from "@/lib/auth";
 import { becomePractitioner } from "./actions";
 import { completeClaim } from "@/app/claim/claim-actions";
-import { clerkEnabled } from "@/lib/clerk-enabled";
+import { authEnabled } from "@/lib/clerk-enabled";
 import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
@@ -103,7 +103,7 @@ function BoostArt() {
 }
 
 export default async function PractitionerHome() {
-  if (!clerkEnabled) {
+  if (!authEnabled) {
     return (
       <Shell>
         <p className="text-ink-soft">

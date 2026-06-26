@@ -5,12 +5,37 @@
 // proxy (use lib/clerk-enabled there instead).
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 
 import { db } from "@/lib/db";
 import { clerkEnabled } from "@/lib/clerk-enabled";
 import type { Practitioner, User } from "@/lib/generated/prisma/client";
 
 export { clerkEnabled };
+
+// ── E2E test-auth bypass (the "get around Clerk" workaround) ──────────────────
+// Playwright can't drive a real Clerk sign-in (bot detection, hosted UI, real creds),
+// so the E2E run starts the app with Clerk DISABLED and this flag ON, then "signs in"
+// by setting an `e2e_uid` cookie (a test user's clerkUserId). getCurrentDbUser resolves
+// it to a real User row, so every downstream gate (practitioner, admin) just works.
+//
+// SAFETY — two independent guards make this unreachable in production:
+//   1. It only fires when E2E_AUTH_BYPASS === "1", an env var set ONLY by the Playwright
+//      webServer (never in Vercel).
+//   2. It lives inside the `!clerkEnabled` branch — and production runs with Clerk ENABLED,
+//      so that branch never executes there regardless of the flag.
+const E2E_AUTH_BYPASS = process.env.E2E_AUTH_BYPASS === "1";
+
+async function e2eUserFromCookie(): Promise<User | null> {
+  const jar = await cookies();
+  const uid = jar.get("e2e_uid")?.value;
+  if (!uid) return null;
+  const existing = await db.user.findUnique({ where: { clerkUserId: uid } });
+  if (existing) return existing;
+  // Mirror the real create-on-first-sight path so brand-new-user flows are testable too.
+  const email = jar.get("e2e_email")?.value ?? `${uid}@e2e.test`;
+  return db.user.create({ data: { clerkUserId: uid, email } });
+}
 
 /**
  * Resolve the signed-in Clerk user to our local `User` row, creating it on first
@@ -19,7 +44,9 @@ export { clerkEnabled };
  * route handler) — `auth()` needs the Clerk proxy to have run.
  */
 export async function getCurrentDbUser(): Promise<User | null> {
-  if (!clerkEnabled) return null;
+  if (!clerkEnabled) {
+    return E2E_AUTH_BYPASS ? e2eUserFromCookie() : null;
+  }
   const { userId } = await auth();
   if (!userId) return null;
 

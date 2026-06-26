@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Container } from "@/app/_components/ui";
 import { getPractitioner } from "@/lib/auth";
-import { clerkEnabled } from "@/lib/clerk-enabled";
+import { authEnabled } from "@/lib/clerk-enabled";
 import { weeklyViewBuckets } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
 import { buildBrand, stateFromScore } from "@/lib/brand";
@@ -47,7 +47,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 export default async function PractitionerBrandPage() {
   // Same calm gates the dashboard uses — never promote a seeker, never crash on
   // an un-configured auth setup.
-  if (!clerkEnabled) {
+  if (!authEnabled) {
     return (
       <Shell>
         <p className="text-ink-soft">
