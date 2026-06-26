@@ -1,80 +1,79 @@
 import type { FullConfig } from "@playwright/test";
+import { Client } from "pg";
 
 import { SEED, SEED_FEEDBACK } from "./fixtures";
 
 /**
  * Seed the E2E database before the run.
  *
- * No-op (with a clear note) when TEST_DATABASE_URL is unset — the DB-backed specs then
- * skip and only the static smoke specs run. It ONLY ever writes to TEST_DATABASE_URL, so
- * it can never touch the production DB.
+ * No-op (with a note) when TEST_DATABASE_URL is unset — the DB-backed specs then skip and only
+ * the static smoke specs run. It ONLY ever writes to TEST_DATABASE_URL, so it can never touch
+ * the production DB.
  *
- * One-time schema setup on the test DB:
- *   DATABASE_URL=$TEST_DATABASE_URL npx prisma db push
+ * Uses node-postgres with raw SQL rather than the Prisma client on purpose: Playwright's loader
+ * can't load the app's generated client (it's TypeScript using the `@/` alias + import.meta).
+ * Enum values are inline literals (Postgres coerces them to the column's enum type); the trusted
+ * fixture strings are parameterized.
+ *
+ * Easiest full run (spins up a throwaway Postgres, no system install):
+ *   node scripts/test-with-db.mjs npm run test:e2e
  */
 async function globalSetup(_config: FullConfig) {
   const testDb = process.env.TEST_DATABASE_URL;
   if (!testDb) {
     console.warn(
       "\n[e2e] TEST_DATABASE_URL not set — seeding skipped; DB-backed specs will skip.\n" +
-        "      Full run:  DATABASE_URL=$TEST_DATABASE_URL npx prisma db push\n" +
-        "                 TEST_DATABASE_URL=… npm run test:e2e\n",
+        "      Full run:  node scripts/test-with-db.mjs npm run test:e2e\n",
     );
     return;
   }
 
-  // Point the app's Prisma client at the test DB before importing it.
-  process.env.DATABASE_URL = testDb;
-  process.env.DATABASE_URL_UNPOOLED = testDb;
-  const { db } = await import("../lib/db");
-
+  const client = new Client({ connectionString: testDb });
+  await client.connect();
   try {
-    await db.$executeRawUnsafe(
+    await client.query(
       'TRUNCATE TABLE "feedback","invites","profile_views","practitioners","users" RESTART IDENTITY CASCADE',
     );
 
-    // Admin identity.
-    await db.user.create({
-      data: { clerkUserId: SEED.admin.clerkUserId, email: SEED.admin.email, role: "ADMIN" },
-    });
+    // Admin identity (role ADMIN — also in the webServer's ADMIN_EMAILS).
+    await client.query(
+      `INSERT INTO users (id, clerk_user_id, email, role, updated_at) VALUES ($1,$2,$3,'ADMIN',now())`,
+      ["e2e-admin", SEED.admin.clerkUserId, SEED.admin.email],
+    );
 
     // Published practitioner: user + a complete-enough public profile.
-    const pubUser = await db.user.create({
-      data: {
-        clerkUserId: SEED.published.clerkUserId,
-        email: SEED.published.email,
-        role: "PRACTITIONER",
-      },
-    });
-    await db.practitioner.create({
-      data: {
-        userId: pubUser.id,
-        slug: SEED.published.slug,
-        displayName: SEED.published.displayName,
-        bio: SEED.published.bio,
-        region: SEED.published.region,
-        visibility: "PUBLISHED",
-        completeness: 80,
-      },
-    });
+    await client.query(
+      `INSERT INTO users (id, clerk_user_id, email, role, updated_at) VALUES ($1,$2,$3,'PRACTITIONER',now())`,
+      ["e2e-pub-user", SEED.published.clerkUserId, SEED.published.email],
+    );
+    await client.query(
+      `INSERT INTO practitioners (id, user_id, slug, display_name, bio, region, visibility, completeness, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,'PUBLISHED',80,now())`,
+      [
+        "e2e-pub-prac",
+        "e2e-pub-user",
+        SEED.published.slug,
+        SEED.published.displayName,
+        SEED.published.bio,
+        SEED.published.region,
+      ],
+    );
 
     // Plain seeker (no practitioner profile).
-    await db.user.create({
-      data: { clerkUserId: SEED.seeker.clerkUserId, email: SEED.seeker.email },
-    });
+    await client.query(
+      `INSERT INTO users (id, clerk_user_id, email, role, updated_at) VALUES ($1,$2,$3,'SEEKER',now())`,
+      ["e2e-seeker-user", SEED.seeker.clerkUserId, SEED.seeker.email],
+    );
 
-    // One feedback row for the admin queue.
-    await db.feedback.create({
-      data: {
-        message: SEED_FEEDBACK.message,
-        kind: SEED_FEEDBACK.kind,
-        status: SEED_FEEDBACK.status,
-      },
-    });
+    // One feedback row for the admin queue (kind/status match SEED_FEEDBACK).
+    await client.query(`INSERT INTO feedback (id, message, kind, status) VALUES ($1,$2,'PRAISE','NEW')`, [
+      "e2e-fb-1",
+      SEED_FEEDBACK.message,
+    ]);
 
     console.log("[e2e] seeded test database");
   } finally {
-    await db.$disconnect();
+    await client.end();
   }
 }
 

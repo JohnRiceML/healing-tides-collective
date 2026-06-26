@@ -66,3 +66,6 @@ backups/
 /playwright-report/
 /playwright/.cache/
 /blob-report/
+
+# embedded-postgres throwaway data dir (scripts/test-with-db.mjs)
+/.pgtest-data/

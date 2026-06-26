@@ -37,6 +37,7 @@ test.describe("Feedback widget", () => {
     const panel = await openWidget(page);
     await panel.getByLabel("Your feedback").fill("E2E: the crisis page was easy to find.");
     await panel.getByRole("button", { name: "Send" }).click();
-    await expect(panel.getByText(/Thank you/i)).toBeVisible();
+    // Exact heading — the body copy also contains "thank you", so a loose match is ambiguous.
+    await expect(panel.getByText("Thank you ♥")).toBeVisible();
   });
 });

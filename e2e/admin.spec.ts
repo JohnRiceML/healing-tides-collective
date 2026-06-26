@@ -20,8 +20,9 @@ test.describe("Admin — gated by requireAdmin, reached via the bypass", () => {
     await signInAs(context, SEED.admin);
     const res = await page.goto("/admin");
     expect(res?.status()).toBe(200);
-    // The admin chrome (tabs) only renders for admins.
-    await expect(page.getByRole("link", { name: "Feedback" })).toBeVisible();
+    // The admin chrome (tabs) only renders for admins. exact: true → the nav tab, not the
+    // overview's "New feedback" card (both link to /admin/feedback).
+    await expect(page.getByRole("link", { name: "Feedback", exact: true })).toBeVisible();
   });
 
   test("the feedback queue surfaces seeded feedback", async ({ page, context }) => {
