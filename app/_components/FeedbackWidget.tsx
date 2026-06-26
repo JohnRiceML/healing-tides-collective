@@ -73,9 +73,9 @@ export function FeedbackWidget() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Share feedback"
-        className="group fixed left-0 top-1/2 z-[190] flex -translate-y-1/2 items-center gap-1.5 rounded-r-2xl bg-teal py-4 pl-2 pr-2.5 text-sand shadow-[0_12px_30px_-12px_rgba(31,58,95,0.5)] transition-all duration-200 hover:bg-teal hover:pr-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/50"
+        className="group fixed left-0 top-1/2 z-[190] flex -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl bg-teal px-2.5 py-4 text-sand shadow-[0_12px_30px_-12px_rgba(31,58,95,0.5)] transition-all duration-200 hover:bg-teal hover:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/50"
       >
-        <span aria-hidden className="text-[13px] leading-none">♥</span>
+        <span aria-hidden className="text-[14px] leading-none">♥</span>
         <span className="text-[13px] font-medium tracking-[0.04em] [writing-mode:vertical-rl]">Feedback</span>
       </button>
     );
