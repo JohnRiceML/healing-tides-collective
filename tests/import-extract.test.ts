@@ -181,9 +181,13 @@ describe("mapNormalized — structured profile → our fields", () => {
     expect(c.data.specialties).toContain("emotional_wellbeing");
   });
 
-  it("surfaces the license as a read-only extra (no field home yet)", () => {
+  it("surfaces the license as a read-only extra (for the import status bar)", () => {
     const license = c.extras.find((e) => e.label === "License");
     expect(license?.value).toBe("#25149 · Minnesota");
+  });
+
+  it("also surfaces the STRUCTURED license, for persistence into the admin credential check", () => {
+    expect(c.license).toEqual({ number: "25149", state: "Minnesota", expires: "2028-03-01" });
   });
 
   it("reports what it filled, for the status bar", () => {

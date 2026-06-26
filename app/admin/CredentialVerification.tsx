@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 
 import { boardsForCredentials, type VerificationAttempt } from "@/app/_lib/credentials";
+import { describeSource } from "@/app/practitioner/_extract/types";
 import { recordCredentialVerification } from "./actions";
 import type { AdminPractitionerRow } from "./_data";
 
@@ -43,6 +44,21 @@ function CredentialRow({ row }: { row: AdminPractitionerRow }) {
         {row.region ? <span className="text-[12px] text-ink-muted">{row.region}</span> : null}
       </div>
       <p className="mt-1 text-[13px] text-ink-soft">Stated: {row.credentials.join(", ")}</p>
+
+      {row.importedLicense ? (
+        <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-ink-soft">
+          <span className="rounded-full bg-seafoam/40 px-2 py-0.5 text-teal">
+            {row.importedLicense.source ? `From ${describeSource(row.importedLicense.source).label}` : "Imported"}
+          </span>
+          <span className="font-medium text-charcoal">
+            {[row.importedLicense.number ? `#${row.importedLicense.number}` : null, row.importedLicense.state]
+              .filter(Boolean)
+              .join(" · ")}
+            {row.importedLicense.expires ? ` · expires ${row.importedLicense.expires}` : ""}
+          </span>
+          <span className="text-ink-muted">— unverified; look it up by number to confirm</span>
+        </p>
+      ) : null}
 
       {boards.length ? (
         <div className="mt-2 flex flex-wrap gap-2">

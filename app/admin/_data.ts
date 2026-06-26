@@ -5,7 +5,12 @@
 import { db } from "@/lib/db";
 import type { ProfileVisibility } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
-import { readVerification, type VerificationAttempt } from "@/app/_lib/credentials";
+import {
+  readImportedLicense,
+  readVerification,
+  type ImportedLicense,
+  type VerificationAttempt,
+} from "@/app/_lib/credentials";
 import { readHold } from "@/app/_lib/moderation";
 import { readPrefill } from "@/lib/invites";
 import { readLastReminder, type ReminderCandidate } from "@/lib/completeness-reminders";
@@ -29,6 +34,7 @@ export type AdminPractitionerRow = {
   verificationBadges: string[];
   credentials: string[]; // stated credentials/licensure (free-text tags)
   credentialVerification: VerificationAttempt | null; // last admin verification, if any
+  importedLicense: ImportedLicense | null; // license #/state/expiry from a directory import (UNVERIFIED)
   held: boolean; // currently on an admin hold
   holdMessage: string | null; // practitioner-facing reason (if held)
 };
@@ -85,6 +91,7 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       verificationBadges: grantedBadgesFrom(fieldValues),
       credentials: toStrings((fieldValues as Record<string, unknown> | null)?.credentials),
       credentialVerification: readVerification(fieldValues),
+      importedLicense: readImportedLicense(fieldValues),
       held: Boolean(hold),
       holdMessage: hold?.message || null,
       views7: count7.get(r.id) ?? 0,

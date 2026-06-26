@@ -26,6 +26,7 @@ function row(o: Partial<AdminPractitionerRow> = {}): AdminPractitionerRow {
     verificationBadges: [],
     credentials: [],
     credentialVerification: null,
+    importedLicense: null,
     held: false,
     holdMessage: null,
     ...o,

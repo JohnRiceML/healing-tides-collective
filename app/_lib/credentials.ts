@@ -126,3 +126,38 @@ export function readVerification(fieldValues: unknown): VerificationAttempt | nu
     credentials: Array.isArray(a.credentials) ? a.credentials.filter((c): c is string => typeof c === "string") : [],
   };
 }
+
+// ── Imported license (reserved fieldValues key) ──────────────────────────────
+// What a directory import (e.g. Psychology Today's hasCertification) reported: license
+// number / issuing state / expiry. UNVERIFIED — a head-start for the admin's manual board
+// check, never a verification itself (that's `__credentialVerification`). Written server-side
+// by the importer, so — like other `__` keys — the practitioner can't forge or wipe it and it
+// survives their later saves (see `mergeFieldValues`).
+export const IMPORTED_LICENSE_KEY = "__importedLicense";
+
+export type ImportedLicense = {
+  number?: string;
+  state?: string;
+  expires?: string;
+  /** Host the license was imported from, e.g. "www.psychologytoday.com". */
+  source?: string;
+  /** ISO timestamp of the import. */
+  at?: string;
+};
+
+/** Read an imported (unverified) license off a practitioner's fieldValues. Null if none/empty. */
+export function readImportedLicense(fieldValues: unknown): ImportedLicense | null {
+  const v = (fieldValues as Record<string, unknown> | null | undefined)?.[IMPORTED_LICENSE_KEY];
+  if (!v || typeof v !== "object") return null;
+  const a = v as Record<string, unknown>;
+  const str = (x: unknown): string | undefined => (typeof x === "string" && x.trim() ? x.trim() : undefined);
+  const lic: ImportedLicense = {
+    number: str(a.number),
+    state: str(a.state),
+    expires: str(a.expires),
+    source: str(a.source),
+    at: str(a.at),
+  };
+  // Only meaningful if we actually have a number or state to act on.
+  return lic.number || lic.state ? lic : null;
+}

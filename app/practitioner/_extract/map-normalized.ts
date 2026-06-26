@@ -17,6 +17,8 @@ export interface SourceContribution {
   unmapped: string[];
   /** A remote headshot we found (not auto-applied — the editor offers to adopt it into Blob). */
   suggestedPhotoUrl?: string;
+  /** Structured license (number/state/expiry) — persisted for the admin's credential check. */
+  license?: NormalizedProfile["license"];
 }
 
 function formatRegion(loc: NonNullable<NormalizedProfile["location"]>): string | undefined {
@@ -86,5 +88,5 @@ export function mapNormalized(n: NormalizedProfile, host: string): SourceContrib
   }
   if (n.telephone) extras.push({ label: "Phone", value: n.telephone, source: host });
 
-  return { data, contributed, extras, unmapped, suggestedPhotoUrl: n.imageUrl };
+  return { data, contributed, extras, unmapped, suggestedPhotoUrl: n.imageUrl, license: n.license };
 }

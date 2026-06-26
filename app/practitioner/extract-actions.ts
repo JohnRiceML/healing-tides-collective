@@ -4,10 +4,13 @@ import { lookup } from "node:dns/promises";
 
 import { generateObject } from "ai";
 
+import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
 import { guardPublicUrl } from "@/lib/ssrf";
+import { IMPORTED_LICENSE_KEY } from "@/app/_lib/credentials";
 import { fieldLabel } from "@/app/_lib/profile-fields";
 import { profileExtractSchema, type ProfileExtract } from "@/app/_lib/profile-extract-schema";
+import type { Prisma } from "@/lib/generated/prisma/client";
 
 import { parseStructuredData, type NormalizedProfile } from "./_extract/parse-structured-data";
 import { mapNormalized, type SourceContribution } from "./_extract/map-normalized";
@@ -223,8 +226,10 @@ function hasAnyData(d: ImportData): boolean {
 /**
  * Draft a profile from a few links + pasted text. For each link: fetch → parse the
  * page's structured data (JSON-LD) for verified facts → run the LLM on the page text
- * (fenced by those facts) for the narrative. Combine everything fill-if-empty. Never
- * saves or publishes — returns a draft + per-source provenance for human review.
+ * (fenced by those facts) for the narrative. Combine everything fill-if-empty. Returns a
+ * draft + per-source provenance for human review — it never saves the editable profile.
+ * (On a SUCCESSFUL import it does record an imported license HINT server-side under the
+ * reserved __importedLicense key — a head-start for the admin's credential check.)
  */
 export async function extractProfileFromSources(input: {
   urls?: string[];
@@ -240,6 +245,8 @@ export async function extractProfileFromSources(input: {
   const extras: ImportExtra[] = [];
   const unmapped = new Set<string>();
   let suggestedPhotoUrl: string | undefined;
+  let importedLicense: SourceContribution["license"];
+  let licenseSource: string | undefined;
 
   for (const url of urls) {
     const page = await fetchPage(url);
@@ -270,6 +277,10 @@ export async function extractProfileFromSources(input: {
     extras.push(...contribution.extras);
     contribution.unmapped.forEach((u) => unmapped.add(u));
     if (!suggestedPhotoUrl && contribution.suggestedPhotoUrl) suggestedPhotoUrl = contribution.suggestedPhotoUrl;
+    if (!importedLicense && contribution.license && (contribution.license.number || contribution.license.state)) {
+      importedLicense = contribution.license;
+      licenseSource = host;
+    }
     sources.push({
       id: url,
       host,
@@ -316,6 +327,33 @@ export async function extractProfileFromSources(input: {
         : "Add a link or paste some text and we'll draft from it.",
       result: sources.length ? result : undefined,
     };
+  }
+
+  // Persist the imported license (UNVERIFIED) — only NOW, on a successful import where we're
+  // about to show a draft (never on a failed/empty import). Re-read fresh + merge so it never
+  // clobbers other reserved keys (__verified / __hold); best-effort so a write failure can't
+  // break the preview. A head-start for the admin's credential check, never a claim of verification.
+  if (importedLicense) {
+    try {
+      const fresh = await db.practitioner.findUnique({
+        where: { id: auth.practitioner.id },
+        select: { fieldValues: true },
+      });
+      const existing = (fresh?.fieldValues ?? {}) as Record<string, unknown>;
+      const lic: Record<string, string> = {};
+      if (importedLicense.number) lic.number = importedLicense.number;
+      if (importedLicense.state) lic.state = importedLicense.state;
+      if (importedLicense.expires) lic.expires = importedLicense.expires;
+      if (licenseSource) lic.source = licenseSource;
+      lic.at = new Date().toISOString();
+      const next = { ...existing, [IMPORTED_LICENSE_KEY]: lic };
+      await db.practitioner.update({
+        where: { id: auth.practitioner.id },
+        data: { fieldValues: next as Prisma.InputJsonValue },
+      });
+    } catch {
+      /* a hint write must never break the import preview */
+    }
   }
 
   return { ok: true, result };

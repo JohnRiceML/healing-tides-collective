@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import { boardsForCredentials, readVerification, MN_BOARDS } from "@/app/_lib/credentials";
+import {
+  boardsForCredentials,
+  readVerification,
+  readImportedLicense,
+  IMPORTED_LICENSE_KEY,
+  MN_BOARDS,
+} from "@/app/_lib/credentials";
 
 describe("boardsForCredentials", () => {
   it("matches a single stated credential to its MN board + lookup URL", () => {
@@ -55,5 +61,40 @@ describe("readVerification", () => {
     expect(readVerification({})).toBeNull();
     expect(readVerification(null)).toBeNull();
     expect(readVerification({ __credentialVerification: { status: "bogus" } })).toBeNull();
+  });
+});
+
+describe("readImportedLicense", () => {
+  it("reads a license written under the reserved key", () => {
+    expect(
+      readImportedLicense({
+        [IMPORTED_LICENSE_KEY]: {
+          number: "25149",
+          state: "Minnesota",
+          expires: "2028-03-01",
+          source: "www.psychologytoday.com",
+          at: "2026-06-26T00:00:00Z",
+        },
+      }),
+    ).toEqual({
+      number: "25149",
+      state: "Minnesota",
+      expires: "2028-03-01",
+      source: "www.psychologytoday.com",
+      at: "2026-06-26T00:00:00Z",
+    });
+  });
+
+  it("is null with no number or state to act on", () => {
+    expect(readImportedLicense({})).toBeNull();
+    expect(readImportedLicense(null)).toBeNull();
+    expect(readImportedLicense({ [IMPORTED_LICENSE_KEY]: {} })).toBeNull();
+    expect(readImportedLicense({ [IMPORTED_LICENSE_KEY]: { expires: "2028-03-01" } })).toBeNull();
+  });
+
+  it("keeps just a number (state optional) and trims blanks", () => {
+    expect(readImportedLicense({ [IMPORTED_LICENSE_KEY]: { number: " 25149 ", state: "  " } })).toEqual({
+      number: "25149",
+    });
   });
 });
