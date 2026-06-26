@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 import { clerkAppearance } from "./clerk-appearance";
+import { isCurrentUserAdmin } from "@/app/_actions/is-admin";
 
 /**
  * The app-wide navigation. Audience-aware:
@@ -119,6 +120,23 @@ export function SiteNav({ clerkEnabled }: { clerkEnabled: boolean }) {
 /** Auth-aware right side. Only mounted when Clerk is enabled (so the hook is inside ClerkProvider). */
 function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const { isLoaded, isSignedIn } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Resolve admin status client-side (a tiny server action) so public pages stay static —
+  // only signed-in users ever ask, and it reveals only a boolean.
+  useEffect(() => {
+    if (!isSignedIn) {
+      setIsAdmin(false);
+      return;
+    }
+    let active = true;
+    isCurrentUserAdmin()
+      .then((v) => active && setIsAdmin(v))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isSignedIn]);
 
   if (!isLoaded) {
     // Reserve space so the bar doesn't jump as auth resolves.
@@ -129,19 +147,38 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
     if (mobile) {
       return (
         <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <Link
-            href="/practitioner"
-            onClick={onNavigate}
-            className="rounded-full text-[15px] font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
-          >
-            Your profile
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/practitioner"
+              onClick={onNavigate}
+              className="rounded-full text-[15px] font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
+            >
+              Your profile
+            </Link>
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                onClick={onNavigate}
+                className="rounded-full text-[15px] text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
+              >
+                Admin
+              </Link>
+            ) : null}
+          </div>
           <UserButton appearance={clerkAppearance} />
         </div>
       );
     }
     return (
       <>
+        {isAdmin ? (
+          <Link
+            href="/admin"
+            className="rounded-full px-3 py-2 text-[14px] text-teal transition-colors hover:bg-seafoam/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
+          >
+            Admin
+          </Link>
+        ) : null}
         <Link
           href="/practitioner"
           className="rounded-full px-3 py-2 text-[14px] font-medium text-charcoal transition-colors hover:bg-sand-deep/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
