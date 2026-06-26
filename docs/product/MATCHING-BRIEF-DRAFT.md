@@ -1,5 +1,10 @@
 # Matching brief — a strawman for Nora
 
+> **SUPERSEDED 2026-06-26 by Nora's filled-in homework → [MATCHING-PRINCIPLES.md](MATCHING-PRINCIPLES.md)**
+> (the canonical spec). This draft was the pre-homework provocation; its framework (crisis/PHI gates,
+> no-percent-scores, hard-vs-soft filters, the "what we'd have to build" list) all held up and is folded
+> into the principles doc. Kept for the worked cases + the open-decisions list.
+
 **Status:** DRAFT for Nora to react to and edit — **not** the answer. Drafted 2026-06-19 to turn "Nora authors the matching brief from a blank page" into "Nora marks up a concrete proposal in ~20 minutes." **The clinical matching logic is yours to own** — this draft is a provocation, and it deliberately leaves your judgment calls open. (Companion to [the Phase-2 reconciliation](../audits/2026-06-19-phase2-reconciliation.md); this is the input that unblocks the entire seeker side.)
 
 ---

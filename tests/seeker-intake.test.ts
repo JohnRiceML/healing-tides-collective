@@ -10,18 +10,24 @@ describe("validateIntake", () => {
       ...base,
       name: "  Jordan  ",
       email: "Jordan@Example.com ",
+      priorTherapy: "  Saw someone once — too much talking in circles  ",
+      stylePreference: "practical",
       lookingFor: ["Therapy", "Therapy", "  "],
       specialties: ["emotional_wellbeing"],
       region: "  Saint Paul  ",
       usesInsurance: true,
+      insuranceName: "  HealthPartners  ",
     });
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.value.name).toBe("Jordan");
       expect(r.value.email).toBe("jordan@example.com");
+      expect(r.value.priorTherapy).toBe("Saw someone once — too much talking in circles");
+      expect(r.value.stylePreference).toBe("practical");
       expect(r.value.lookingFor).toEqual(["Therapy"]); // trimmed, deduped, blanks dropped
       expect(r.value.region).toBe("Saint Paul");
       expect(r.value.usesInsurance).toBe(true);
+      expect(r.value.insuranceName).toBe("HealthPartners");
     }
   });
 
@@ -51,6 +57,9 @@ describe("validateIntake", () => {
     if (r.ok) {
       expect(r.value.region).toBeNull();
       expect(r.value.usesInsurance).toBeNull();
+      expect(r.value.priorTherapy).toBeNull();
+      expect(r.value.stylePreference).toBeNull();
+      expect(r.value.insuranceName).toBeNull();
       expect(r.value.lookingFor).toEqual([]);
       expect(r.value.specialties).toEqual([]);
     }

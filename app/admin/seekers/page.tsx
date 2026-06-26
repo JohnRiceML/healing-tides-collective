@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { requireAdmin } from "@/lib/auth";
 import { specialtyLabel } from "@/app/_lib/taxonomy";
-import { FORMATS, AGE_GROUPS, URGENCY, intakeStatusLabel } from "@/lib/seeker-intake";
+import { FORMATS, AGE_GROUPS, URGENCY, STYLE_PREFS, intakeStatusLabel } from "@/lib/seeker-intake";
 import { getSeekerIntakes, type AdminSeekerRow } from "../_data";
 import { AdminShell } from "../_components/AdminShell";
 
@@ -32,7 +32,14 @@ function IntakeCard({ s }: { s: AdminSeekerRow }) {
     s.region,
     labelOf(FORMATS, s.format),
     labelOf(AGE_GROUPS, s.ageGroup),
-    s.usesInsurance === true ? "wants insurance" : s.usesInsurance === false ? "out-of-pocket ok" : null,
+    s.stylePreference ? labelOf(STYLE_PREFS, s.stylePreference) : null,
+    s.usesInsurance === true
+      ? s.insuranceName
+        ? `insurance: ${s.insuranceName}`
+        : "wants insurance"
+      : s.usesInsurance === false
+        ? "out-of-pocket ok"
+        : null,
     labelOf(URGENCY, s.urgency),
   ].filter(Boolean);
 
@@ -56,6 +63,7 @@ function IntakeCard({ s }: { s: AdminSeekerRow }) {
 
       <p className="mt-3 whitespace-pre-wrap text-[14px] leading-[1.6] text-charcoal">{s.story}</p>
 
+      {s.priorTherapy ? <Fact label="Past experience">{s.priorTherapy}</Fact> : null}
       {s.budgetNote ? <Fact label="Budget">{s.budgetNote}</Fact> : null}
       {s.genderPreference ? <Fact label="Gender pref">{s.genderPreference}</Fact> : null}
       {s.availability ? <Fact label="Free">{s.availability}</Fact> : null}

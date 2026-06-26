@@ -223,6 +223,12 @@ model SeekerIntake {
   // The heart of it — what Nora reads, in the seeker's own words.
   story String
 
+  // Nora's highest-signal questions (her matching homework): prior-therapy experience is her #1
+  // non-checkbox lever ("what helped / what didn't / why it wasn't a fit"); style preference =
+  // practical-skills vs. exploratory-insight.
+  priorTherapy    String? @map("prior_therapy")
+  stylePreference String? @map("style_preference")
+
   // Structured preferences — all optional ("none of this is binding"); they narrow candidates.
   lookingFor       String[] @default([]) // high-level care types (Therapy, Reiki, …)
   specialties      String[] @default([]) // taxonomy category ids (areas of focus) → practitioner.specialties
@@ -230,7 +236,8 @@ model SeekerIntake {
   format           String? // in-person / virtual / either (modality preference)
   ageGroup         String?  @map("age_group") // who the care is for
   genderPreference String?  @map("gender_preference")
-  usesInsurance    Boolean? @map("uses_insurance") // boolean only — never a plan / member id
+  usesInsurance    Boolean? @map("uses_insurance") // boolean only — never a member id
+  insuranceName    String?  @map("insurance_name") // which plan (e.g. "HealthPartners") — Nora needs this to match
   budgetNote       String?  @map("budget_note") // their own words, optional
   availability     String?
   urgency          String?

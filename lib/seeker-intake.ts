@@ -39,6 +39,13 @@ export const URGENCY = [
   { value: "open", label: "Open-ended" },
 ] as const;
 
+// Nora's "what kind of work" axis — practical/skills vs. exploratory/insight (her matching homework).
+export const STYLE_PREFS = [
+  { value: "practical", label: "Practical tools & structure" },
+  { value: "exploratory", label: "Exploring & understanding myself" },
+  { value: "not_sure", label: "Not sure yet" },
+] as const;
+
 export const MIN_STORY = 10;
 export const MAX_STORY = 4000;
 
@@ -53,6 +60,8 @@ export type IntakeInput = {
   name?: string;
   email?: string;
   story?: string;
+  priorTherapy?: string;
+  stylePreference?: string;
   lookingFor?: string[];
   specialties?: string[];
   region?: string;
@@ -60,6 +69,7 @@ export type IntakeInput = {
   ageGroup?: string;
   genderPreference?: string;
   usesInsurance?: boolean | null;
+  insuranceName?: string;
   budgetNote?: string;
   availability?: string;
   urgency?: string;
@@ -69,6 +79,8 @@ export type CleanIntake = {
   name: string;
   email: string;
   story: string;
+  priorTherapy: string | null;
+  stylePreference: string | null;
   lookingFor: string[];
   specialties: string[];
   region: string | null;
@@ -76,6 +88,7 @@ export type CleanIntake = {
   ageGroup: string | null;
   genderPreference: string | null;
   usesInsurance: boolean | null;
+  insuranceName: string | null;
   budgetNote: string | null;
   availability: string | null;
   urgency: string | null;
@@ -116,6 +129,8 @@ export function validateIntake(input: IntakeInput): { ok: true; value: CleanInta
       name,
       email,
       story,
+      priorTherapy: clean(input.priorTherapy, 2000),
+      stylePreference: clean(input.stylePreference, 40),
       lookingFor: strList(input.lookingFor),
       specialties: strList(input.specialties),
       region: clean(input.region, 120),
@@ -123,6 +138,7 @@ export function validateIntake(input: IntakeInput): { ok: true; value: CleanInta
       ageGroup: clean(input.ageGroup, 40),
       genderPreference: clean(input.genderPreference, 80),
       usesInsurance: typeof input.usesInsurance === "boolean" ? input.usesInsurance : null,
+      insuranceName: clean(input.insuranceName, 120),
       budgetNote: clean(input.budgetNote, 500),
       availability: clean(input.availability, 300),
       urgency: clean(input.urgency, 40),

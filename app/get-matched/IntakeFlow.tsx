@@ -16,10 +16,18 @@ import {
   TextInput,
 } from "@/app/_components/ui";
 import { CATEGORIES } from "@/app/_lib/taxonomy";
-import { CARE_TYPES, FORMATS, AGE_GROUPS, INSURANCE, URGENCY, insuranceToBool } from "@/lib/seeker-intake";
+import {
+  CARE_TYPES,
+  FORMATS,
+  AGE_GROUPS,
+  INSURANCE,
+  URGENCY,
+  STYLE_PREFS,
+  insuranceToBool,
+} from "@/lib/seeker-intake";
 import { submitIntake } from "./actions";
 
-const FORM_STEPS = 6; // steps 1..6, between Welcome (0) and Confirmation (7)
+const FORM_STEPS = 7; // steps 1..7, between Welcome (0) and Confirmation (8)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const labelOf = (opts: readonly { value: string; label: string }[], v: string) =>
   opts.find((o) => o.value === v)?.label ?? "";
@@ -31,12 +39,15 @@ export function IntakeFlow() {
 
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [story, setStory] = useState("");
+  const [priorTherapy, setPriorTherapy] = useState("");
+  const [stylePreference, setStylePreference] = useState("");
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [region, setRegion] = useState("");
   const [format, setFormat] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
   const [genderPreference, setGenderPreference] = useState("");
   const [insurance, setInsurance] = useState("");
+  const [insuranceName, setInsuranceName] = useState("");
   const [availability, setAvailability] = useState("");
   const [urgency, setUrgency] = useState("");
   const [budgetNote, setBudgetNote] = useState("");
@@ -49,7 +60,7 @@ export function IntakeFlow() {
 
   const goNext = () => {
     setError(null);
-    setStep((s) => Math.min(s + 1, 7));
+    setStep((s) => Math.min(s + 1, 8));
   };
   const goBack = () => {
     setError(null);
@@ -63,6 +74,8 @@ export function IntakeFlow() {
         name,
         email,
         story,
+        priorTherapy,
+        stylePreference,
         lookingFor,
         specialties,
         region,
@@ -70,11 +83,12 @@ export function IntakeFlow() {
         ageGroup,
         genderPreference,
         usesInsurance: insuranceToBool(insurance),
+        insuranceName,
         budgetNote,
         availability,
         urgency,
       });
-      if (res.ok) setStep(7);
+      if (res.ok) setStep(8);
       else setError(res.error);
     });
   }
@@ -85,7 +99,7 @@ export function IntakeFlow() {
         <Welcome onBegin={goNext} />
       </Container>
     );
-  if (step === 7)
+  if (step === 8)
     return (
       <Container size="narrow">
         <Confirmation />
@@ -95,7 +109,7 @@ export function IntakeFlow() {
   const canContinue =
     step === 2
       ? story.trim().length >= 10
-      : step === 5
+      : step === 6
         ? Boolean(name.trim() && EMAIL_RE.test(email.trim()) && consent)
         : true;
 
@@ -110,8 +124,16 @@ export function IntakeFlow() {
 
       {step === 1 ? <StepCare value={lookingFor} onToggle={toggle(setLookingFor)} /> : null}
       {step === 2 ? <StepStory value={story} onChange={setStory} /> : null}
-      {step === 3 ? <StepFocus value={specialties} onToggle={toggle(setSpecialties)} /> : null}
-      {step === 4 ? (
+      {step === 3 ? (
+        <StepExperience
+          priorTherapy={priorTherapy}
+          setPriorTherapy={setPriorTherapy}
+          stylePreference={stylePreference}
+          setStylePreference={setStylePreference}
+        />
+      ) : null}
+      {step === 4 ? <StepFocus value={specialties} onToggle={toggle(setSpecialties)} /> : null}
+      {step === 5 ? (
         <StepPrefs
           region={region}
           setRegion={setRegion}
@@ -123,6 +145,8 @@ export function IntakeFlow() {
           setGenderPreference={setGenderPreference}
           insurance={insurance}
           setInsurance={setInsurance}
+          insuranceName={insuranceName}
+          setInsuranceName={setInsuranceName}
           budgetNote={budgetNote}
           setBudgetNote={setBudgetNote}
           availability={availability}
@@ -131,19 +155,22 @@ export function IntakeFlow() {
           setUrgency={setUrgency}
         />
       ) : null}
-      {step === 5 ? (
+      {step === 6 ? (
         <StepContact name={name} setName={setName} email={email} setEmail={setEmail} consent={consent} setConsent={setConsent} />
       ) : null}
-      {step === 6 ? (
+      {step === 7 ? (
         <StepReview
           lookingFor={lookingFor}
           story={story}
+          priorTherapy={priorTherapy}
+          stylePreference={stylePreference}
           specialties={specialties}
           region={region}
           format={format}
           ageGroup={ageGroup}
           genderPreference={genderPreference}
           insurance={insurance}
+          insuranceName={insuranceName}
           budgetNote={budgetNote}
           availability={availability}
           urgency={urgency}
@@ -162,7 +189,7 @@ export function IntakeFlow() {
         <Button tone="ghost" onClick={goBack}>
           ← Back
         </Button>
-        {step === 6 ? (
+        {step === 7 ? (
           <Button onClick={submit} disabled={submitting}>
             {submitting ? "Sending…" : "Send to Nora"}
           </Button>
@@ -249,11 +276,56 @@ function StepStory({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
+function StepExperience({
+  priorTherapy,
+  setPriorTherapy,
+  stylePreference,
+  setStylePreference,
+}: {
+  priorTherapy: string;
+  setPriorTherapy: (v: string) => void;
+  stylePreference: string;
+  setStylePreference: (v: string) => void;
+}) {
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="03 / Your experience so far"
+        title="Have you tried this before?"
+        body="Optional, but it really helps Nora find a better fit — especially if past care didn't land."
+      />
+      <Card className="mt-12 space-y-10">
+        <Field
+          label="If you've worked with someone before"
+          optional
+          hint="What helped, what didn't, and — if it wasn't a fit — what felt off. Even a line is useful."
+        >
+          <TextArea
+            value={priorTherapy}
+            onChange={(e) => setPriorTherapy(e.target.value)}
+            rows={4}
+            className="min-h-[110px]"
+            placeholder="I saw someone a couple years ago — it felt too much like just talking in circles…"
+          />
+        </Field>
+        <div>
+          <p className="meta text-ink-muted">What kind of work feels right</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {STYLE_PREFS.map((o) => (
+              <ChoiceChip key={o.value} label={o.label} selected={stylePreference === o.value} onClick={() => setStylePreference(o.value)} />
+            ))}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function StepFocus({ value, onToggle }: { value: string[]; onToggle: (v: string) => void }) {
   return (
     <div>
       <SectionHeader
-        eyebrow="03 / Areas of focus"
+        eyebrow="04 / Areas of focus"
         title="Anything specific you'd want support with?"
         body="Optional — pick any that fit, or skip and let your story speak for itself."
       />
@@ -277,6 +349,8 @@ type PrefProps = {
   setGenderPreference: (v: string) => void;
   insurance: string;
   setInsurance: (v: string) => void;
+  insuranceName: string;
+  setInsuranceName: (v: string) => void;
   budgetNote: string;
   setBudgetNote: (v: string) => void;
   availability: string;
@@ -307,7 +381,7 @@ function StepPrefs(p: PrefProps) {
   return (
     <div>
       <SectionHeader
-        eyebrow="04 / Preferences"
+        eyebrow="05 / Preferences"
         title="A few practical pieces."
         body="These help Nora narrow the shortlist. Skip anything that doesn't apply — none of it is binding."
       />
@@ -333,6 +407,16 @@ function StepPrefs(p: PrefProps) {
         <div>
           <p className="meta text-ink-muted">Insurance</p>
           <PillRow options={INSURANCE} value={p.insurance} onPick={p.setInsurance} />
+          {p.insurance === "yes" ? (
+            <div className="mt-3">
+              <TextInput
+                value={p.insuranceName}
+                onChange={(e) => p.setInsuranceName(e.target.value)}
+                placeholder="Which plan? e.g. HealthPartners, BCBS"
+                aria-label="Insurance plan"
+              />
+            </div>
+          ) : null}
         </div>
 
         <Field label="Budget notes" optional hint="A sentence is plenty — sliding scale, a number you can hold, out-of-network is okay.">
@@ -383,7 +467,7 @@ function StepContact(p: ContactProps) {
   return (
     <div>
       <SectionHeader
-        eyebrow="05 / Where to reach you"
+        eyebrow="06 / Where to reach you"
         title="Where should your shortlist go?"
         body="Just a name and an email. Your story is read by a person — Nora — before any practitioner sees a thing."
       />
@@ -426,12 +510,15 @@ function StepContact(p: ContactProps) {
 type ReviewProps = {
   lookingFor: string[];
   story: string;
+  priorTherapy: string;
+  stylePreference: string;
   specialties: string[];
   region: string;
   format: string;
   ageGroup: string;
   genderPreference: string;
   insurance: string;
+  insuranceName: string;
   budgetNote: string;
   availability: string;
   urgency: string;
@@ -445,10 +532,13 @@ function StepReview(r: ReviewProps) {
     .map((id) => CATEGORIES.find((c) => c.id === id)?.label)
     .filter(Boolean)
     .join(", ");
+  const insuranceLine = [labelOf(INSURANCE, r.insurance), r.insurance === "yes" ? r.insuranceName : null]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <div>
       <SectionHeader
-        eyebrow="06 / Review"
+        eyebrow="07 / Review"
         title="Here's what we'll send to Nora."
         body="Read it back. You can step back to edit anything — nothing is sent until you press the button."
       />
@@ -458,11 +548,13 @@ function StepReview(r: ReviewProps) {
           <DLRow label="Email">{r.email || dash}</DLRow>
           <DLRow label="Looking for">{r.lookingFor.length ? r.lookingFor.join(", ") : dash}</DLRow>
           <DLRow label="Your story">{r.story ? <span className="whitespace-pre-wrap">{r.story}</span> : dash}</DLRow>
+          <DLRow label="Past experience">{r.priorTherapy ? <span className="whitespace-pre-wrap">{r.priorTherapy}</span> : dash}</DLRow>
+          <DLRow label="Kind of work">{labelOf(STYLE_PREFS, r.stylePreference) || dash}</DLRow>
           <DLRow label="Areas of focus">{focusLabels || dash}</DLRow>
           <DLRow label="Location">{r.region || dash}</DLRow>
           <DLRow label="Format">{labelOf(FORMATS, r.format) || dash}</DLRow>
           <DLRow label="Care for">{labelOf(AGE_GROUPS, r.ageGroup) || dash}</DLRow>
-          <DLRow label="Insurance">{labelOf(INSURANCE, r.insurance) || dash}</DLRow>
+          <DLRow label="Insurance">{insuranceLine || dash}</DLRow>
           <DLRow label="Budget notes">{r.budgetNote ? <span className="whitespace-pre-wrap">{r.budgetNote}</span> : dash}</DLRow>
           <DLRow label="Gender preference">{r.genderPreference || dash}</DLRow>
           <DLRow label="Availability">{r.availability || dash}</DLRow>

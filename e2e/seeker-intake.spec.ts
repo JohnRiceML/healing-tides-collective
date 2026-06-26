@@ -26,12 +26,14 @@ test.describe("Seeker intake (the Get-matched front door)", () => {
     await page.getByPlaceholder("I've been carrying a lot since…").fill("I've been feeling stuck and want support with anxiety.");
     await page.getByRole("button", { name: "Continue →" }).click();
 
-    // 3 · focus — skip
+    // 3 · experience — skip
     await page.getByRole("button", { name: "Continue →" }).click();
-    // 4 · preferences — skip
+    // 4 · focus — skip
+    await page.getByRole("button", { name: "Continue →" }).click();
+    // 5 · preferences — skip
     await page.getByRole("button", { name: "Continue →" }).click();
 
-    // 5 · contact + consent (gates Continue)
+    // 6 · contact + consent (gates Continue)
     await page.getByPlaceholder("First name is fine").fill("Jordan E2E");
     await page.getByPlaceholder("you@example.com").fill("jordan-e2e@example.com");
     await page.getByRole("button", { name: /I understand this is read by a person/ }).click();

@@ -212,6 +212,8 @@ export type AdminSeekerRow = {
   name: string;
   email: string;
   story: string;
+  priorTherapy: string | null;
+  stylePreference: string | null;
   lookingFor: string[];
   specialties: string[];
   region: string | null;
@@ -219,6 +221,7 @@ export type AdminSeekerRow = {
   ageGroup: string | null;
   genderPreference: string | null;
   usesInsurance: boolean | null;
+  insuranceName: string | null;
   budgetNote: string | null;
   availability: string | null;
   urgency: string | null;
@@ -238,6 +241,8 @@ export async function getSeekerIntakes(): Promise<AdminSeekerRow[]> {
         name: true,
         email: true,
         story: true,
+        priorTherapy: true,
+        stylePreference: true,
         lookingFor: true,
         specialties: true,
         region: true,
@@ -245,6 +250,7 @@ export async function getSeekerIntakes(): Promise<AdminSeekerRow[]> {
         ageGroup: true,
         genderPreference: true,
         usesInsurance: true,
+        insuranceName: true,
         budgetNote: true,
         availability: true,
         urgency: true,
