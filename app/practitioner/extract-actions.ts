@@ -1,11 +1,11 @@
 "use server";
 
 import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 
 import { generateObject } from "ai";
 
 import { getOrCreatePractitioner } from "@/lib/auth";
+import { guardPublicUrl } from "@/lib/ssrf";
 import { fieldLabel } from "@/app/_lib/profile-fields";
 import { profileExtractSchema, type ProfileExtract } from "@/app/_lib/profile-extract-schema";
 
@@ -86,18 +86,8 @@ async function runAiExtraction(
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
-function isPrivateIp(ip: string): boolean {
-  return (
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip.startsWith("0.") ||
-    /^10\./.test(ip) ||
-    /^192\.168\./.test(ip) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
-    /^169\.254\./.test(ip) || // link-local incl. cloud metadata
-    /^(fc|fd|fe80)/i.test(ip) // IPv6 ULA / link-local
-  );
-}
+/** Production DNS resolver handed to the shared SSRF guard (lib/ssrf). */
+const dnsResolve = async (host: string): Promise<string> => (await lookup(host)).address;
 
 function htmlToText(html: string): string {
   return html
@@ -127,27 +117,21 @@ function safeHost(rawUrl: string): string {
 async function fetchPage(
   rawUrl: string,
 ): Promise<{ ok: true; html: string; text: string; host: string } | { ok: false; error: string }> {
-  let url: URL;
-  try {
-    url = new URL((rawUrl ?? "").trim());
-  } catch {
-    return { ok: false, error: "That doesn't look like a valid web address." };
+  const guard = await guardPublicUrl(rawUrl, dnsResolve);
+  if (!guard.ok) {
+    const error =
+      guard.reason === "invalid_url"
+        ? "That doesn't look like a valid web address."
+        : guard.reason === "bad_protocol"
+          ? "Use a website link that starts with https://."
+          : guard.reason === "unresolvable"
+            ? "Couldn't find that website."
+            : "That address isn't reachable."; // internal_host | private_ip
+    return { ok: false, error };
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    return { ok: false, error: "Use a website link that starts with https://." };
-  }
-  const host = url.hostname.toLowerCase();
-  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) {
-    return { ok: false, error: "That address isn't reachable." };
-  }
+  const { url, host } = guard;
   if (host.includes("linkedin.")) {
     return { ok: false, error: "LinkedIn blocks automated visits — paste your About section instead." };
-  }
-  try {
-    const addr = isIP(host) ? host : (await lookup(host)).address;
-    if (isPrivateIp(addr)) return { ok: false, error: "That address isn't reachable." };
-  } catch {
-    return { ok: false, error: "Couldn't find that website." };
   }
   try {
     const res = await fetch(url, {

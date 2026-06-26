@@ -1,13 +1,13 @@
 "use server";
 
 import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 
 import { put, del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
+import { guardPublicUrl } from "@/lib/ssrf";
 
 const MAX_BYTES = 6 * 1024 * 1024; // 6 MB
 const ALLOWED: Record<string, string> = {
@@ -18,20 +18,9 @@ const ALLOWED: Record<string, string> = {
   "image/gif": "gif",
 };
 
-// Same SSRF posture as the importer: a remote image URL is user-influenced, so only
-// ever fetch PUBLIC http(s) hosts (never localhost / private / metadata IPs).
-function isPrivateIp(ip: string): boolean {
-  return (
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip.startsWith("0.") ||
-    /^10\./.test(ip) ||
-    /^192\.168\./.test(ip) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
-    /^169\.254\./.test(ip) ||
-    /^(fc|fd|fe80)/i.test(ip)
-  );
-}
+// Same SSRF posture as the importer: a remote image URL is user-influenced, so only ever
+// fetch PUBLIC http(s) hosts (never localhost / private / metadata IPs). Shared guard: lib/ssrf.
+const dnsResolve = async (host: string): Promise<string> => (await lookup(host)).address;
 
 type SaveResult = { ok: true; photoUrl: string } | { ok: false; error: string };
 
@@ -79,25 +68,17 @@ export async function adoptImportedPhoto(rawUrl: string): Promise<SaveResult> {
   const result = await getOrCreatePractitioner();
   if (!result) return { ok: false, error: "You're not signed in." };
 
-  let url: URL;
-  try {
-    url = new URL((rawUrl ?? "").trim());
-  } catch {
-    return { ok: false, error: "That image link doesn't look valid." };
+  const guard = await guardPublicUrl(rawUrl, dnsResolve);
+  if (!guard.ok) {
+    const error =
+      guard.reason === "invalid_url"
+        ? "That image link doesn't look valid."
+        : guard.reason === "unresolvable"
+          ? "Couldn't find that image."
+          : "That image link isn't reachable."; // bad_protocol | internal_host | private_ip
+    return { ok: false, error };
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    return { ok: false, error: "That image link isn't reachable." };
-  }
-  const host = url.hostname.toLowerCase();
-  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) {
-    return { ok: false, error: "That image link isn't reachable." };
-  }
-  try {
-    const addr = isIP(host) ? host : (await lookup(host)).address;
-    if (isPrivateIp(addr)) return { ok: false, error: "That image link isn't reachable." };
-  } catch {
-    return { ok: false, error: "Couldn't find that image." };
-  }
+  const { url } = guard;
 
   try {
     const res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(8000) });

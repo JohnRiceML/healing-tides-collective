@@ -19,12 +19,14 @@ export { clerkEnabled };
 // by setting an `e2e_uid` cookie (a test user's clerkUserId). getCurrentDbUser resolves
 // it to a real User row, so every downstream gate (practitioner, admin) just works.
 //
-// SAFETY — two independent guards make this unreachable in production:
-//   1. It only fires when E2E_AUTH_BYPASS === "1", an env var set ONLY by the Playwright
-//      webServer (never in Vercel).
-//   2. It lives inside the `!clerkEnabled` branch — and production runs with Clerk ENABLED,
-//      so that branch never executes there regardless of the flag.
-const E2E_AUTH_BYPASS = process.env.E2E_AUTH_BYPASS === "1";
+// SAFETY — three independent guards make this unreachable in production:
+//   1. The E2E_AUTH_BYPASS env var is set ONLY by the Playwright webServer (never in Vercel).
+//   2. It also requires a non-production NODE_ENV, so it can't fire in a production build even
+//      if that flag were somehow set.
+//   3. It only reads inside the `!clerkEnabled` branch below — production runs with Clerk
+//      ENABLED, so that branch never executes there regardless of the flag.
+const E2E_AUTH_BYPASS =
+  process.env.E2E_AUTH_BYPASS === "1" && process.env.NODE_ENV !== "production";
 
 async function e2eUserFromCookie(): Promise<User | null> {
   const jar = await cookies();
