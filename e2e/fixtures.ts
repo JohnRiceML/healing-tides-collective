@@ -17,6 +17,15 @@ export const SEED = {
 
   // A plain seeker — proves the admin gate rejects non-admins.
   seeker: { clerkUserId: "e2e-seeker", email: "seeker@e2e.test" },
+
+  // A submitted intake the matching workspace works against. Region matches the published
+  // practitioner above so the candidate shows at least one overlap chip.
+  intake: {
+    name: "Jordan Rivers",
+    email: "jordan-intake@e2e.test",
+    story: "I've been feeling stretched thin and want trauma-informed support that isn't just talk therapy.",
+    region: "Twin Cities",
+  },
 } as const;
 
 // A feedback row the admin queue should surface.

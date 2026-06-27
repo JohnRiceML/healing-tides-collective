@@ -73,16 +73,27 @@ The directory profile doesn't yet capture the signals Nora ranks on. To make the
 
 ## The workspace (Phase 2) — design principles
 
-A **rank + rule-OUT + curate** tool, not a filter:
+A **curate + rule-OUT** tool, **not a ranker**. See the reasoning in
+[ADR 0001](../decisions/0001-matching-workspace-curation-not-ranker.md) — short version: a fit score
+would replace the judgment we're trying to support, and it would rank on practitioner data we don't
+capture yet. v1 ships as curation; ranking is a deferred *sequencing* decision, not a permanent no.
 
 - Lead with the seeker's **narrative + prior-therapy** front and center (that's what she reads first).
-- Surface candidate practitioners with **her signals** (specialization depth, primary modality + certs,
-  years, setting, insurance, availability) — not a percent score (no leaderboard; "speak in reasons").
-- Support **exclusion** (rule out CBT-primary for trauma; rule out "all ages" for an adolescent).
+- Surface candidate practitioners with a **transparent overlap read** on the signals that resolve
+  cleanly *today* (format, specialty, insurance, region, gender-pref, accepting-new) — shown as
+  **reasons (chips), never a percent score** (no leaderboard; "speak in reasons"). The overlap only
+  *orders* the list. Each candidate's readable profile (bio / credentials / values) carries the
+  prose signals (modality, experience, style) for Nora to weigh by eye.
+- Support **exclusion** — in v1 this is implicit (she simply doesn't shortlist a ruled-out
+  candidate); a dedicated "ruled out because…" control is a v2 nicety.
 - Let her **hand-pick a shortlist that can span care types**, and write the **"why I thought of them"**
   per pick (`Match.reason`). She always has the last word.
 - **Flag safety signals** on the intake → the crisis path.
 - **"No good match" is an honest answer** — nearest virtual option / waitlist / log the gap.
+- **Sending** the shortlist (the email to the seeker) is **Phase 3**, not this build.
+
+> The structured practitioner fields below ("gaps today") are the *deferred* half of ADR 0001 — add
+> them when volume or a concrete filter need justifies it, importer-prefilled so nobody backfills by hand.
 
 ## Decisions her homework now answers (vs. the draft's open list)
 

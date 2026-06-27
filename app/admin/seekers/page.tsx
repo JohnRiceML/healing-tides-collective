@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import { requireAdmin } from "@/lib/auth";
 import { specialtyLabel } from "@/app/_lib/taxonomy";
@@ -46,12 +47,20 @@ function IntakeCard({ s }: { s: AdminSeekerRow }) {
   return (
     <li className="rounded-2xl border border-rule/70 bg-white p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-medium text-charcoal">{s.name}</span>
+        <Link href={`/admin/seekers/${s.id}`} className="font-medium text-charcoal underline-offset-2 hover:underline">
+          {s.name}
+        </Link>
         <span className={`rounded-full px-2.5 py-0.5 text-[12px] ${STATUS_CHIP[s.status] ?? "bg-charcoal/5 text-ink-muted"}`}>
           {intakeStatusLabel(s.status)}
         </span>
         <span className="text-[12px] text-ink-muted">{s.createdAt.toISOString().slice(0, 10)}</span>
         {s.matchCount > 0 ? <span className="text-[12px] text-teal">{s.matchCount} shortlisted</span> : null}
+        <Link
+          href={`/admin/seekers/${s.id}`}
+          className="ml-auto rounded-full bg-teal px-3 py-1 text-[12px] text-white hover:bg-teal/90"
+        >
+          Open workspace →
+        </Link>
       </div>
 
       <a href={`mailto:${s.email}`} className="mt-1 inline-block text-[13px] text-teal underline-offset-2 hover:underline">
@@ -90,9 +99,9 @@ export default async function AdminSeekersPage() {
   return (
     <AdminShell title="Seekers">
       <p className="mt-4 max-w-prose text-[15px] leading-[1.7] text-ink-soft">
-        Every &ldquo;Get matched&rdquo; submission lands here for you to read first. The matching{" "}
-        <span className="text-charcoal">workspace</span> — choosing a shortlist and sending it — is the next build;
-        for now this is the calm intake queue.
+        Every &ldquo;Get matched&rdquo; submission lands here for you to read first. Open one to enter the matching{" "}
+        <span className="text-charcoal">workspace</span> — read their story, see candidate practitioners ranked by your
+        signals, and hand-build a shortlist with a note on each. (Sending it by email is the next build.)
       </p>
 
       {intakes.length === 0 ? (

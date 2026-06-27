@@ -32,7 +32,7 @@ async function globalSetup(_config: FullConfig) {
   await client.connect();
   try {
     await client.query(
-      'TRUNCATE TABLE "feedback","invites","profile_views","practitioners","users" RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE "matches","seeker_intakes","feedback","invites","profile_views","practitioners","users" RESTART IDENTITY CASCADE',
     );
 
     // Admin identity (role ADMIN — also in the webServer's ADMIN_EMAILS).
@@ -70,6 +70,13 @@ async function globalSetup(_config: FullConfig) {
       "e2e-fb-1",
       SEED_FEEDBACK.message,
     ]);
+
+    // A submitted seeker intake for the matching workspace (status defaults to NEW).
+    await client.query(
+      `INSERT INTO seeker_intakes (id, name, email, story, region, status, updated_at)
+       VALUES ($1,$2,$3,$4,$5,'NEW',now())`,
+      ["e2e-intake-1", SEED.intake.name, SEED.intake.email, SEED.intake.story, SEED.intake.region],
+    );
 
     console.log("[e2e] seeded test database");
   } finally {
