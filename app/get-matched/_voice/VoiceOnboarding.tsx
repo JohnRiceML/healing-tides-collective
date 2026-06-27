@@ -52,8 +52,16 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
   const onUserText = useCallback((text: string) => setTurns((t) => [...t, { role: "user", text }]), []);
   const onAssistantText = useCallback((text: string) => setTurns((t) => [...t, { role: "assistant", text }]), []);
 
+  // Why a session auto-ended, so we can explain it instead of silently snapping back to idle.
+  const [endedReason, setEndedReason] = useState<null | "cap" | "idle" | "manual" | "error">(null);
+
   const { status, error, isMicMuted, isAssistantSpeaking, isThinking, assistantCaption, startedAt, connect, disconnect, toggleMute, audioElRef } =
-    useRealtimeVoice({ executeTool, onUserText, onAssistantText });
+    useRealtimeVoice({ executeTool, onUserText, onAssistantText, onSessionEnd: setEndedReason });
+
+  const startCall = useCallback(() => {
+    setEndedReason(null);
+    void connect();
+  }, [connect]);
 
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -85,7 +93,12 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
           <p className="font-display text-[18px] font-light text-charcoal">Talk it through</p>
           <p className="text-[12px] text-ink-muted">A spoken conversation — a real person reads the summary.</p>
         </div>
-        <button onClick={onSwitchToText} className="text-[12px] text-teal underline-offset-2 hover:underline">
+        <button
+          onClick={() => {
+            if (!connected || window.confirm("Switching to text will end this call. Continue?")) onSwitchToText();
+          }}
+          className="text-[12px] text-teal underline-offset-2 hover:underline"
+        >
           Prefer to type?
         </button>
       </header>
@@ -94,7 +107,7 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
       <div className="flex flex-col items-center gap-4 py-10">
         <button
           type="button"
-          onClick={() => (connected ? toggleMute() : connect())}
+          onClick={() => (connected ? toggleMute() : startCall())}
           disabled={status === "connecting"}
           aria-label={connected ? (isMicMuted ? "Unmute microphone" : "Mute microphone") : "Start the voice conversation"}
           className="relative grid h-32 w-32 place-items-center rounded-full bg-seafoam/40 ring-1 ring-teal/30 transition disabled:opacity-60"
@@ -139,10 +152,20 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
         ) : null}
 
         {error && !connected ? (
-          <p className="text-[13px] text-clay">
-            {/iceconnection|getusermedia|permission|denied|notallowed/i.test(error)
-              ? "I couldn't reach your microphone — check the browser's mic permission and try again."
-              : "Something went wrong connecting. You can try again, or type instead."}
+          <p className="max-w-md text-center text-[13px] text-clay">
+            {/NotAllowedError|SecurityError|permission|denied/i.test(error)
+              ? "I couldn't get to your microphone — check the browser's mic permission for this site, then tap to try again."
+              : /NotFoundError/i.test(error)
+                ? "I couldn't find a microphone. Plug one in, or use the text chat instead."
+                : /NotReadableError/i.test(error)
+                  ? "Your microphone looks busy in another app. Close that and tap to try again."
+                  : "Something went wrong connecting. You can try again, or type instead."}
+          </p>
+        ) : !connected && (endedReason === "cap" || endedReason === "idle") ? (
+          <p className="max-w-md text-center text-[13px] text-ink-soft">
+            {endedReason === "cap"
+              ? "We paused this after 10 minutes to keep it free — tap to start a fresh conversation. Anything already on your screen is saved."
+              : "This paused after a quiet stretch — tap whenever you're ready to pick back up."}
           </p>
         ) : null}
 

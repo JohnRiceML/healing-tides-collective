@@ -37,18 +37,18 @@ const toHit = (p: {
 // ── Schemas + descriptions (the realtime session route advertises these too) ──────────
 export const TOOL_SCHEMAS = {
   search_practitioners: z.object({
-    keywords: z.string().describe("What to search for — focus, approach, or need, e.g. 'trauma somatic'"),
-    region: z.string().optional().describe("Minnesota city/region, e.g. 'Saint Paul'"),
+    keywords: z.string().max(200).describe("What to search for — focus, approach, or need, e.g. 'trauma somatic'"),
+    region: z.string().max(120).optional().describe("Minnesota city/region, e.g. 'Saint Paul'"),
     acceptingNew: z.boolean().optional().describe("Only those accepting new clients"),
   }),
-  get_practitioner: z.object({ slug: z.string() }),
+  get_practitioner: z.object({ slug: z.string().max(200) }),
   reflect_priorities: z.object({
     priorities: z
-      .array(z.object({ label: z.string(), weight: z.number().min(0).max(100) }))
+      .array(z.object({ label: z.string().max(80), weight: z.number().min(0).max(100) }))
       .min(2)
       .max(6)
       .describe("2–6 things that matter to them, with a rough weight each"),
-    note: z.string().describe("One warm sentence framing the reflection, in your voice"),
+    note: z.string().max(300).describe("One warm sentence framing the reflection, in your voice"),
   }),
   show_crisis_resources: z.object({}),
   save_intake: z.object({
@@ -146,8 +146,10 @@ export async function runShowCrisisResources(): Promise<CrisisResources & { summ
       { label: "Emergency", detail: "If you're in immediate danger, call 911" },
     ],
     summary:
-      "Crisis resources are now on screen. Acknowledge their courage in sharing, gently encourage them to reach out, " +
-      "and let them lead — do not pivot back to matching unless they clearly want to.",
+      "Crisis resources are now on screen. Acknowledge their courage in sharing and gently encourage them to reach " +
+      "out. IMPORTANT: say the key numbers OUT LOUD too — that they can call or text 988 right now, any time, and " +
+      "911 if they're in immediate danger — don't rely on the screen alone (they may not be looking). Then let them " +
+      "lead; do not pivot back to matching unless they clearly want to.",
   };
 }
 

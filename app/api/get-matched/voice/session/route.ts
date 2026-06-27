@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { buildVoiceOnboardingPrompt } from "@/lib/onboarding/voice-system-prompt";
 import { TOOL_SCHEMAS, TOOL_DESCRIPTIONS, type OnboardingToolName } from "@/lib/onboarding/tool-logic";
+import { voiceSessionLimiter, clientIp } from "@/lib/onboarding/voice/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -20,9 +21,18 @@ export const maxDuration = 30;
 const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL ?? "gpt-realtime";
 const REALTIME_VOICE = process.env.OPENAI_REALTIME_VOICE ?? "marin"; // calm, natural
 
-export async function POST() {
+export async function POST(req: Request) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: "Voice isn't configured right now." }, { status: 503 });
+  }
+
+  // Best-effort per-IP guard on this per-minute-billed public endpoint (see rate-limit.ts).
+  const rl = voiceSessionLimiter.check(clientIp(req), Date.now());
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "That's a lot of voice sessions in a short time — take a breather, or use the text chat." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
   }
 
   const tools = (Object.keys(TOOL_SCHEMAS) as OnboardingToolName[]).map((name) => ({

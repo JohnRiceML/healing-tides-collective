@@ -84,10 +84,15 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
     if (audioElRef.current) audioElRef.current.srcObject = null;
     setStatus((prev) => {
       if (prev === "connected" || prev === "connecting") onSessionEndRef.current?.(reason);
-      return "idle";
+      // Don't clobber a just-set terminal "error" status (the connect-failure path sets it
+      // immediately before calling disconnect("error")).
+      return prev === "error" ? "error" : "idle";
     });
     setIsAssistantSpeaking(false);
     setIsThinking(false);
+    // Reset mute so a fresh reconnect (new MediaStream defaults to enabled) can't show a muted
+    // icon while the mic is actually live.
+    setIsMicMuted(false);
     setStartedAt(null);
     captionRef.current = "";
     setAssistantCaption("");
@@ -203,6 +208,10 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
           break;
         case "error":
           setError((msg.error as { message?: string } | undefined)?.message ?? "Voice connection error");
+          // A bare error (e.g. rejected response.create) emits no response.done, so clear the
+          // speaking/thinking flags here too or the orb can stick on "Thinking…".
+          setIsThinking(false);
+          setIsAssistantSpeaking(false);
           responseLoopRef.current?.onError();
           break;
       }
@@ -258,7 +267,9 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
       setStartedAt(Date.now());
       setStatus("connected");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      // Keep the DOMException NAME (NotAllowedError / NotFoundError / NotReadableError) — it's the
+      // stable, locale-independent signal the UI branches on; .message is browser/locale-specific.
+      setError(err instanceof Error ? `${err.name}: ${err.message}` : String(err));
       setStatus("error");
       disconnect("error");
     }
