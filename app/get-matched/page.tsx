@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { ChatOnboarding } from "./ChatOnboarding";
+import { GetMatchedExperience } from "./GetMatchedExperience";
 
 export const metadata: Metadata = {
   title: "Find your fit — Healing Tides Collective",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function GetMatchedPage() {
   return (
     <main id="main-content" className="bg-sand py-8 text-charcoal md:py-12">
-      <ChatOnboarding />
+      <GetMatchedExperience />
     </main>
   );
 }

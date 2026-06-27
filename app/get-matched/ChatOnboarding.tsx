@@ -126,7 +126,7 @@ function AssistantParts({ message }: { message: OnboardingUIMessage }) {
   );
 }
 
-export function ChatOnboarding() {
+export function ChatOnboarding({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) {
   const { messages, sendMessage, status, error } = useChat<OnboardingUIMessage>({
     transport: new DefaultChatTransport({ api: "/api/get-matched/chat" }),
   });
@@ -157,9 +157,16 @@ export function ChatOnboarding() {
           <p className="font-display text-[18px] font-light text-charcoal">Find your fit</p>
           <p className="text-[12px] text-ink-muted">A calm conversation — a real person reads every word.</p>
         </div>
-        <Link href="/get-matched/form" className="text-[12px] text-teal underline-offset-2 hover:underline">
-          Prefer a form?
-        </Link>
+        <div className="flex items-center gap-3">
+          {onSwitchToVoice ? (
+            <button onClick={onSwitchToVoice} className="text-[12px] text-teal underline-offset-2 hover:underline">
+              🎙 Talk instead
+            </button>
+          ) : null}
+          <Link href="/get-matched/form" className="text-[12px] text-ink-muted underline-offset-2 hover:underline">
+            Prefer a form?
+          </Link>
+        </div>
       </header>
 
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-6">
