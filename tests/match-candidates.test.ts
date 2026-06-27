@@ -70,6 +70,29 @@ describe("candidateRelevance", () => {
     expect(miss.facts.every((f) => !f.hit)).toBe(true);
   });
 
+  it("gender uses whole-word matching, not substring (no 'female' ⊃ 'male' false positive)", () => {
+    // a seeker wanting a woman must NOT read as a match for a male practitioner
+    expect(candidateRelevance(seeker({ genderPreference: "female" }), cand({ gender: "Male" })).facts[0].hit).toBe(false);
+    // verbose seeker phrasing still matches a terse practitioner value (symmetric)
+    expect(
+      candidateRelevance(seeker({ genderPreference: "a woman, if possible" }), cand({ gender: "Woman" })).facts[0].hit,
+    ).toBe(true);
+  });
+
+  it("insurance ignores trivially short input so it can't match every plan", () => {
+    expect(
+      candidateRelevance(seeker({ usesInsurance: true, insuranceName: "a" }), cand({ insuranceAccepted: ["Aetna"] }))
+        .facts[0].hit,
+    ).toBe(false);
+    // a real (sub)string still matches
+    expect(
+      candidateRelevance(
+        seeker({ usesInsurance: true, insuranceName: "HealthPartners" }),
+        cand({ insuranceAccepted: ["HealthPartners of MN"] }),
+      ).facts[0].hit,
+    ).toBe(true);
+  });
+
   it("flags a candidate not accepting new clients (surfaced, not excluded)", () => {
     expect(candidateRelevance(seeker(), cand({ acceptingNew: false })).notAcceptingNew).toBe(true);
     expect(candidateRelevance(seeker(), cand({ acceptingNew: true })).notAcceptingNew).toBe(false);

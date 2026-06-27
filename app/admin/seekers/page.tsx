@@ -100,8 +100,8 @@ export default async function AdminSeekersPage() {
     <AdminShell title="Seekers">
       <p className="mt-4 max-w-prose text-[15px] leading-[1.7] text-ink-soft">
         Every &ldquo;Get matched&rdquo; submission lands here for you to read first. Open one to enter the matching{" "}
-        <span className="text-charcoal">workspace</span> — read their story, see candidate practitioners ranked by your
-        signals, and hand-build a shortlist with a note on each. (Sending it by email is the next build.)
+        <span className="text-charcoal">workspace</span> — read their story, see candidate practitioners ordered by the
+        needs they meet, and hand-build a shortlist with a note on each. (Sending it by email is the next build.)
       </p>
 
       {intakes.length === 0 ? (

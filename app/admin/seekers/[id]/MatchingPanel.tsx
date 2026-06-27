@@ -49,10 +49,34 @@ export function MatchingPanel({
   const [pending, start] = useTransition();
   const [q, setQ] = useState("");
   const [draft, setDraft] = useState<Record<string, string>>({}); // per-match reason overrides
+  const [error, setError] = useState<string | null>(null);
 
   const shortlisted = useMemo(() => new Set(matches.map((m) => m.practitionerId)), [matches]);
 
-  const run = (fn: () => Promise<unknown>) => start(() => void fn().then(() => router.refresh()));
+  // Forget a per-match draft so the textarea falls back to the authoritative (server-cleaned)
+  // m.reason after refresh — keeps "Save note" from lingering and stops stale text from
+  // resurfacing on a remove → re-add.
+  const clearDraft = (id: string) => setDraft(({ [id]: _omit, ...rest }) => rest);
+
+  // Run a server action, surface its {ok:false} error (and transport errors), and only
+  // refresh + run post-success cleanup when it actually succeeded.
+  const run = (fn: () => Promise<unknown>, onSuccess?: () => void) =>
+    start(async () => {
+      setError(null);
+      let res: unknown;
+      try {
+        res = await fn();
+      } catch {
+        setError("Something went wrong — please try again.");
+        return;
+      }
+      if (res && typeof res === "object" && "ok" in res && (res as { ok: boolean }).ok === false) {
+        setError((res as { error?: string }).error ?? "Something went wrong.");
+        return; // keep the admin's input; don't refresh away a failed edit
+      }
+      onSuccess?.();
+      router.refresh();
+    });
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -82,6 +106,7 @@ export function MatchingPanel({
             key={s.value}
             type="button"
             disabled={pending}
+            aria-pressed={s.value === status}
             onClick={() => s.value !== status && run(() => setIntakeStatus(intakeId, s.value))}
             className={`rounded-full px-3 py-1 text-[13px] transition ${
               s.value === status
@@ -93,6 +118,12 @@ export function MatchingPanel({
           </button>
         ))}
       </div>
+
+      {error ? (
+        <p role="alert" className="mt-3 rounded-lg border border-clay/40 bg-clay/[0.08] px-3 py-2 text-[13px] text-clay">
+          {error}
+        </p>
+      ) : null}
 
       {/* Shortlist */}
       <section className="mt-8">
@@ -121,7 +152,7 @@ export function MatchingPanel({
                     <button
                       type="button"
                       disabled={pending}
-                      onClick={() => run(() => removeFromShortlist(intakeId, m.practitionerId))}
+                      onClick={() => run(() => removeFromShortlist(intakeId, m.practitionerId), () => clearDraft(m.practitionerId))}
                       className="text-[12px] text-ink-muted underline-offset-2 hover:text-clay hover:underline disabled:opacity-50"
                     >
                       Remove
@@ -131,6 +162,7 @@ export function MatchingPanel({
                     value={reason}
                     onChange={(e) => setDraft((d) => ({ ...d, [m.practitionerId]: e.target.value }))}
                     placeholder="Why I thought of them for this person…"
+                    aria-label={`Why ${m.displayName ?? "this practitioner"} for this seeker`}
                     rows={2}
                     className="mt-2 w-full resize-y rounded-lg border border-rule bg-sand/40 p-2.5 text-[14px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
                   />
@@ -139,7 +171,7 @@ export function MatchingPanel({
                       <button
                         type="button"
                         disabled={pending}
-                        onClick={() => run(() => setMatchReason(intakeId, m.practitionerId, reason))}
+                        onClick={() => run(() => setMatchReason(intakeId, m.practitionerId, reason), () => clearDraft(m.practitionerId))}
                         className="rounded-full bg-teal px-3 py-1 text-[13px] text-white hover:bg-teal/90 disabled:opacity-50"
                       >
                         Save note
@@ -166,6 +198,7 @@ export function MatchingPanel({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Filter by name, focus, words…"
+            aria-label="Filter candidates by name, focus, or words"
             className="w-56 rounded-full border border-rule bg-white px-3.5 py-1.5 text-[13px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
           />
         </div>
@@ -200,6 +233,7 @@ export function MatchingPanel({
                   <button
                     type="button"
                     disabled={pending || on}
+                    aria-pressed={on}
                     onClick={() => run(() => addToShortlist(intakeId, c.id))}
                     className={`shrink-0 rounded-full px-3 py-1 text-[13px] transition ${
                       on

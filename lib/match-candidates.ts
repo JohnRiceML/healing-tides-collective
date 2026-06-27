@@ -41,6 +41,31 @@ export type CandidateRelevance = {
 
 const norm = (s: string) => s.trim().toLowerCase();
 
+/** Word tokens of length >= 2 (drops "a" and punctuation) for whole-word matching. */
+const words = (s: string): string[] => norm(s).split(/[^a-z0-9]+/).filter((w) => w.length >= 2);
+
+/**
+ * Symmetric substring match, guarded so trivially short input can't false-positive (e.g. a seeker
+ * typing "a" must not "match" every plan containing an "a"). Used for free-text region/insurance.
+ */
+function looseContains(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  return shorter.length >= 3 && longer.includes(shorter);
+}
+
+/**
+ * Whole-word overlap. Used for the gender field specifically, because plain substring matching
+ * has a dangerous trap there — "female".includes("male") is true, so a male practitioner would
+ * read as a match for a seeker wanting a woman. Token matching avoids that and is symmetric, so
+ * verbose phrasings ("a woman, if possible") still match a terse "Woman".
+ */
+function sharesWord(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const set = new Set(words(a));
+  return words(b).some((w) => set.has(w));
+}
+
 /** Does a candidate's session format satisfy the seeker's format preference? HYBRID covers both. */
 function formatSatisfies(seekerFormat: string, modality: string | null): boolean {
   if (!modality) return false;
@@ -69,25 +94,25 @@ export function candidateRelevance(seeker: SeekerSignals, candidate: CandidateSi
     facts.push({ label, hit: formatSatisfies(seeker.format, candidate.modality) });
   }
 
-  // Insurance — only a constraint when the seeker wants to use it AND named a plan. Free text → soft.
+  // Insurance — only a constraint when the seeker wants to use it AND named a plan. Free text → soft,
+  // guarded so trivially short input can't match every plan.
   if (seeker.usesInsurance === true && seeker.insuranceName) {
     const want = norm(seeker.insuranceName);
-    const hit = candidate.insuranceAccepted.some((p) => norm(p).includes(want) || want.includes(norm(p)));
+    const hit = candidate.insuranceAccepted.some((p) => looseContains(want, norm(p)));
     facts.push({ label: `Accepts ${seeker.insuranceName}`, hit, soft: true });
   }
 
   // Region — free text both sides → soft, never a hard drop.
   if (seeker.region) {
-    const a = norm(seeker.region);
-    const b = candidate.region ? norm(candidate.region) : "";
-    facts.push({ label: `Near ${seeker.region}`, hit: Boolean(b) && (a.includes(b) || b.includes(a)), soft: true });
+    const hit = looseContains(norm(seeker.region), candidate.region ? norm(candidate.region) : "");
+    facts.push({ label: `Near ${seeker.region}`, hit, soft: true });
   }
 
-  // Gender preference — free text → soft (e.g. seeker "female", practitioner "Female, she/her").
+  // Gender preference — free text → soft. Whole-word match (NOT substring): "female" must not
+  // read as a match for a "male" practitioner.
   if (seeker.genderPreference) {
-    const a = norm(seeker.genderPreference);
-    const b = candidate.gender ? norm(candidate.gender) : "";
-    facts.push({ label: `Prefers ${seeker.genderPreference}`, hit: Boolean(b) && b.includes(a), soft: true });
+    const hit = sharesWord(seeker.genderPreference, candidate.gender ?? "");
+    facts.push({ label: `Prefers ${seeker.genderPreference}`, hit, soft: true });
   }
 
   return {
