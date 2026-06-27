@@ -13,11 +13,9 @@ import {
 
 import { onboardingTools } from "@/lib/onboarding/tools";
 import { buildOnboardingSystemPrompt } from "@/lib/onboarding/system-prompt";
+import { onboardingModel } from "@/lib/onboarding/model";
 
 export const maxDuration = 60;
-
-// Conversational quality matters here; Haiku is the cheaper fallback if cost bites.
-const MODEL = "anthropic/claude-sonnet-4.6";
 
 // Exported so the client can type useChat<OnboardingUIMessage> (type-only import → no server
 // code is bundled into the browser).
@@ -43,7 +41,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: MODEL,
+    model: onboardingModel(),
     system: buildOnboardingSystemPrompt(),
     messages: await convertToModelMessages(messages),
     tools: onboardingTools,
