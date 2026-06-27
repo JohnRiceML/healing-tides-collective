@@ -5,9 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { INTAKE_STATUSES } from "@/lib/seeker-intake";
+import { composeShortlistEmail } from "@/lib/shortlist-email";
 import type { CandidateRelevance } from "@/lib/match-candidates";
 import type { WorkspaceMatch } from "../_data";
-import { addToShortlist, removeFromShortlist, setMatchReason, setIntakeStatus } from "../actions";
+import {
+  addToShortlist,
+  removeFromShortlist,
+  setMatchReason,
+  setIntakeStatus,
+  sendShortlist,
+  markShortlistSent,
+} from "../actions";
 
 export type CandidateVM = {
   id: string;
@@ -39,17 +47,59 @@ export function MatchingPanel({
   status,
   matches,
   candidates,
+  seekerName,
+  seekerEmail,
 }: {
   intakeId: string;
   status: string;
   matches: WorkspaceMatch[];
   candidates: CandidateVM[];
+  seekerName: string;
+  seekerEmail: string;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [q, setQ] = useState("");
   const [draft, setDraft] = useState<Record<string, string>>({}); // per-match reason overrides
   const [error, setError] = useState<string | null>(null);
+  const [sendFallback, setSendFallback] = useState(false); // email not configured → show mailto + "mark sent"
+
+  // The shortlist email (used for the mailto fallback Nora sends from her own inbox).
+  const composed = useMemo(
+    () =>
+      composeShortlistEmail({
+        seekerName,
+        seekerEmail,
+        picks: matches.map((m) => ({ displayName: m.displayName, slug: m.slug, reason: m.reason })),
+      }),
+    [seekerName, seekerEmail, matches],
+  );
+
+  // "Send shortlist": try Resend; on success the status flips to Matched. If email isn't
+  // configured, reveal the prefilled mailto + a "Mark as sent" confirmation.
+  const handleSend = () =>
+    start(async () => {
+      setError(null);
+      let res: Awaited<ReturnType<typeof sendShortlist>>;
+      try {
+        res = await sendShortlist(intakeId);
+      } catch {
+        setError("Couldn't send just now — try again, or email it yourself below.");
+        return;
+      }
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      if (res.delivered) {
+        setSendFallback(false);
+        router.refresh();
+      } else {
+        // Email isn't wired — open Nora's mail client with everything prefilled.
+        setSendFallback(true);
+        if (typeof window !== "undefined") window.location.href = composed.mailto;
+      }
+    });
 
   const shortlisted = useMemo(() => new Set(matches.map((m) => m.practitionerId)), [matches]);
 
@@ -184,9 +234,44 @@ export function MatchingPanel({
           </ul>
         )}
         {matches.length > 0 ? (
-          <p className="mt-3 text-[12px] text-ink-muted">
-            Sending this shortlist to the seeker by email is the next build (Phase 3).
-          </p>
+          status === "MATCHED" ? (
+            <div className="mt-4 rounded-xl border border-teal/30 bg-seafoam/20 px-3.5 py-2.5 text-[13px] text-ocean">
+              Sent to {seekerName}. You can re-send if you revise the shortlist.
+              <a href={composed.mailto} className="ml-2 text-teal underline-offset-2 hover:underline">
+                Re-open email
+              </a>
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={handleSend}
+                  className="rounded-full bg-ocean px-4 py-1.5 text-[13px] text-white hover:bg-ocean/90 disabled:opacity-50"
+                >
+                  ✉️ Send shortlist to {seekerName}
+                </button>
+                <a href={composed.mailto} className="text-[12px] text-ink-muted underline-offset-2 hover:text-teal hover:underline">
+                  Preview / compose it yourself
+                </a>
+              </div>
+              {sendFallback ? (
+                <p className="text-[12px] text-ink-soft">
+                  Email isn&rsquo;t auto-sending yet, so I opened it in your mail app. Once you&rsquo;ve sent it,{" "}
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => run(() => markShortlistSent(intakeId))}
+                    className="text-teal underline-offset-2 hover:underline disabled:opacity-50"
+                  >
+                    mark it as sent
+                  </button>
+                  .
+                </p>
+              ) : null}
+            </div>
+          )
         ) : null}
       </section>
 

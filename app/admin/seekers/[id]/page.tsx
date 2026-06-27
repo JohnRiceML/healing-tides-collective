@@ -129,7 +129,14 @@ export default async function SeekerWorkspacePage({ params }: { params: Promise<
         </div>
 
         {/* RIGHT — status, shortlist, and candidates (interactive) */}
-        <MatchingPanel intakeId={intake.id} status={intake.status} matches={intake.matches} candidates={candidates} />
+        <MatchingPanel
+          intakeId={intake.id}
+          status={intake.status}
+          matches={intake.matches}
+          candidates={candidates}
+          seekerName={intake.name}
+          seekerEmail={intake.email}
+        />
       </div>
     </AdminShell>
   );
