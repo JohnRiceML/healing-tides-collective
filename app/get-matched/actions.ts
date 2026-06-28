@@ -1,8 +1,14 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { db } from "@/lib/db";
 import { getCurrentDbUser } from "@/lib/auth";
 import { validateIntake, type IntakeInput } from "@/lib/seeker-intake";
+import { createRateLimiter } from "@/lib/onboarding/voice/rate-limit";
+
+// Best-effort per-IP guard on the public intro write (same posture as the voice endpoints).
+const introLimiter = createRateLimiter(8, 60 * 60 * 1000); // 8 intro requests / IP / hour
 
 /**
  * Store a seeker's intake. Anonymous-friendly (no account needed — most seekers don't want one).
@@ -39,10 +45,26 @@ export async function requestIntro(input: {
   name: string;
   email: string;
   slugs: string[];
+  consent: boolean;
   note?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
+  // Consent is the boundary for this storage event — verify + record it server-side, not just in
+  // the UI, so there's a durable, provable consent trail (matters for the HIPAA posture).
+  if (input.consent !== true) {
+    return { ok: false, error: "Please check the consent box so we know it's okay to reach out." };
+  }
+
   const slugs = (Array.isArray(input.slugs) ? input.slugs : []).filter((s) => typeof s === "string").slice(0, 20);
   if (slugs.length === 0) return { ok: false, error: "Add at least one practitioner to your list first." };
+
+  try {
+    const ip = ((await headers()).get("x-forwarded-for")?.split(",")[0] || "unknown").trim();
+    if (!introLimiter.check(ip, Date.now()).ok) {
+      return { ok: false, error: "That's a lot of requests in a short time — please try again a little later." };
+    }
+  } catch {
+    /* headers unavailable → skip the guard rather than block a legitimate request */
+  }
 
   const story =
     input.note?.trim() ||
@@ -63,8 +85,19 @@ export async function requestIntro(input: {
       where: { slug: { in: slugs }, visibility: "PUBLISHED" },
       select: { id: true },
     });
+    // Persist the FULL intended list (incl. any since-unpublished) so the seeker's choices are never
+    // silently lost; flag for Nora when some couldn't be matched. Record the consent fact.
+    const adminNote =
+      pracs.length < slugs.length
+        ? `Seeker saved ${slugs.length} practitioner(s); ${pracs.length} currently published. Full list in fieldValues.savedSlugs.`
+        : null;
     const intake = await db.seekerIntake.create({
-      data: { ...clean.value, fieldValues: { __source: "considering" }, userId },
+      data: {
+        ...clean.value,
+        adminNote,
+        fieldValues: { __source: "considering", savedSlugs: slugs, consentedAt: new Date().toISOString(), consentVersion: "v1" },
+        userId,
+      },
     });
     if (pracs.length > 0) {
       await db.match.createMany({

@@ -160,9 +160,11 @@ export function FluidVisualizer({ isActive, speaker, userAnalyser }: Props) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
 
     const draw = () => {
+      // Read DPR each frame so a mid-session DPI/zoom change (the resize handler re-sizes the
+      // backing store with the new DPR) never desyncs the drawing transform.
+      const dpr = window.devicePixelRatio || 1;
       const cssW = canvas.width / dpr;
       const cssH = canvas.height / dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

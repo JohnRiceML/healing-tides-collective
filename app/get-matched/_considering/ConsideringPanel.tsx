@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 
 import { useConsidering } from "./ConsideringContext";
@@ -10,7 +10,7 @@ import { requestIntro } from "../actions";
 // A floating pill opens a drawer with the saved practitioners + a staged, low-pressure CTA:
 // reach out yourself, or consent to have Nora make a warm introduction (the storage moment).
 export function ConsideringPanel() {
-  const { items, remove } = useConsidering();
+  const { items, remove, clear } = useConsidering();
   const [open, setOpen] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   const [name, setName] = useState("");
@@ -19,6 +19,32 @@ export function ConsideringPanel() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  // Close + reset the staged state so a re-open starts clean (no stale form / stuck success).
+  const closePanel = () => {
+    setOpen(false);
+    setShowIntro(false);
+    setDone(false);
+    setName("");
+    setEmail("");
+    setConsent(false);
+    setError(null);
+  };
+
+  // While the drawer is open: Esc to close + lock background scroll.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePanel();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   if (items.length === 0 && !open) return null;
 
@@ -29,9 +55,13 @@ export function ConsideringPanel() {
     }
     start(async () => {
       setError(null);
-      const res = await requestIntro({ name, email, slugs: items.map((i) => i.slug) });
-      if (res.ok) setDone(true);
-      else setError(res.error);
+      const res = await requestIntro({ name, email, slugs: items.map((i) => i.slug), consent });
+      if (res.ok) {
+        setDone(true);
+        clear(); // sent — empty the list so the pill count + success message stay consistent
+      } else {
+        setError(res.error);
+      }
     });
   };
 
@@ -50,18 +80,36 @@ export function ConsideringPanel() {
       ) : null}
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-charcoal/20" onClick={() => setOpen(false)} aria-hidden />
-          <div className="relative flex h-full w-full max-w-[420px] flex-col overflow-y-auto bg-sand shadow-xl">
+        <div className="fixed inset-0 z-[210] flex justify-end">
+          <div className="absolute inset-0 bg-charcoal/20" onClick={closePanel} aria-hidden />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="People you're considering"
+            className="relative flex h-full w-full max-w-[420px] flex-col overflow-y-auto overscroll-contain bg-sand shadow-xl"
+          >
             <header className="flex items-center justify-between border-b border-rule/60 px-5 py-4">
               <p className="font-display text-[18px] font-light text-charcoal">People you&rsquo;re considering</p>
-              <button onClick={() => setOpen(false)} className="text-[13px] text-ink-muted hover:text-charcoal">
+              <button onClick={closePanel} className="text-[13px] text-ink-muted hover:text-charcoal">
                 Close
               </button>
             </header>
 
             <div className="flex-1 px-5 py-4">
-              {items.length === 0 ? (
+              {done ? (
+                <div className="rounded-2xl border border-teal/30 bg-seafoam/20 p-4 text-[14px] leading-[1.6] text-ocean">
+                  <p>
+                    <span className="font-medium">We have it from here.</span> Nora will read your list and reach out by
+                    email — usually within a few days. You can keep exploring anytime.
+                  </p>
+                  <button
+                    onClick={closePanel}
+                    className="mt-3 rounded-full bg-ocean px-4 py-1.5 text-[13px] text-white hover:bg-ocean/90"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : items.length === 0 ? (
                 <p className="text-[14px] text-ink-soft">Your list is empty — save anyone who resonates as you talk.</p>
               ) : (
                 <ul className="flex flex-col gap-2.5">
@@ -92,15 +140,10 @@ export function ConsideringPanel() {
               )}
             </div>
 
-            {/* Staged, low-pressure CTA */}
-            {items.length > 0 ? (
+            {/* Staged, low-pressure CTA (hidden once sent) */}
+            {!done && items.length > 0 ? (
               <div className="border-t border-rule/60 bg-white px-5 py-4">
-                {done ? (
-                  <p className="text-[14px] leading-[1.6] text-ocean">
-                    <span className="font-medium">We have it from here.</span> Nora will read your list and reach out
-                    by email — usually within a few days. You can keep exploring anytime.
-                  </p>
-                ) : showIntro ? (
+                {showIntro ? (
                   <div className="flex flex-col gap-2.5">
                     <p className="text-[13px] leading-[1.6] text-ink-soft">
                       Nora will read your list and make a warm introduction. Just your name and email — nothing else.
