@@ -8,7 +8,7 @@ import { RESERVED_BADGES_KEY, sanitizeGrant, grantedBadgesFrom } from "@/app/_li
 import { VERIFICATION_KEY, type VerificationStatus } from "@/app/_lib/credentials";
 import { isValidStatus, type FeedbackStatus } from "@/lib/feedback";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
-import { newInviteToken, readPrefill, parseBulkInvites, type InvitePrefill } from "@/lib/invites";
+import { newInviteToken, readPrefill, MAX_BULK_INVITES, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
 import { sendEmail, emailConfigured } from "@/lib/email";
 import { claimInviteEmail, completenessReminderEmail } from "@/lib/email-templates";
@@ -29,7 +29,7 @@ type MintResult =
 
 /**
  * Core invite mint: validate → persist the row → best-effort send the claim email. NO auth + NO
- * revalidate (callers do those once). Shared by `createInvite` (single) and `bulkCreateInvites` (many)
+ * revalidate (callers do those once). Shared by `createInvite` (single) and `createInvitesFromRows` (many)
  * so the email/prefill behavior can't drift between the two paths.
  */
 async function mintAndEmailInvite(input: {
@@ -98,25 +98,43 @@ export type BulkInviteResult =
     };
 
 /**
- * Invite many practitioners from a pasted block (one per line: email, optional name, optional link).
- * ADMIN-ONLY. Parses + de-dupes, skips emails that already have a PENDING invite (so a re-paste can't
- * double-email anyone), then mints + best-effort emails each. Returns a per-row result + a summary so
- * the admin sees exactly what sent, what's a copyable link, and what failed.
+ * Invite many practitioners from hand-edited rows (the admin pastes a list, it's parsed into editable
+ * rows client-side, they tweak, then submit). ADMIN-ONLY. Normalizes + de-dupes by email, skips emails
+ * that already have a PENDING invite (so a re-submit can't double-email anyone), then mints +
+ * best-effort emails each. Returns a per-row result + summary so the admin sees what sent, what's a
+ * copyable link, and what was skipped/failed.
  */
-export async function bulkCreateInvites(text: string): Promise<BulkInviteResult> {
+export async function createInvitesFromRows(
+  inputRows: { email: string; displayName?: string; importUrl?: string }[],
+): Promise<BulkInviteResult> {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Not authorized." };
 
-  const parsed = parseBulkInvites(text);
-  if (parsed.valid.length === 0 && parsed.invalid.length === 0) {
-    return { ok: false, error: "Nothing to invite — paste one practitioner per line (email, optional name, optional link)." };
+  // Normalize + de-dupe by email (the row could carry blanks / casing / dupes after hand-editing).
+  const seen = new Set<string>();
+  const clean: { email: string; displayName?: string; importUrl?: string }[] = [];
+  let duplicates = 0;
+  for (const r of Array.isArray(inputRows) ? inputRows.slice(0, MAX_BULK_INVITES) : []) {
+    const email = (r?.email ?? "").trim().toLowerCase();
+    if (!email) continue;
+    if (seen.has(email)) {
+      duplicates++;
+      continue;
+    }
+    seen.add(email);
+    clean.push({
+      email,
+      displayName: r.displayName?.trim() || undefined,
+      importUrl: r.importUrl?.trim() || undefined,
+    });
   }
+  if (clean.length === 0) return { ok: false, error: "Add at least one practitioner with an email." };
 
-  // Skip emails that already have an UNCLAIMED invite — a re-paste shouldn't email anyone twice.
+  // Skip emails that already have an UNCLAIMED invite — a re-submit shouldn't email anyone twice.
   let alreadyInvited = new Set<string>();
   try {
     const existing = await db.invite.findMany({
-      where: { email: { in: parsed.valid.map((r) => r.email) }, claimedAt: null },
+      where: { email: { in: clean.map((r) => r.email) }, claimedAt: null },
       select: { email: true },
     });
     alreadyInvited = new Set(existing.map((e) => e.email.toLowerCase()));
@@ -126,7 +144,7 @@ export async function bulkCreateInvites(text: string): Promise<BulkInviteResult>
 
   const rows: BulkInviteRow[] = [];
   let skippedExisting = 0;
-  for (const r of parsed.valid) {
+  for (const r of clean) {
     if (alreadyInvited.has(r.email)) {
       skippedExisting++;
       rows.push({ email: r.email, ok: false, error: "Already has a pending invite — skipped." });
@@ -154,11 +172,11 @@ export async function bulkCreateInvites(text: string): Promise<BulkInviteResult>
       emailed,
       failed: rows.length - created - skippedExisting,
       skippedExisting,
-      invalid: parsed.invalid.length,
-      duplicates: parsed.duplicates,
+      invalid: 0,
+      duplicates,
     },
     rows,
-    invalid: parsed.invalid,
+    invalid: [],
   };
 }
 
