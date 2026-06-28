@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
 
 import type { PractitionerHit, PractitionerDetail } from "@/lib/onboarding/types";
+import { useConsidering } from "../_considering/ConsideringContext";
 
 /** A practitioner the agent surfaced, rendered inline in the conversation. Calm, not a hard sell. */
 export function PractitionerChatCard({ p }: { p: PractitionerHit | PractitionerDetail }) {
   const detail = "bio" in p ? (p as PractitionerDetail) : null;
+  const { has, toggle } = useConsidering();
+  const saved = has(p.slug);
   return (
     <div className="rounded-2xl border border-rule bg-white p-4 shadow-[0_1px_0_rgba(0,0,0,0.02)]">
       <div className="flex items-start justify-between gap-3">
@@ -49,13 +54,25 @@ export function PractitionerChatCard({ p }: { p: PractitionerHit | PractitionerD
         </p>
       ) : null}
 
-      <Link
-        href={`/practitioners/${p.slug}`}
-        target="_blank"
-        className="mt-3 inline-block text-[12px] text-teal underline-offset-2 hover:underline"
-      >
-        See full profile →
-      </Link>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <Link
+          href={`/practitioners/${p.slug}`}
+          target="_blank"
+          className="text-[12px] text-teal underline-offset-2 hover:underline"
+        >
+          See full profile →
+        </Link>
+        <button
+          type="button"
+          onClick={() => toggle({ slug: p.slug, displayName: p.displayName, title: p.title, region: p.region })}
+          aria-pressed={saved}
+          className={`rounded-full px-3 py-1 text-[12px] transition ${
+            saved ? "bg-seafoam/60 text-ocean" : "bg-white text-ink-soft ring-1 ring-rule hover:ring-teal/40"
+          }`}
+        >
+          {saved ? "♥ Saved" : "♡ Save"}
+        </button>
+      </div>
     </div>
   );
 }
