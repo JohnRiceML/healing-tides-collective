@@ -39,11 +39,14 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
   const [isThinking, setIsThinking] = useState(false);
   const [assistantCaption, setAssistantCaption] = useState("");
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  // Mic frequency analyser → the fluid visualizer reacts to the seeker's own voice.
+  const [userAnalyser, setUserAnalyser] = useState<AnalyserNode | null>(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const capTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const captionRef = useRef("");
@@ -81,6 +84,11 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
     pcRef.current = null;
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
+    if (audioCtxRef.current) {
+      void audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
+    setUserAnalyser(null);
     if (audioElRef.current) audioElRef.current.srcObject = null;
     setStatus((prev) => {
       if (prev === "connected" || prev === "connecting") onSessionEndRef.current?.(reason);
@@ -243,6 +251,23 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
       localStreamRef.current = localStream;
       for (const track of localStream.getTracks()) pc.addTrack(track, localStream);
 
+      // Mic analyser so the visualizer breathes with the seeker's voice (best-effort).
+      try {
+        const Ctx =
+          window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (Ctx) {
+          const ctx = new Ctx();
+          audioCtxRef.current = ctx;
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.6;
+          ctx.createMediaStreamSource(localStream).connect(analyser);
+          setUserAnalyser(analyser);
+        }
+      } catch {
+        /* visualizer falls back to ambient sway */
+      }
+
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
       dc.addEventListener("message", handleDataChannelMessage);
@@ -293,6 +318,7 @@ export function useRealtimeVoice({ executeTool, onAssistantText, onUserText, onS
     isThinking,
     assistantCaption,
     startedAt,
+    userAnalyser,
     connect,
     disconnect,
     toggleMute,

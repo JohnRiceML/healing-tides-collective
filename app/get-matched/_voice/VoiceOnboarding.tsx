@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+
+import { FluidVisualizer } from "./FluidVisualizer";
 
 import type { PractitionerHit, PractitionerDetail, PriorityReflection, CrisisResources } from "@/lib/onboarding/types";
 import { PractitionerChatCard } from "../_chat/PractitionerChatCard";
@@ -55,8 +56,20 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
   // Why a session auto-ended, so we can explain it instead of silently snapping back to idle.
   const [endedReason, setEndedReason] = useState<null | "cap" | "idle" | "manual" | "error">(null);
 
-  const { status, error, isMicMuted, isAssistantSpeaking, isThinking, assistantCaption, startedAt, connect, disconnect, toggleMute, audioElRef } =
-    useRealtimeVoice({ executeTool, onUserText, onAssistantText, onSessionEnd: setEndedReason });
+  const {
+    status,
+    error,
+    isMicMuted,
+    isAssistantSpeaking,
+    isThinking,
+    assistantCaption,
+    startedAt,
+    userAnalyser,
+    connect,
+    disconnect,
+    toggleMute,
+    audioElRef,
+  } = useRealtimeVoice({ executeTool, onUserText, onAssistantText, onSessionEnd: setEndedReason });
 
   const startCall = useCallback(() => {
     setEndedReason(null);
@@ -110,21 +123,14 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
           onClick={() => (connected ? toggleMute() : startCall())}
           disabled={status === "connecting"}
           aria-label={connected ? (isMicMuted ? "Unmute microphone" : "Mute microphone") : "Start the voice conversation"}
-          className="relative grid h-32 w-32 place-items-center rounded-full bg-seafoam/40 ring-1 ring-teal/30 transition disabled:opacity-60"
+          className="relative grid h-36 w-36 place-items-center rounded-full bg-seafoam/25 ring-1 ring-teal/25 transition disabled:opacity-60"
         >
-          <motion.span
-            aria-hidden
-            className="absolute inset-0 rounded-full bg-teal/20"
-            animate={
-              connected && isAssistantSpeaking
-                ? { scale: [1, 1.18, 1], opacity: [0.5, 0.2, 0.5] }
-                : connected
-                  ? { scale: [1, 1.06, 1], opacity: [0.35, 0.5, 0.35] }
-                  : { scale: 1, opacity: 0.3 }
-            }
-            transition={{ duration: isAssistantSpeaking ? 1.1 : 2.4, repeat: Infinity, ease: "easeInOut" }}
+          <FluidVisualizer
+            isActive={connected}
+            speaker={!connected ? "none" : isAssistantSpeaking ? "ai" : "user"}
+            userAnalyser={userAnalyser}
           />
-          <span className="relative text-[28px]">{!connected ? "🎙️" : isMicMuted ? "🔇" : "🌊"}</span>
+          <span className="relative text-[26px] drop-shadow-sm">{!connected ? "🎙️" : isMicMuted ? "🔇" : "🌊"}</span>
         </button>
 
         <p className="text-[14px] text-ink-soft">{stateLabel}</p>
