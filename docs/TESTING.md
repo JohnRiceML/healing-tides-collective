@@ -10,8 +10,11 @@ anywhere); tiers 3–4 are opt-in against a throwaway database.
 | **3 · Integration** | `tests/integration/*.test.ts` | Real Postgres (JSON operators, unique constraints, the live read layer) + live Resend/Serper | ⏳ `npm run test:integration` (skips without a DB / keys) |
 | **4 · E2E** | `e2e/*.spec.ts` | Real Chromium driving the running app — public + signed-in flows end to end | ⏳ `npm run test:e2e` (DB-backed specs skip without a DB) |
 
-Roughly **369 tests**: 328 unit + 17 flow + 9 integration + 15 E2E. Gates on every push/PR:
-`npx tsc --noEmit` + `npm test`.
+**452 tests** in `npm test` (unit + flow; integration/E2E skip without a DB). Gates on every
+push/PR: `npx tsc --noEmit` + `npm test`. Every server action that writes has a flow test —
+including the M2/admin surfaces: seeker accounts (`syncSaved`/`unsaveBySlug`/`ensureWelcomed`),
+the practitioner triage layer (`runTriage`/`saveAdminNote`/`messagePractitioner`), bulk invite
+(`createInvitesFromRows`), and the seeker intro (`requestIntro`).
 
 > **Coverage honesty:** the unit/flow tiers mock Prisma, so they verify the where/select
 > *object shape*, not that Postgres honours it. The tiers that prove user-facing flows against
@@ -42,13 +45,18 @@ import { publishProfile } from "@/app/practitioner/publish-actions";
 beforeEach(() => { h.db = makeMockDb({ practitioners: [aPractitioner({ id: "p1" })] }); });
 ```
 
-`makeMockDb` matches rows by the scalar/unique fields in `where` (incl. `NOT: { id }`),
-which covers every CRUD-by-key the flows need. It is **not** a SQL engine — complex
-directory `where` clauses (`array_contains`, JSON paths, `OR`) are verified by the pure
-`buildPractitionerWhere` unit tests and by tier 3, not here.
+`makeMockDb` matches rows by the scalar/unique fields in `where` (incl. `NOT: { id }`, plus the
+`{ in: [...] }` and `{ not: x }` operators), supports `create`/`createMany` (with `skipDuplicates`)
+/`update`/`updateMany`/`upsert`/`delete`/`deleteMany`/`count`, and seeds the `user` · `practitioner` ·
+`invite` · `profileView` · `savedPractitioner` · `seekerIntake` · `match` models. It is **not** a SQL
+engine — relation `where` (e.g. `practitioner: { slug }`), JSON-path filters, and `OR` are out of
+scope and verified by the pure unit tests + tier 3, not here.
 
-**To add a flow:** drop a file in `tests/flows/`, seed the store, drive the actions,
-assert on `h.db.<model>.rows()`. See `claim-flow.test.ts` and `publish-flow.test.ts`.
+**To add a flow:** drop a file in `tests/flows/`, seed the store, drive the actions, assert on
+`h.db.<model>.rows()`. Patterns to copy: `claim-flow.test.ts`, `publish-flow.test.ts`,
+`seeker-account-flow.test.ts` (auth gate + idempotency + send-once + rollback-on-failure),
+`triage-flow.test.ts` (incl. the **re-read-fresh lost-update guard** — a note written mid-AI-call
+must survive), `bulk-invite-flow.test.ts`, and `intro-flow.test.ts` (consent + rate-limit).
 
 ## Tier 3 — real-DB integration
 

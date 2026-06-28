@@ -16,8 +16,21 @@ function matches(row: Row, where: Row): boolean {
       if (Object.entries(v as Row).every(([nk, nv]) => row[nk] === nv)) return false;
       continue;
     }
-    // Only equality on scalars is supported; nested operator objects are out of scope.
-    if (v !== null && typeof v === "object") continue;
+    // Operator objects: support `in` + `not` (the flows use them); other operators (gte/JSON paths)
+    // stay out of scope (skipped = no constraint), verified by pure unit tests + the real-DB layer.
+    if (v !== null && typeof v === "object") {
+      const op = v as Record<string, unknown>;
+      if (Array.isArray(op.in)) {
+        if (!op.in.includes(row[k])) return false;
+        continue;
+      }
+      if ("not" in op) {
+        const nv = op.not;
+        if (nv === null ? row[k] == null : row[k] === nv) return false;
+        continue;
+      }
+      continue;
+    }
     // `null` in a where-clause is "nullish" — matches an absent (undefined) or null field,
     // mirroring Prisma (a freshly-created row's optional column reads as null in the real DB).
     if (v === null) {
@@ -42,6 +55,19 @@ function collection(initial: Row[] = []) {
       const row = { id: data.id ?? `row_${(auto += 1)}`, ...data };
       rows.push(row);
       return { ...row };
+    },
+    createMany: async ({ data, skipDuplicates }: { data: Row[]; skipDuplicates?: boolean }) => {
+      let count = 0;
+      for (const d of data) {
+        // skipDuplicates: a row is a dup if an existing row matches all of d's non-id fields
+        // (covers the composite-unique constraints the flows rely on, e.g. [userId, practitionerId]).
+        if (skipDuplicates && rows.some((r) => Object.entries(d).every(([k, val]) => k === "id" || r[k] === val))) {
+          continue;
+        }
+        rows.push({ id: d.id ?? `row_${(auto += 1)}`, ...d });
+        count += 1;
+      }
+      return { count };
     },
     update: async ({ where, data }: { where: Row; data: Row }) => {
       const row = rows.find((r) => matches(r, where));
@@ -82,12 +108,23 @@ export type MockDb = ReturnType<typeof makeMockDb>;
 
 /** Build an in-memory db. Seed any model with starting rows. */
 export function makeMockDb(
-  seed: { users?: Row[]; practitioners?: Row[]; invites?: Row[]; profileViews?: Row[] } = {},
+  seed: {
+    users?: Row[];
+    practitioners?: Row[];
+    invites?: Row[];
+    profileViews?: Row[];
+    savedPractitioners?: Row[];
+    seekerIntakes?: Row[];
+    matches?: Row[];
+  } = {},
 ) {
   return {
     user: collection(seed.users),
     practitioner: collection(seed.practitioners),
     invite: collection(seed.invites),
     profileView: collection(seed.profileViews),
+    savedPractitioner: collection(seed.savedPractitioners),
+    seekerIntake: collection(seed.seekerIntakes),
+    match: collection(seed.matches),
   };
 }
