@@ -131,6 +131,16 @@ export function DiscoveryRail() {
                 </div>
               )}
             </div>
+
+            {/* Quiet, optional: keep this list across devices by making a free account. */}
+            {!done ? (
+              <p className="mt-3 border-t border-rule/50 pt-3 text-center text-[11px] leading-[1.5] text-ink-muted">
+                <Link href="/save-account" className="text-teal underline-offset-2 hover:underline">
+                  Save this list to an account
+                </Link>{" "}
+                to keep it for later.
+              </p>
+            ) : null}
           </section>
         ) : null}
 

@@ -7,7 +7,7 @@ import { clerkEnabled } from "@/lib/clerk-enabled";
 
 export const metadata: Metadata = {
   title: "Sign in — Healing Tides Collective",
-  description: "Sign in to manage your practitioner profile.",
+  description: "Sign in to Healing Tides Collective.",
 };
 
 export default function SignInPage() {
@@ -15,22 +15,22 @@ export default function SignInPage() {
     <main id="main-content" className="min-h-screen bg-sand text-charcoal">
       <Container size="narrow" className="py-14 sm:py-16 md:py-24">
         <div className="mx-auto max-w-md">
-          <p className="meta text-ink-muted">Practitioners</p>
+          <p className="meta text-ink-muted">Healing Tides</p>
           <h1 className="font-display mt-3 text-[clamp(28px,7vw,40px)] font-light leading-[1.08] tracking-[-0.02em]">
             Welcome back.
           </h1>
           <p className="mt-3 text-[15px] leading-[1.6] text-ink-soft">
-            Sign in to manage your profile.
+            Sign in to your saved list, or to manage your practitioner profile.
           </p>
 
-          {/* Optional catch-all route ([[...sign-in]]) so Clerk can route its
-              multi-step flow with `path` routing. */}
+          {/* Optional catch-all route ([[...sign-in]]) so Clerk can route its multi-step flow.
+              Redirect through /welcome, which routes by role (practitioner → profile, seeker → saved). */}
           <div className="mt-8">
             {clerkEnabled ? (
               <SignIn
                 path="/sign-in"
                 signUpUrl="/join"
-                forceRedirectUrl="/practitioner"
+                forceRedirectUrl="/welcome"
                 appearance={clerkAppearance}
               />
             ) : (

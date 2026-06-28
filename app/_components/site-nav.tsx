@@ -7,6 +7,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 
 import { clerkAppearance } from "./clerk-appearance";
 import { isCurrentUserAdmin } from "@/app/_actions/is-admin";
+import { isCurrentUserPractitioner } from "@/app/_actions/is-practitioner";
 
 /**
  * The app-wide navigation. Audience-aware:
@@ -121,17 +122,23 @@ export function SiteNav({ clerkEnabled }: { clerkEnabled: boolean }) {
 function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const { isLoaded, isSignedIn } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPractitioner, setIsPractitioner] = useState(false);
 
-  // Resolve admin status client-side (a tiny server action) so public pages stay static —
-  // only signed-in users ever ask, and it reveals only a boolean.
+  // Resolve admin + practitioner status client-side (tiny server actions) so public pages stay
+  // static — only signed-in users ever ask, and each reveals only a boolean. "Your profile" is
+  // shown ONLY to actual practitioners; a pure seeker sees just "Saved" + the account menu.
   useEffect(() => {
     if (!isSignedIn) {
       setIsAdmin(false);
+      setIsPractitioner(false);
       return;
     }
     let active = true;
     isCurrentUserAdmin()
       .then((v) => active && setIsAdmin(v))
+      .catch(() => {});
+    isCurrentUserPractitioner()
+      .then((v) => active && setIsPractitioner(v))
       .catch(() => {});
     return () => {
       active = false;
@@ -149,12 +156,21 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-4">
             <Link
-              href="/practitioner"
+              href="/dashboard"
               onClick={onNavigate}
-              className="rounded-full text-[15px] font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
+              className="rounded-full text-[15px] text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
             >
-              Your profile
+              Saved
             </Link>
+            {isPractitioner ? (
+              <Link
+                href="/practitioner"
+                onClick={onNavigate}
+                className="rounded-full text-[15px] font-medium text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-4 focus-visible:ring-offset-sand"
+              >
+                Your profile
+              </Link>
+            ) : null}
             {isAdmin ? (
               <Link
                 href="/admin"
@@ -180,11 +196,19 @@ function NavAccount({ mobile = false, onNavigate }: { mobile?: boolean; onNaviga
           </Link>
         ) : null}
         <Link
-          href="/practitioner"
-          className="rounded-full px-3 py-2 text-[14px] font-medium text-charcoal transition-colors hover:bg-sand-deep/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
+          href="/dashboard"
+          className="rounded-full px-3 py-2 text-[14px] text-ink-soft transition-colors hover:bg-sand-deep/50 hover:text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
         >
-          Your profile
+          Saved
         </Link>
+        {isPractitioner ? (
+          <Link
+            href="/practitioner"
+            className="rounded-full px-3 py-2 text-[14px] font-medium text-charcoal transition-colors hover:bg-sand-deep/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
+          >
+            Your profile
+          </Link>
+        ) : null}
         <UserButton appearance={clerkAppearance} />
       </>
     );

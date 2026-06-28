@@ -53,8 +53,11 @@ model User {
   // Last time this user was signed in & active (touched, throttled, on auth resolve).
   // Powers the admin "who's active" read. Nullable: backfills naturally as people return.
   lastSeenAt DateTime? @map("last_seen_at")
+  // When the seeker welcome email was sent (idempotency: send once, on first dashboard visit).
+  welcomedAt DateTime? @map("welcomed_at")
 
-  practitioner Practitioner?
+  practitioner       Practitioner?
+  savedPractitioners SavedPractitioner[]
 
   @@map("users")
 }
@@ -122,6 +125,7 @@ model Practitioner {
 
   views   ProfileView[]
   matches Match[]
+  savedBy SavedPractitioner[]
 
   @@index([visibility])
   @@map("practitioners")
@@ -283,4 +287,20 @@ model Match {
   @@unique([seekerIntakeId, practitionerId]) // a practitioner appears once per intake
   @@index([seekerIntakeId])
   @@map("matches")
+}
+
+// A practitioner a signed-in seeker saved to their account (the persisted "basket"). Anonymous
+// browsing keeps the basket client-side only; this exists once they opt into an account.
+model SavedPractitioner {
+  id             String       @id @default(cuid())
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  practitionerId String       @map("practitioner_id")
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, practitionerId]) // a practitioner appears once per user
+  @@index([userId])
+  @@map("saved_practitioners")
 }

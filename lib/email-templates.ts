@@ -90,6 +90,65 @@ export function claimInviteEmail(input: {
 }
 
 /**
+ * The warm welcome a seeker gets after creating an account. No urgency, no marketing — just
+ * "your space is here, the saved list is safe, reach out when you're ready." `dashboardUrl`
+ * is their saved-list page; `savedCount` lets us acknowledge what they carried over (optional).
+ */
+export function seekerWelcomeEmail(input: {
+  name?: string | null;
+  dashboardUrl: string;
+  savedCount?: number;
+}): EmailContent {
+  const first = (input.name ?? "").trim();
+  const nameText = first || "there";
+  const nameHtml = first ? escapeHtml(first) : "there";
+  const url = input.dashboardUrl;
+  const urlHtml = escapeHtml(url);
+  const n = Math.max(0, input.savedCount ?? 0);
+  const savedText =
+    n > 0
+      ? `The ${n === 1 ? "practitioner" : `${n} practitioners`} you saved ${n === 1 ? "is" : "are"} waiting on your list — nothing's lost.`
+      : "";
+
+  const subject = "Your space on Healing Tides is ready";
+
+  const text = [
+    `Hi ${nameText},`,
+    ``,
+    `Welcome — your account is set up, and your saved practitioners now live in one calm place ` +
+      `you can come back to anytime.`,
+    ...(savedText ? [``, savedText] : []),
+    ``,
+    `Whenever you're ready, you can open a practitioner's profile to reach out directly, or ` +
+      `keep adding people who feel like a good fit. There's no rush and no obligation — this is ` +
+      `your space, at your pace.`,
+    ``,
+    `Your saved list: ${url}`,
+    ``,
+    `If you're ever in crisis, please call or text 988 (the Suicide & Crisis Lifeline, free and ` +
+      `confidential, 24/7), or call 911 if you're in immediate danger.`,
+    ``,
+    `Warmly,`,
+    `Healing Tides Collective`,
+  ].join("\n");
+
+  const html = [
+    `<div style="background:#f7f5f2;padding:32px 16px;font-family:Georgia,'Times New Roman',serif">`,
+    `<div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px 28px;color:#2f2f2f;line-height:1.6">`,
+    `<p style="margin:0 0 16px;font-size:16px">Hi ${nameHtml},</p>`,
+    `<p style="margin:0 0 16px;font-size:16px">Welcome — your account is set up, and your saved practitioners now live in one calm place you can come back to anytime.</p>`,
+    ...(savedText ? [`<p style="margin:0 0 16px;font-size:16px">${escapeHtml(savedText)}</p>`] : []),
+    `<p style="margin:0 0 24px;font-size:16px">Whenever you're ready, you can open a practitioner's profile to reach out directly, or keep adding people who feel like a good fit. There's no rush and no obligation — this is your space, at your pace.</p>`,
+    `<p style="margin:0 0 24px"><a href="${urlHtml}" style="display:inline-block;background:#5f8f8b;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:15px">Open your saved list</a></p>`,
+    `<p style="margin:0 0 16px;font-size:13px;color:#6b6b6b">If you're ever in crisis, please call or text <strong>988</strong> (the Suicide &amp; Crisis Lifeline — free, confidential, 24/7), or call <strong>911</strong> if you're in immediate danger.</p>`,
+    `<p style="margin:24px 0 0;font-size:16px">Warmly,<br>Healing Tides Collective</p>`,
+    `</div></div>`,
+  ].join("");
+
+  return { subject, html, text };
+}
+
+/**
  * The gentle "your profile is X% — finish when you're ready" nudge. Calm, no pressure: a lovely
  * start, no rush, nothing published until they choose to. `editUrl` is where they go to finish.
  */
