@@ -97,17 +97,35 @@ export async function runSearchPractitioners({
   acceptingNew,
 }: z.infer<(typeof TOOL_SCHEMAS)["search_practitioners"]>): Promise<{ practitioners: PractitionerHit[]; summary: string }> {
   const q = [keywords, region].filter(Boolean).join(" ").trim();
-  let cards: Awaited<ReturnType<typeof getPublishedPractitioners>> = [];
-  try {
-    cards = await getPublishedPractitioners({ q: q || undefined, acceptingNew: acceptingNew || undefined }, "recommended");
-  } catch {
-    cards = [];
+  const fetch = async (filters: Parameters<typeof getPublishedPractitioners>[0]) => {
+    try {
+      return await getPublishedPractitioners(filters, "recommended");
+    } catch {
+      return [];
+    }
+  };
+
+  // Try the keyword/region query first; if that's empty (common in a small/seeded directory or on a
+  // too-narrow query), BROADEN so the agent always has real people to introduce + talk through —
+  // never dead-end into "no match" while published practitioners actually exist.
+  let cards = await fetch({ q: q || undefined, acceptingNew: acceptingNew || undefined });
+  let broadened = false;
+  if (cards.length === 0 && acceptingNew) {
+    cards = await fetch({ q: q || undefined });
+    broadened = cards.length > 0;
   }
+  if (cards.length === 0) {
+    cards = await fetch({});
+    broadened = cards.length > 0;
+  }
+
   const practitioners = cards.slice(0, 4).map((c) => toHit(c));
   const summary =
     practitioners.length === 0
-      ? "No clear matches surfaced. Don't force it — reassure them a person will look by hand and reach out."
-      : `Surfaced ${practitioners.length}. Introduce them warmly, one at a time, as suggestions a person will confirm — not a final match.`;
+      ? "Our Minnesota network has no published practitioners to show yet — gently say it's still growing and a person will reach out as soon as there's a good fit."
+      : broadened
+        ? `No exact keyword match, so here are ${practitioners.length} from our network. Introduce them warmly and naturally — say these are who's available right now — and see if any resonate. Don't say "no match."`
+        : `Surfaced ${practitioners.length}. Introduce them warmly, one at a time, as suggestions a person will confirm — not a final match.`;
   return { practitioners, summary };
 }
 
