@@ -60,7 +60,7 @@
 | Brief item (§4 M3 / §8–§11) | Status | Evidence / reality |
 |---|---|---|
 | **Crisis detection & safety** (keyword flag → admin + Nora's cell; crisis page; 988; after-hours auto-reply) | 🔴 | A crisis-resources page exists only in a **dead `/prototype` route** (not in live nav). Non-negotiable per brief; design early. |
-| **Full admin command center** (§9) | 🔴 | Only the basic read/badge/hold surface exists. |
+| **Full admin command center** (§9) | 🟡 | **Daily-action "command center" home shipped** (2026-06-28): `/admin` now opens with a greeting + "N things waiting on you today" + a people-waiting-to-be-matched queue (urgent first) + a card per non-empty action queue (intakes / review / feedback / invites / nudges / drafts / on-hold), each deep-linking into the work. Pure `buildCommandCenter` (tested). Still deferred (need new models/decisions): approve/reject application queue, on-platform messaging, consultations. |
 | **Email automation flows live** (outreach, nudges, newsletters) | 🔴 | Blocked on M0 email decision. |
 | **Tiered pricing + group-practice tier** (§10) | 🔴 | Schema pre-models it — `AccountType` enum already has `GROUP_PRACTICE` + `TREATMENT_CENTER`; `tier`/`featured` dormant. |
 | **Out-of-state handling** (§11: MN-only; waitlist for other states; crisis still → 988) | 🟡 | **MINNESOTA-ONLY is now the explicit v1 scope** ([SYSTEM.md § Scope](SYSTEM.md); geo audit defaults a bare city to MN; credentials = MN boards). Still TODO: the seeker-facing out-of-state UX (soft "we're growing" message vs. waitlist) — Nora's call on aggressiveness. |
