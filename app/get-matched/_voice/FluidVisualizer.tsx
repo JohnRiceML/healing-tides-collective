@@ -42,7 +42,7 @@ interface Orb {
 }
 
 function createOrb(width: number, height: number, index: number): Orb {
-  const baseRadius = Math.min(width, height) * 0.3;
+  const baseRadius = Math.min(width, height) * 0.34;
   return {
     x: width / 2,
     y: height / 2,
@@ -71,10 +71,10 @@ function drawOrb(ctx: CanvasRenderingContext2D, orb: Orb) {
   const r1 = Math.max(1, orb.radius);
   const gradient = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, r1);
   const { r, g, b } = orb.colorRGB;
-  gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.95)`);
-  gradient.addColorStop(0.2, `rgba(${r}, ${g}, ${b}, 0.7)`);
-  gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.35)`);
-  gradient.addColorStop(0.8, `rgba(${r}, ${g}, ${b}, 0.1)`);
+  gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);
+  gradient.addColorStop(0.25, `rgba(${r}, ${g}, ${b}, 0.85)`);
+  gradient.addColorStop(0.55, `rgba(${r}, ${g}, ${b}, 0.5)`);
+  gradient.addColorStop(0.8, `rgba(${r}, ${g}, ${b}, 0.2)`);
   gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
   ctx.fillStyle = gradient;
   ctx.beginPath();
@@ -150,7 +150,7 @@ export function FluidVisualizer({ isActive, speaker, userAnalyser }: Props) {
       simulatedVolumeRef.current = 0; // driven by the real analyser below
       return;
     }
-    simulatedVolumeRef.current = 18; // connected + silent → gentle ambient
+    simulatedVolumeRef.current = 45; // connected + silent → visible ambient drift
     talkingRef.current = false;
   }, [isActive, speaker]);
 
@@ -179,7 +179,7 @@ export function FluidVisualizer({ isActive, speaker, userAnalyser }: Props) {
           const end = Math.floor(buf.length * 0.5);
           let sum = 0;
           for (let i = start; i < end; i++) sum += buf[i];
-          targetVol = Math.max(sum / Math.max(1, end - start), 18); // floor so it never goes flat
+          targetVol = Math.max(sum / Math.max(1, end - start), 40); // floor so it never goes flat
         } else {
           targetVol = simulatedVolumeRef.current;
         }
@@ -204,24 +204,24 @@ export function FluidVisualizer({ isActive, speaker, userAnalyser }: Props) {
     };
   }, [isActive, speaker, userAnalyser]);
 
-  const blurPx = Math.max(4, Math.round(size * 0.1));
+  const blurPx = Math.max(3, Math.round(size * 0.07));
 
   return (
     <div className="absolute inset-0 overflow-hidden rounded-full">
-      {/* Soft tide-pool base so the orbs read as light in calm water on the sand page. */}
+      {/* Deeper tide-pool base so the lighter-composite orbs read as glowing light in calm water. */}
       <div
         className="absolute inset-0 transition-opacity duration-700"
         style={{
-          background: "radial-gradient(circle at 50% 50%, rgba(47,79,76,0.20), rgba(95,143,139,0.10) 55%, transparent 75%)",
-          opacity: isActive ? 1 : 0.5,
+          background: "radial-gradient(circle at 50% 50%, rgba(31,58,76,0.34), rgba(95,143,139,0.18) 55%, transparent 78%)",
+          opacity: isActive ? 1 : 0.78,
         }}
       />
       <div
         className="absolute inset-0 transition-opacity duration-700"
         style={{
-          filter: `blur(${blurPx}px) saturate(1.25)`,
+          filter: `blur(${blurPx}px) saturate(1.4)`,
           transform: "translate3d(0,0,0)",
-          opacity: isActive ? 1 : 0.6,
+          opacity: isActive ? 1 : 0.85,
         }}
       >
         <canvas ref={canvasRef} className="block h-full w-full" />

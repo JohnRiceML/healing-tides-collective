@@ -12,7 +12,7 @@ import { ConsideringPanel } from "./_considering/ConsideringPanel";
 // seeker's saved shortlist (anonymous, client-side) shared across both modalities + persists across
 // the toggle; ConsideringPanel is the floating list + staged "reach out / warm intro" CTA.
 export function GetMatchedExperience() {
-  const [mode, setMode] = useState<"text" | "voice">("text");
+  const [mode, setMode] = useState<"text" | "voice">("voice");
   return (
     <ConsideringProvider>
       {mode === "voice" ? (

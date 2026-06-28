@@ -123,14 +123,15 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
           onClick={() => (connected ? toggleMute() : startCall())}
           disabled={status === "connecting"}
           aria-label={connected ? (isMicMuted ? "Unmute microphone" : "Mute microphone") : "Start the voice conversation"}
-          className="relative grid h-36 w-36 place-items-center rounded-full bg-seafoam/25 ring-1 ring-teal/25 transition disabled:opacity-60"
+          className={`relative grid h-44 w-44 place-items-center rounded-full bg-seafoam/25 ring-1 ring-teal/25 transition disabled:opacity-60 ${
+            isMicMuted ? "opacity-70" : ""
+          }`}
         >
           <FluidVisualizer
             isActive={connected}
             speaker={!connected ? "none" : isAssistantSpeaking ? "ai" : "user"}
             userAnalyser={userAnalyser}
           />
-          <span className="relative text-[26px] drop-shadow-sm">{!connected ? "🎙️" : isMicMuted ? "🔇" : "🌊"}</span>
         </button>
 
         <p className="text-[14px] text-ink-soft">{stateLabel}</p>
