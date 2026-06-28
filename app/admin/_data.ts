@@ -12,6 +12,7 @@ import {
   type VerificationAttempt,
 } from "@/app/_lib/credentials";
 import { readHold } from "@/app/_lib/moderation";
+import { readTriage } from "@/app/_lib/triage";
 import { readPrefill } from "@/lib/invites";
 import { readLastReminder, type ReminderCandidate } from "@/lib/completeness-reminders";
 
@@ -37,6 +38,7 @@ export type AdminPractitionerRow = {
   importedLicense: ImportedLicense | null; // license #/state/expiry from a directory import (UNVERIFIED)
   held: boolean; // currently on an admin hold
   holdMessage: string | null; // practitioner-facing reason (if held)
+  triageCategory: string | null; // last AI-triage bucket (null = never triaged)
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -94,12 +96,72 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       importedLicense: readImportedLicense(fieldValues),
       held: Boolean(hold),
       holdMessage: hold?.message || null,
+      triageCategory: readTriage(fieldValues)?.category ?? null,
       views7: count7.get(r.id) ?? 0,
       views30: count30.get(r.id) ?? 0,
       lastViewedAt: lastView.get(r.id) ?? null,
       lastSeenAt: user?.lastSeenAt ?? null,
     };
   });
+}
+
+export type AdminPractitionerDetail = {
+  id: string;
+  displayName: string | null;
+  slug: string | null;
+  visibility: ProfileVisibility;
+  completeness: number;
+  region: string | null;
+  modality: string | null; // enum value (map to a label at the edge)
+  bio: string | null;
+  values: string | null;
+  website: string | null;
+  title: string | null;
+  specialties: string[]; // taxonomy ids
+  credentials: string[];
+  acceptingNew: boolean;
+  email: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  fieldValues: unknown; // raw — server-side reads (triage + notes) only; never hand to a client whole
+};
+
+// One practitioner, full detail — for the admin detail/triage page. ADMIN-ONLY (page gates).
+export async function getAdminPractitionerDetail(id: string): Promise<AdminPractitionerDetail | null> {
+  const p = await db.practitioner.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      displayName: true,
+      slug: true,
+      visibility: true,
+      completeness: true,
+      region: true,
+      modality: true,
+      bio: true,
+      values: true,
+      website: true,
+      specialties: true,
+      createdAt: true,
+      updatedAt: true,
+      fieldValues: true,
+      user: { select: { email: true } },
+    },
+  });
+  if (!p) return null;
+  const fv = p.fieldValues as Record<string, unknown> | null;
+  const fstr = (k: string) => {
+    const v = fv?.[k];
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  };
+  const { user, ...rest } = p;
+  return {
+    ...rest,
+    title: fstr("title"),
+    credentials: toStrings(fv?.credentials),
+    acceptingNew: fstr("availability_state") === "accepting",
+    email: user?.email ?? null,
+  };
 }
 
 // Practitioners as completeness-reminder candidates (pre-filtering happens in the pure

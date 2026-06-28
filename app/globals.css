@@ -13,6 +13,9 @@
   --color-seafoam: #d6ede8;
   --color-rule: #d9d4ca;
   --color-rule-strong: #2f2f2f;
+  /* Muted terracotta for gentle "attention" accents (warm, never alarm-red — per the no-red rule).
+     Used app-wide (crisis card, status chips, remove controls); define once here. */
+  --color-clay: #b0664a;
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;

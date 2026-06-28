@@ -4,9 +4,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { classifyActivity, relativeShort, type ActivityState } from "@/app/_lib/activity";
+import { categoryMeta, type TriageTone } from "@/app/_lib/triage";
 import { BadgeEditor } from "./BadgeEditor";
 import { HoldControl } from "./HoldControl";
 import type { AdminPractitionerRow } from "./_data";
+
+const TRIAGE_CHIP: Record<TriageTone, string> = {
+  good: "bg-seafoam/50 text-ocean ring-1 ring-teal/30",
+  warn: "bg-clay/10 text-clay ring-1 ring-clay/30",
+  neutral: "bg-sand-deep/60 text-ink-soft ring-1 ring-rule",
+};
 
 const STATUS: Record<string, { label: string; className: string }> = {
   PUBLISHED: { label: "Published", className: "bg-teal/15 text-teal" },
@@ -170,7 +177,9 @@ export function PractitionersTable({ rows, now }: { rows: AdminPractitionerRow[]
                   <tr key={r.id} className="border-b border-rule/60 last:border-0">
                     <td className="px-5 py-3">
                       <div className="font-medium text-charcoal">
-                        {r.displayName ?? <span className="text-ink-muted">— no name —</span>}
+                        <Link href={`/admin/practitioners/${r.id}`} className="underline-offset-2 hover:text-teal hover:underline">
+                          {r.displayName ?? <span className="text-ink-muted">— no name —</span>}
+                        </Link>
                         {r.featured ? (
                           <span className="ml-2 text-teal" title="Featured" aria-label="featured">
                             ★
@@ -184,6 +193,16 @@ export function PractitionersTable({ rows, now }: { rows: AdminPractitionerRow[]
                         >
                           {r.email}
                         </a>
+                      ) : null}
+                      {r.triageCategory ? (
+                        <div className="mt-1.5">
+                          <Link
+                            href={`/admin/practitioners/${r.id}`}
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[11px] ${TRIAGE_CHIP[categoryMeta(r.triageCategory).tone]}`}
+                          >
+                            {categoryMeta(r.triageCategory).label}
+                          </Link>
+                        </div>
                       ) : null}
                     </td>
                     <td className="px-5 py-3">
