@@ -12,6 +12,9 @@ export type PractitionerHit = {
   modality: string | null; // "In person" | "Virtual" | "Hybrid"
   acceptingNew: boolean;
   blurb: string | null; // a short, first-person-ish snippet
+  photoUrl: string | null; // portrait
+  coverDesign: string | null; // watercolor cover motif (for ProfileCover)
+  coverColor: string | null; // watercolor cover palette
 };
 
 /** Fuller profile for "tell me more about them". */

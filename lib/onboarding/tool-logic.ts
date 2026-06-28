@@ -23,6 +23,9 @@ const toHit = (p: {
   modality: string | null;
   acceptingNew: boolean;
   bio: string | null;
+  photoUrl: string | null;
+  coverDesign: string | null;
+  coverColor: string | null;
 }): PractitionerHit => ({
   slug: p.slug,
   displayName: p.displayName,
@@ -32,6 +35,9 @@ const toHit = (p: {
   modality: p.modality ? modalityLabel(p.modality) : null,
   acceptingNew: p.acceptingNew,
   blurb: snippet(p.bio),
+  photoUrl: p.photoUrl,
+  coverDesign: p.coverDesign,
+  coverColor: p.coverColor,
 });
 
 // ── Schemas + descriptions (the realtime session route advertises these too) ──────────
