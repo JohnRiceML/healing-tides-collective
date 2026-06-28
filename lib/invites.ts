@@ -59,6 +59,12 @@ export function readPrefill(prefill: unknown): InvitePrefill {
   };
 }
 
+// Bulk-invite parsing lives in the client-safe lib/bulk-invites (NO db import) so the admin
+// BulkInviteCreator can import MAX_BULK_INVITES without dragging @/lib/db into the browser bundle.
+// Re-exported here for the server actions + tests (same split as IMPORT_URL_KEY above).
+export { parseBulkInvites, MAX_BULK_INVITES } from "./bulk-invites";
+export type { ParsedBulkInvite, BulkParseResult } from "./bulk-invites";
+
 export async function getInviteByToken(token: string) {
   if (!token) return null;
   return db.invite.findUnique({ where: { token } });

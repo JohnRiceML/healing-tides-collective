@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 // lib/invites imports @/lib/db (throws without DATABASE_URL); we only test pure helpers.
 vi.mock("@/lib/db", () => ({ db: {} }));
 
-import { newInviteToken, readPrefill, inviteIsClaimable, buildClaimUpdate, readImportUrl } from "@/lib/invites";
+import { newInviteToken, readPrefill, inviteIsClaimable, buildClaimUpdate, readImportUrl, parseBulkInvites, MAX_BULK_INVITES } from "@/lib/invites";
 
 describe("newInviteToken", () => {
   it("produces a url-safe token (no +/= chars) of stable length", () => {
@@ -100,5 +100,58 @@ describe("readImportUrl (reserved __importUrl key)", () => {
     expect(readImportUrl({ __importUrl: "  " })).toBeNull();
     expect(readImportUrl(null)).toBeNull();
     expect(readImportUrl("nope")).toBeNull();
+  });
+});
+
+describe("parseBulkInvites", () => {
+  it("parses email-only lines", () => {
+    const r = parseBulkInvites("a@x.com\nb@y.com");
+    expect(r.valid).toEqual([{ email: "a@x.com" }, { email: "b@y.com" }]);
+    expect(r.invalid).toHaveLength(0);
+  });
+
+  it("parses email + name + url in any order, comma OR tab separated", () => {
+    const r = parseBulkInvites(
+      "jordan@example.com, Jordan Lee, https://www.psychologytoday.com/us/therapists/jordan-lee\n" +
+        "https://pt.com/sam\tSam Rivera\tsam@example.com",
+    );
+    expect(r.valid[0]).toEqual({
+      email: "jordan@example.com",
+      displayName: "Jordan Lee",
+      importUrl: "https://www.psychologytoday.com/us/therapists/jordan-lee",
+    });
+    expect(r.valid[1]).toEqual({ email: "sam@example.com", displayName: "Sam Rivera", importUrl: "https://pt.com/sam" });
+  });
+
+  it("lowercases the email and skips blank lines", () => {
+    const r = parseBulkInvites("\n  \nFoo@Bar.COM\n\n");
+    expect(r.valid).toEqual([{ email: "foo@bar.com" }]);
+  });
+
+  it("de-dupes repeats within the paste (by lowercased email)", () => {
+    const r = parseBulkInvites("a@x.com\nA@X.com, A Name");
+    expect(r.valid).toEqual([{ email: "a@x.com" }]);
+    expect(r.duplicates).toBe(1);
+  });
+
+  it("reports lines with no valid email", () => {
+    const r = parseBulkInvites("not-an-email\nJust A Name");
+    expect(r.valid).toHaveLength(0);
+    expect(r.invalid).toHaveLength(2);
+    expect(r.invalid[0].line).toBe(1);
+  });
+
+  it("caps at MAX_BULK_INVITES and reports the overflow", () => {
+    const many = Array.from({ length: MAX_BULK_INVITES + 5 }, (_, i) => `u${i}@x.com`).join("\n");
+    const r = parseBulkInvites(many);
+    expect(r.valid).toHaveLength(MAX_BULK_INVITES);
+    expect(r.invalid).toHaveLength(5);
+  });
+
+  it("ignores non-http(s) junk as the url (leaves importUrl unset)", () => {
+    const r = parseBulkInvites("a@x.com, A Name, ftp://nope");
+    // ftp isn't http(s) → not treated as importUrl; it falls through as leftover name candidate
+    expect(r.valid[0].email).toBe("a@x.com");
+    expect(r.valid[0].importUrl).toBeUndefined();
   });
 });

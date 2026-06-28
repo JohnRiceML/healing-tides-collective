@@ -7,6 +7,7 @@ import { getAdminInvites, getAdminPractitioners, getReminderCandidates } from ".
 import { CompletenessReminders } from "../CompletenessReminders";
 import { CredentialVerification } from "../CredentialVerification";
 import { InviteCreator } from "../InviteCreator";
+import { BulkInviteCreator } from "../BulkInviteCreator";
 import { InvitesList } from "../InvitesList";
 import { PractitionersTable } from "../PractitionersTable";
 import { AdminShell } from "../_components/AdminShell";
@@ -30,6 +31,10 @@ export default async function AdminPractitionersPage() {
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         <InviteCreator />
         <CompletenessReminders eligible={eligibleReminders} />
+      </div>
+
+      <div className="mt-4">
+        <BulkInviteCreator />
       </div>
 
       <InvitesList invites={invites} />
