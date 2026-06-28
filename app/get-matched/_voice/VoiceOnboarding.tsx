@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { FluidVisualizer } from "./FluidVisualizer";
 
-import type { PractitionerHit, PractitionerDetail, PriorityReflection, CrisisResources } from "@/lib/onboarding/types";
-import { PractitionerChatCard } from "../_chat/PractitionerChatCard";
+import type { PractitionerHit, PriorityReflection, CrisisResources } from "@/lib/onboarding/types";
 import { PriorityChart } from "../_chat/PriorityChart";
 import { CrisisCard } from "../_chat/CrisisCard";
 import { useRealtimeVoice, SESSION_CAP_MS, type VoiceToolResult } from "./useRealtimeVoice";
+import { useSurfaced } from "../_discovery/SurfacedContext";
 
 const fmt = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -16,39 +16,41 @@ const fmt = (ms: number) => {
 };
 
 export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void }) {
-  const [cards, setCards] = useState<(PractitionerHit | PractitionerDetail)[]>([]);
   const [priorities, setPriorities] = useState<PriorityReflection | null>(null);
   const [crisis, setCrisis] = useState<CrisisResources | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [turns, setTurns] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
+  const { addMany } = useSurfaced();
 
-  // Tool calls run server-side (/voice/tool) so the DB work happens there; the result is both
-  // returned to the model (over the data channel) AND stashed here to render on screen.
-  const executeTool = useCallback(async (name: string, args: unknown): Promise<VoiceToolResult> => {
-    try {
-      const res = await fetch("/api/get-matched/voice/tool", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, args }),
-      });
-      const result = (await res.json()) as VoiceToolResult;
-      if (name === "search_practitioners" && Array.isArray(result.practitioners)) {
-        setCards(result.practitioners as PractitionerHit[]);
-      } else if (name === "get_practitioner" && result.practitioner) {
-        const d = result.practitioner as PractitionerDetail;
-        setCards((c) => [d, ...c.filter((x) => x.slug !== d.slug)]);
-      } else if (name === "reflect_priorities" && Array.isArray(result.priorities)) {
-        setPriorities(result as unknown as PriorityReflection);
-      } else if (name === "show_crisis_resources") {
-        setCrisis(result as unknown as CrisisResources);
-      } else if (name === "save_intake" && result.ok) {
-        setSaved(typeof result.name === "string" ? result.name : "friend");
+  // Tool calls run server-side (/voice/tool). The result is returned to the model (over the data
+  // channel) AND surfaced practitioners flow into the right-hand rail; reflections/crisis show inline.
+  const executeTool = useCallback(
+    async (name: string, args: unknown): Promise<VoiceToolResult> => {
+      try {
+        const res = await fetch("/api/get-matched/voice/tool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, args }),
+        });
+        const result = (await res.json()) as VoiceToolResult;
+        if (name === "search_practitioners" && Array.isArray(result.practitioners)) {
+          addMany(result.practitioners as PractitionerHit[]);
+        } else if (name === "get_practitioner" && result.practitioner) {
+          addMany([result.practitioner as PractitionerHit]);
+        } else if (name === "reflect_priorities" && Array.isArray(result.priorities)) {
+          setPriorities(result as unknown as PriorityReflection);
+        } else if (name === "show_crisis_resources") {
+          setCrisis(result as unknown as CrisisResources);
+        } else if (name === "save_intake" && result.ok) {
+          setSaved(typeof result.name === "string" ? result.name : "friend");
+        }
+        return result;
+      } catch {
+        return { error: "that didn't go through — let's keep going" };
       }
-      return result;
-    } catch {
-      return { error: "that didn't go through — let's keep going" };
-    }
-  }, []);
+    },
+    [addMany],
+  );
 
   const onUserText = useCallback((text: string) => setTurns((t) => [...t, { role: "user", text }]), []);
   const onAssistantText = useCallback((text: string) => setTurns((t) => [...t, { role: "assistant", text }]), []);
@@ -184,14 +186,11 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
         ) : null}
       </div>
 
-      {/* What the guide surfaced (tool results render here) */}
-      {(cards.length > 0 || priorities || crisis || saved) && (
+      {/* Reflections + safety render inline; surfaced practitioners flow to the rail on the right. */}
+      {(priorities || crisis || saved) && (
         <div className="flex flex-col gap-3 pb-6">
           {crisis ? <CrisisCard data={crisis} /> : null}
           {priorities ? <PriorityChart data={priorities} /> : null}
-          {cards.map((p) => (
-            <PractitionerChatCard key={p.slug} p={p} />
-          ))}
           {saved ? (
             <div className="rounded-2xl border border-teal/30 bg-seafoam/20 px-4 py-3 text-[14px] leading-[1.6] text-ocean">
               <span className="font-medium">We have it from here, {saved}.</span> A real person will read your summary

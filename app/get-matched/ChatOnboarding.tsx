@@ -7,9 +7,10 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
 import type { OnboardingUIMessage } from "@/app/api/get-matched/chat/route";
-import { PractitionerChatCard } from "./_chat/PractitionerChatCard";
+import type { PractitionerHit } from "@/lib/onboarding/types";
 import { PriorityChart } from "./_chat/PriorityChart";
 import { CrisisCard } from "./_chat/CrisisCard";
+import { useSurfaced } from "./_discovery/SurfacedContext";
 
 const STARTERS = [
   "I'm not sure where to start",
@@ -40,6 +41,16 @@ function TypingDots() {
   );
 }
 
+/** Inline acknowledgment when the agent surfaces practitioners — the cards live in the rail. */
+function SurfacedNote({ names }: { names: string[] }) {
+  if (names.length === 0) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-seafoam/40 px-3 py-1 text-[12px] text-ocean">
+      <span aria-hidden>✦</span> Added {names.join(" · ")} to your people <span className="lg:inline hidden">→</span>
+    </span>
+  );
+}
+
 /** Render the rich parts an assistant turn can contain (text + tool results). */
 function AssistantParts({ message }: { message: OnboardingUIMessage }) {
   return (
@@ -58,25 +69,13 @@ function AssistantParts({ message }: { message: OnboardingUIMessage }) {
 
           case "tool-search_practitioners":
             if (part.state === "output-available") {
-              const hits = part.output.practitioners;
-              if (hits.length === 0) return null;
-              return (
-                <div key={i} className="flex max-w-[92%] flex-col gap-2">
-                  {hits.map((p) => (
-                    <PractitionerChatCard key={p.slug} p={p} />
-                  ))}
-                </div>
-              );
+              return <SurfacedNote key={i} names={part.output.practitioners.map((p) => p.displayName)} />;
             }
             return <ThinkingPill key={i} label="Looking for practitioners…" />;
 
           case "tool-get_practitioner":
             if (part.state === "output-available" && "practitioner" in part.output) {
-              return (
-                <div key={i} className="max-w-[92%]">
-                  <PractitionerChatCard p={part.output.practitioner} />
-                </div>
-              );
+              return <SurfacedNote key={i} names={[part.output.practitioner.displayName]} />;
             }
             return null;
 
@@ -132,6 +131,7 @@ export function ChatOnboarding({ onSwitchToVoice }: { onSwitchToVoice?: () => vo
   });
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { addMany } = useSurfaced();
   const busy = status === "submitted" || status === "streaming";
 
   // Scroll the MESSAGE CONTAINER only (not the window) — scrollIntoView would bubble up and
@@ -140,6 +140,22 @@ export function ChatOnboarding({ onSwitchToVoice }: { onSwitchToVoice?: () => vo
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, status]);
+
+  // Lift practitioners the agent surfaces out of the chat stream into the right-hand rail.
+  useEffect(() => {
+    const hits: PractitionerHit[] = [];
+    for (const m of messages) {
+      if (m.role !== "assistant") continue;
+      for (const part of m.parts) {
+        if (part.type === "tool-search_practitioners" && part.state === "output-available") {
+          hits.push(...part.output.practitioners);
+        } else if (part.type === "tool-get_practitioner" && part.state === "output-available" && "practitioner" in part.output) {
+          hits.push(part.output.practitioner);
+        }
+      }
+    }
+    if (hits.length) addMany(hits);
+  }, [messages, addMany]);
 
   const send = (text: string) => {
     const t = text.trim();
