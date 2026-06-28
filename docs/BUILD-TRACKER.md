@@ -4,7 +4,7 @@
 >
 > **Source brief:** the "Healing Tides — Build Brief for the App Team" (synthesizes the **June 10 sync** + **May 20 Phase-2 call**). That brief owns *strategy & intent*; this doc owns *status & evidence*.
 >
-> **Last verified against code:** 2026-06-19 (branch `feat/practitioner-listing-mvp`, head `77412e2`).
+> **Last verified against code:** 2026-06-28 (branch `main`, head `cce0df9`).
 >
 > **Code-verified reconciliation:** [audits/2026-06-19-phase2-reconciliation.md](audits/2026-06-19-phase2-reconciliation.md) — a 5-agent promised-vs-delivered pass against the *founding* brief (29 items: 13 delivered / 7 partial / 2 prototype-only / 6 not-started / 1 deferred) plus a **doc-truth audit** of where our own docs over-claimed. Its corrections are folded in below.
 >
@@ -16,11 +16,12 @@
 
 ## TL;DR
 
-- **Milestone 1 (practitioner profiles + directory)** is ~80% built and demo-ready.
-- **Milestone 0 (foundation)** is half-there — the missing half (Stripe, email sending, the relational tables for applications/matches/messages) is exactly what Milestones 2–3 branch off.
-- **Milestones 2–3 (seeker/matching, safety, command center, monetization)** are essentially greenfield.
-- The brief **moves three goalposts** vs. prior plans — tracked under [Open decisions](#open-decisions-brief-changed-the-plan).
-- One **live bug** blocks the seeker side: signing in silently turns any user into a *practitioner*.
+- **Milestone 1 (practitioner profiles + directory)** is live + demo-ready.
+- **Milestone 2 (seeker side + matching)** is now **largely shipped** (2026-06-26→28): the conversational `/get-matched` agent (voice + text), `SeekerIntake`/`Match`/`SavedPractitioner` tables, Nora's `/admin/seekers` curation workspace (ADR [0001](decisions/0001-matching-workspace-curation-not-ranker.md)), shortlist delivery, and **optional anonymous-by-default seeker accounts** (`/save-account` → `/dashboard`, ADR [0002](decisions/0002-seeker-onboarding-and-optional-accounts.md)). The matcher is a *curation tool, not a ranker* (smarts deferred).
+- **Milestone 0 (foundation)** — DB + auth + email layer are wired; the remaining gap is **Stripe** (parked, schema-ready).
+- **Milestone 3 (safety, full command center, monetization)** is still greenfield (crisis page + 988 exist; the command center + billing don't).
+- The old "sign-in turns any user into a practitioner" bug is **fixed** (read-only `getPractitioner` GETs; promotion only via explicit `becomePractitioner`).
+- **Real-seeker launch is HIPAA-gated** (Christie) — the seeker code is built minimal + anonymous-by-default to be defensible now.
 
 ---
 
@@ -28,7 +29,7 @@
 
 | Brief item (§3) | Status | Evidence / reality |
 |---|---|---|
-| **Database** (practitioners, seekers, profiles, applications, matches, messages/events) | 🟡 | Only `User`, `Practitioner`, `ProfileView` exist in `prisma/schema.prisma`. **No `Application`, `Match`, `Message`, `Consultation`, or `Seeker` models** — this is the real foundational gap before M2. |
+| **Database** (practitioners, seekers, profiles, applications, matches, messages/events) | 🟡→🟢 | `User`, `Practitioner`, `ProfileView`, `Invite`, `Feedback`, **`SeekerIntake`, `Match`, `SavedPractitioner`** all exist + are migrated to prod. The M2 foundation is in. Still absent (deliberately, until their features land): `Message`/`Consultation` (no on-platform messaging/scheduling yet). |
 | **Google auth + account creation AND deletion (both user types)** | 🟡 | Clerk wired, Google enabled (`/join`, `/sign-in`). The user-facing **"Delete account"** already exists via Clerk's `UserButton` (enable the toggle in the Clerk dashboard — John). What's unresolved is **what deletion does to our data**: today `user.deleted` only *hides* the profile (not erasure). True erasure vs. hide-and-preserve is a legal call — see [decision #7](#open-decisions-brief-changed-the-plan). |
 | **Stripe wired now** (before charging) | 🔴 | No Stripe dependency. **But the schema is already prepped:** `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus` enum (`NONE/TRIALING/ACTIVE/PAST_DUE/CANCELED`), plus dormant `tier` / `featured` / `accountType` on `Practitioner`. So wiring = checkout + webhook + a gating read; **no migration**. See [decision #1](#open-decisions-brief-changed-the-plan). |
 | **Email automation scaffolding** (transactional + follow-up) | 🟡 | **Send layer WIRED via Resend** (2026-06-19): `lib/email.ts` (fetch-based, never-throws, env-gated — mirrors `serper.ts`) + pure templates in `lib/email-templates.ts`. First flow live: **claim invites auto-send** the claim link (best-effort; admin still gets a copyable link + an honest sent/failed/off status). Decision #2 resolved → Resend. **Still to wire:** completeness-reminder + M2 referral/intro emails (the sender is ready — just add the triggers). John sets `RESEND_API_KEY` + `EMAIL_FROM` + verifies a sending domain. |
@@ -39,7 +40,7 @@
 |---|---|---|
 | Profile pages: bio, photo, social/site links, ~7 category tags, **values / "what healing means to you"** | ✅ | Live on prod. Two-column profile, Quick-details sidebar, cover system. |
 | Directory + filtering, **free at launch** | ✅ | `/practitioners` — search, specialty/modality/region/accepting-new filters, sort. |
-| **"Claim your profile" — auto-pull Psychology Today, one-click pre-fill** | 🟡 | Foundation only: the URL/paste importer (Claude extract, SSRF-guarded) *can* ingest a profile URL. The **tokenized claim flow itself is not built**. ⚠️ source changed from "Nora's CSV" to "PT URLs" — see [decision #3](#open-decisions-brief-changed-the-plan). |
+| **"Claim your profile" — auto-pull Psychology Today, one-click pre-fill** | 🟡→🟢 | **Tokenized claim flow is built + live** (`Invite` model + `/claim/[token]` + completion wiring + fill-if-empty prefill; `add_invites` migration applied). Invite emails auto-send once Resend is keyed. **PT *auto*-pull stays deferred** (ToS/Christie, [decision #3](#open-decisions-brief-changed-the-plan)) — practitioners use the URL/paste importer (Claude extract, SSRF-guarded) post-claim. |
 | Credential capture + **verified badge** | 🟡 | Badge system exists (`__verified` reserved key + admin grant). **Not wired to proof or licensing-board lookup** (§6 automation unbuilt). |
 | **Profile-completeness nudges** ("90% complete" + reminder emails) | ✅ | In-editor nudge live; **reminder emails built 2026-06-20** — admin-triggered `sendCompletenessReminders` (calm "finish when you're ready" email to <80% practitioners; pure `selectReminderRecipients` with a 7-day cooldown + skips held; reserved `__completenessReminder` key). Needs `EMAIL_FROM` set to actually send. |
 | **Admin panel (basic):** applied / pending / approve-reject / request edits | 🟡 | Have read-only list + badge-grant + hold/release, **plus a practitioner-activity read** (2026-06-25): New/Active/Quiet/Dormant chips, recent views (7d/30d) + last-viewed, sortable columns — sign-in tracking built but gated on a migration (see Recently shipped). **No application queue, no approve/reject** — there's no "application" concept yet. |
@@ -48,10 +49,10 @@
 
 | Brief item (§4 M2 / §5) | Status | Evidence / reality |
 |---|---|---|
-| **Seeker intake** — conversational/voice-style, ~5–10 questions | 🔴 | "Get matched" is a `mailto` today. |
-| **Matching engine** encoding Nora's clinical intuition | 🔴 | Gated on Nora's "homework" doc (§5). |
-| **Seeker accounts** with abstracted/de-identified identity | 🔴 | Surface unbuilt — but the blocking **role-fork bug is fixed** (2026-06-16): page GETs now use the read-only `getPractitioner()`; promotion happens only via the explicit `becomePractitioner` action, so visiting `/practitioner` no longer turns a seeker into a practitioner. `lib/auth.ts`, `tests/auth.test.ts`. |
-| **Referral delivery** (curated list to seeker; de-identified ping to practitioner) | 🔴 | Needs the relational tables + email sender. |
+| **Seeker intake** — conversational/voice-style, ~5–10 questions | ✅ | `/get-matched` is a **real-time conversational agent** — voice by default (OpenAI Realtime + WebRTC) or text, plus a plain `/get-matched/form` floor. Shared tools in `lib/onboarding/tool-logic.ts` (search/get practitioner, reflect priorities, crisis resources, save intake → `SeekerIntake`). ADR [0002](decisions/0002-seeker-onboarding-and-optional-accounts.md). |
+| **Matching engine** encoding Nora's clinical intuition | 🟡 | Shipped as a **curation workspace, not a ranker** (ADR [0001](decisions/0001-matching-workspace-curation-not-ranker.md)): `/admin/seekers` + `/admin/seekers/[id]` let Nora read an intake, rule out, and hand-pick a shortlist with a reason per pick → `Match` rows. A *computed* fit score + structured matching fields are deliberately deferred. |
+| **Seeker accounts** with abstracted/de-identified identity | ✅ | **Optional + anonymous-by-default** (ADR [0002](decisions/0002-seeker-onboarding-and-optional-accounts.md)): browse/match/basket store nothing server-side; `/save-account` → `/dashboard` is the opt-in that persists the saved list (`SavedPractitioner`, minimal data: name+email+slugs). Role-fork bug fixed (2026-06-16). |
+| **Referral delivery** (curated list to seeker; de-identified ping to practitioner) | 🟡 | The seeker can request a warm intro (`requestIntro`, consent recorded) and Nora delivers a shortlist from the workspace. Delivery is **mailto today / Resend once keyed** — the sender's wired, just needs `RESEND_API_KEY`+`EMAIL_FROM`. |
 | **Consultation request flow** (availability → request → accept/decline → email ping) | 🔴 | No `Consultation` model; no scheduling. (Brief: keep on-platform, **no external calendars yet**.) |
 
 ## Milestone 3 — Safety / command center / monetization / expansion
@@ -134,7 +135,7 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 
 - 🔴 **Rotate the leaked Neon + Clerk + Serper credentials** (all shared in chat) before any production push.
 - `SERPER_API_KEY` in `.env.local` + Vercel — powers the practitioner local-visibility audit (returns "not configured" until set). Rotate the one pasted in chat via [serper.dev](https://serper.dev).
-- **Create the `invites` table** via the safe flow: `npm run db:migrate:safe -- add_invites` (generates + prints the SQL — additive `CREATE TABLE`, no data risk) → `npm run db:migrate:deploy` (applies; can never reset). Until then the claim/admin-invite code compiles but errors at runtime (table missing) — the rest of the app is unaffected. Migrations are John-only (the prod classifier blocks the agent). Full process: **[DB-OPERATIONS.md](DB-OPERATIONS.md)**.
+- ✅ **DB migrations are all applied to prod** (`prisma migrate status` clean as of 2026-06-28): `init`, `add_invites`, `add_user_last_seen`, `add_feedback`(+context), `add_seeker_intake_and_match`, `add_saved_practitioners`. The claim/admin-invite, feedback, matching, and seeker-account code all run live. Migrations are John-run by default; he has twice explicitly authorized the agent to run `db:migrate:deploy` per-request. Full process: **[DB-OPERATIONS.md](DB-OPERATIONS.md)**.
 - **`RESEND_API_KEY` + `EMAIL_FROM` in `.env.local` + Vercel**, and verify a sending domain at [resend.com](https://resend.com) — powers the now-wired email layer (claim invites auto-send once set; until then invites still mint a copyable link). `EMAIL_FROM` must be `Name <addr@verified-domain>`.
 - `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel + the Clerk dashboard webhook (`user.updated` + `user.deleted` + `session.created` for the admin last-seen / who's-active read) — moderation auto-hide 501s until then.
 - `ADMIN_EMAILS` in Vercel — `/admin` is closed until set.
@@ -148,6 +149,15 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 ---
 
 ## Recently shipped
+
+### 2026-06-26 → 28 — the M2 seeker loop went real (intake → match → deliver → save)
+The whole guided seeker side landed across this stretch — the product's "decision tool" thesis is now live, not a prototype. Architecture/why: ADR [0001](decisions/0001-matching-workspace-curation-not-ranker.md) (matching workspace) + ADR [0002](decisions/0002-seeker-onboarding-and-optional-accounts.md) (onboarding agent + accounts).
+- ✅ **Conversational onboarding agent** at `/get-matched` — voice by default (OpenAI Realtime + WebRTC; model `gpt-realtime`) and an equal text chat (Vercel AI SDK v6; `gpt-4.1`), plus a `/get-matched/form` floor. Shared tool layer (`lib/onboarding/tool-logic.ts`): search/get practitioner, reflect priorities, crisis resources (speaks 988/911 aloud), save intake. *Model is OpenAI, not Claude — the AI Gateway free tier 403s Claude here.*
+- ✅ **Two-pane discovery** — chat on the left; practitioners surface as cards in a right-hand rail (`_discovery/SurfacedContext`) + a saved "basket" (`_considering/ConsideringContext`, localStorage). Mobile = a bottom-sheet drawer. The agent shows people early + nudges saving more than one.
+- ✅ **Nora's matching workspace** (`/admin/seekers`, `/admin/seekers/[id]`) — reads an intake, rule-out + hand-pick a shortlist with a reason per pick → `Match` rows. Curation, not ranking (ADR 0001).
+- ✅ **Optional seeker accounts** (`/save-account` → `/dashboard`) — anonymous-by-default; the basket (both the chat shortlist *and* the directory "Save profile" key) merges into `SavedPractitioner` on first visit; `seekerWelcomeEmail` sends once via an atomic claim; `/welcome` routes returning users by role; nav shows "Your profile" only to actual practitioners.
+- 🔒 **Hardened by an adversarial pre-deploy review** (4 dimensions → per-finding verification): **10 confirmed findings fixed before ship** — incl. a HIGH where directory saves wrote a key the sync never read (silent data loss), the welcome-email double-send/never-send race, and the shared-column deploy-order trap (`welcomed_at` on `users`).
+- **Verified:** `tsc` + **397 tests** + `npm run build` + secret-scan + live smoke (sign-up, basket CTA, dashboard gate) all green. **State: LIVE on `main` (`cce0df9`)** — migration applied to prod *before* the code push (deploy-order rule). **To fully light up:** set `RESEND_API_KEY`+`EMAIL_FROM` (welcome + intro emails); HIPAA determination (Christie) before real seekers; publish more practitioners (only 2 live).
 
 ### 2026-06-25 — admin practitioner-activity read ("who's active" + traction)
 Answers Nora's June-10 ask for a dashboard to "monitor activity, trends, and gaps." The `/admin` practitioner table now shows engagement and traction at a glance, sortable.
