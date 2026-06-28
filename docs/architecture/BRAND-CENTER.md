@@ -61,10 +61,15 @@ on `Practitioner.fieldValues`. **Registry:**
 | `__presenceScanHistory` | `lib/presence-history.ts` | rolling ≤8 daily snapshots → the "growing over time" momentum read |
 | `__hold` / `__holdHistory` | `app/_lib/moderation.ts` | admin hold + audit trail (see [MODERATION.md](../MODERATION.md)) |
 | `__verified` | `app/_lib/verification.ts` | granted trust badges |
+| `__aiTriage` | `app/_lib/triage.ts` | cached AI triage of the account (category + insight flags) for the admin people-management layer |
+| `__adminNotes` | `app/_lib/admin-notes.ts` | private, append-only admin notes (never shown to the practitioner) |
 
 **Guardrail:** reserved keys are written by **direct spread** (`{ ...existing, [KEY]: value }`),
 **never** through `mergeFieldValues` (which strips `__` keys so a practitioner's profile save can't
-clobber admin/system state). A practitioner save preserves every `__` sibling.
+clobber admin/system state). A practitioner save preserves every `__` sibling. **An async write
+(an AI call, an email send) must re-read `fieldValues` FRESH immediately before the spread** — a
+snapshot captured before the slow op will clobber any reserved-key write that lands meanwhile
+(the runTriage/messagePractitioner lost-update class, caught in review 2026-06-28).
 
 ## What turns the data into understanding
 - `lib/seeker-language.ts` `deriveSeekerLanguage()` — the **say/search mirror**: the real questions

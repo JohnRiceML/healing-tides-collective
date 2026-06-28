@@ -60,7 +60,7 @@
 | Brief item (§4 M3 / §8–§11) | Status | Evidence / reality |
 |---|---|---|
 | **Crisis detection & safety** (keyword flag → admin + Nora's cell; crisis page; 988; after-hours auto-reply) | 🔴 | A crisis-resources page exists only in a **dead `/prototype` route** (not in live nav). Non-negotiable per brief; design early. |
-| **Full admin command center** (§9) | 🟡 | **Daily-action "command center" home shipped** (2026-06-28): `/admin` now opens with a greeting + "N things waiting on you today" + a people-waiting-to-be-matched queue (urgent first) + a card per non-empty action queue (intakes / review / feedback / invites / nudges / drafts / on-hold), each deep-linking into the work. Pure `buildCommandCenter` (tested). Still deferred (need new models/decisions): approve/reject application queue, on-platform messaging, consultations. |
+| **Full admin command center** (§9) | 🟡 | Shipped 2026-06-28: (a) **daily-action home** — `/admin` opens with "what needs you today" (intakes / review / feedback / invites / nudges / drafts / on-hold), each deep-linking in (`buildCommandCenter`, tested); (b) **bulk invite** — paste → editable rows → claim links; (c) **practitioner people-management** at `/admin/practitioners/[id]` — view + private notes (`__adminNotes`) + direct email (Resend) + a one-click **AI triage** (`__aiTriage`: category + insight flags, badged in the list). Still deferred (need new models/decisions): a publish-blocking approve/reject gate, on-platform messaging, consultations, seeker-side AI (HIPAA-gated). |
 | **Email automation flows live** (outreach, nudges, newsletters) | 🔴 | Blocked on M0 email decision. |
 | **Tiered pricing + group-practice tier** (§10) | 🔴 | Schema pre-models it — `AccountType` enum already has `GROUP_PRACTICE` + `TREATMENT_CENTER`; `tier`/`featured` dormant. |
 | **Out-of-state handling** (§11: MN-only; waitlist for other states; crisis still → 988) | 🟡 | **MINNESOTA-ONLY is now the explicit v1 scope** ([SYSTEM.md § Scope](SYSTEM.md); geo audit defaults a bare city to MN; credentials = MN boards). Still TODO: the seeker-facing out-of-state UX (soft "we're growing" message vs. waitlist) — Nora's call on aggressiveness. |
@@ -149,6 +149,14 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 ---
 
 ## Recently shipped
+
+### 2026-06-28 — admin command center: daily-action home + bulk invite + practitioner triage/AI
+Turned `/admin` from a stats grid into a daily driver, and added the "people management" layer Nora asked for. Architecture/why: ADR [0003](decisions/0003-admin-people-management-and-ai-triage.md).
+- ✅ **Command-center home** — greeting + "N things waiting on you today" + a people-waiting-to-be-matched queue (urgent first) + a card per non-empty action queue, each deep-linking in. Pure `buildCommandCenter` (`app/admin/command-center.ts`, tested).
+- ✅ **Bulk invite** — `BulkInviteCreator`: paste a list → it auto-splits into editable Email/Name/PT-link rows → send. Skips already-pending invites; client-safe parser in `lib/bulk-invites.ts`. Composes the proven `createInvite` core.
+- ✅ **Practitioner triage / AI layer** — `/admin/practitioners/[id]`: view + private notes + direct email + a one-click Claude triage (`generateObject` via the gateway `anthropic/claude-haiku-4.5`) that categorizes the profile + flags insights, cached in `__aiTriage`, badged in the list. The triage interpretation of the brief's "application queue" — relationship/triage, **not** a publish-blocking gate.
+- 🔒 **Hardened by adversarial pre-deploy review** (10 findings): fixed a HIGH stale-snapshot lost-update (re-read `fieldValues` fresh after the slow AI call/email send), prompt-injection fencing, email reply-to, the **app-wide undefined `--color-clay` token** (used in 10+ files incl. the crisis card), and panel reconcile/a11y.
+- **Verified:** `tsc` + **432 tests** + build + screenshots. **State: LIVE on `main` (`17bef2b`)**, no migration. AI triage uses the same gateway path as the bio importer (no new key). Email actions go live once Resend is keyed.
 
 ### 2026-06-26 → 28 — the M2 seeker loop went real (intake → match → deliver → save)
 The whole guided seeker side landed across this stretch — the product's "decision tool" thesis is now live, not a prototype. Architecture/why: ADR [0001](decisions/0001-matching-workspace-curation-not-ranker.md) (matching workspace) + ADR [0002](decisions/0002-seeker-onboarding-and-optional-accounts.md) (onboarding agent + accounts).
