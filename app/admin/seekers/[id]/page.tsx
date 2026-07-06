@@ -115,6 +115,38 @@ export default async function SeekerWorkspacePage({ params }: { params: Promise<
                 ))}
               </div>
             ) : null}
+
+            {/* What the seeker chose during discovery — their own picks, distinct from your shortlist. */}
+            {intake.savedSlugs.length ? (
+              <div className="mt-4 rounded-xl bg-seafoam/40 p-3">
+                <p className="text-[12px] text-ink-muted">They chose ({intake.savedSlugs.length}):</p>
+                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                  {intake.savedSlugs.map((slug) => (
+                    <Link
+                      key={slug}
+                      href={`/practitioners/${slug}`}
+                      target="_blank"
+                      className="text-[13px] text-teal underline-offset-2 hover:underline"
+                    >
+                      {slug}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {intake.adminNote ? (
+              <p className="mt-4 rounded-xl border border-clay/30 bg-clay/[0.06] p-3 text-[13px] leading-[1.6] text-ink-soft">
+                <span className="font-medium text-clay">Heads up:</span> {intake.adminNote}
+              </p>
+            ) : null}
+
+            {intake.consentedAt ? (
+              <p className="mt-4 text-[12px] text-ink-muted">
+                Consented to outreach on {intake.consentedAt.slice(0, 10)}
+                {intake.consentVersion ? ` · ${intake.consentVersion}` : ""}
+              </p>
+            ) : null}
           </div>
 
           {/* Safety reminder — rule 6 of the matching principles, every case. */}

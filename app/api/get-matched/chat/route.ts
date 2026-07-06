@@ -14,8 +14,14 @@ import {
 import { onboardingTools } from "@/lib/onboarding/tools";
 import { buildOnboardingSystemPrompt } from "@/lib/onboarding/system-prompt";
 import { onboardingModel } from "@/lib/onboarding/model";
+import { createRateLimiter, clientIp } from "@/lib/onboarding/voice/rate-limit";
 
 export const maxDuration = 60;
+
+// Best-effort per-IP guard — every POST is one LLM call, and this route is public (same posture
+// as the voice endpoints). One request per user message, so a genuine onboarding paces well
+// under this; it stops scripted hammering and accidental client loops.
+const chatLimiter = createRateLimiter(30, 10 * 60 * 1000); // 30 messages / IP / 10 minutes
 
 // Exported so the client can type useChat<OnboardingUIMessage> (type-only import → no server
 // code is bundled into the browser).
@@ -29,6 +35,14 @@ function errorMessage(error: unknown): string {
 }
 
 export async function POST(req: Request) {
+  const rl = chatLimiter.check(clientIp(req), Date.now());
+  if (!rl.ok) {
+    return Response.json(
+      { error: "That's a lot of messages in a short time — take a breather and try again in a little while." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
+    );
+  }
+
   let messages: OnboardingUIMessage[];
   try {
     ({ messages } = await req.json());

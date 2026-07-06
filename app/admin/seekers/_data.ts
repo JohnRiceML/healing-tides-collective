@@ -43,6 +43,11 @@ export type WorkspaceIntake = {
   status: string;
   adminNote: string | null;
   createdAt: Date;
+  // From the fieldValues blob (read defensively — its shape is never trusted). Set by the
+  // requestIntro path; empty/null for classic form + chat/voice intakes.
+  savedSlugs: string[]; // the practitioners the seeker chose during discovery
+  consentedAt: string | null; // ISO timestamp of the outreach consent
+  consentVersion: string | null;
   matches: WorkspaceMatch[]; // current shortlist (any status)
 };
 
@@ -58,9 +63,12 @@ export async function getSeekerIntake(id: string): Promise<WorkspaceIntake | nul
       },
     });
     if (!row) return null;
-    const { matches, ...r } = row;
+    const { matches, fieldValues, ...r } = row;
     return {
       ...r,
+      savedSlugs: strs((fieldValues as Record<string, unknown> | null)?.savedSlugs),
+      consentedAt: str(fieldValues, "consentedAt"),
+      consentVersion: str(fieldValues, "consentVersion"),
       matches: matches.map((m) => ({
         practitionerId: m.practitionerId,
         displayName: m.practitioner?.displayName ?? null,

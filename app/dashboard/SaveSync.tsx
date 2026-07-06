@@ -8,6 +8,11 @@
 //   - the /get-matched chat shortlist → `ht_considering_v1` (array of {slug,...} objects)
 //   - the directory profile "Save profile" button → `ht_saved_practitioners` (array of slug strings)
 // We merge BOTH so saves from either path carry over — anything else silently drops a seeker's picks.
+//
+// CONTRACT: after a successful sync the account is the source of truth, so BOTH keys are cleared —
+// even when nothing new was added. Leaving them behind would re-merge stale slugs on every visit
+// and resurrect practitioners the seeker deliberately removed. On a failed sync the keys stay put,
+// so nothing is lost and the next visit retries.
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -42,6 +47,16 @@ export function SaveSync() {
       const slugs = Array.from(new Set([...readSlugs(CONSIDERING_KEY), ...readSlugs(SAVED_KEY)]));
 
       const res = await syncSaved(slugs); // safe with an empty list
+      if (res.ok) {
+        // Merged (or nothing to merge) — the account now owns the list. Clear both baskets so a
+        // slug removed from the account can't be resurrected from stale localStorage next visit.
+        try {
+          localStorage.removeItem(CONSIDERING_KEY);
+          localStorage.removeItem(SAVED_KEY);
+        } catch {
+          /* storage unavailable — worst case we re-merge next visit */
+        }
+      }
       await ensureWelcomed();
       if (res.ok && res.added > 0) router.refresh();
     })();

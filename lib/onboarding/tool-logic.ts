@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 import { db } from "@/lib/db";
+import { getCurrentDbUser } from "@/lib/auth";
 import { getPublishedPractitioners, getPractitionerBySlug } from "@/lib/practitioners";
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
 import { validateIntake, type IntakeInput } from "@/lib/seeker-intake";
@@ -183,8 +184,18 @@ export async function runSaveIntake(
 ): Promise<IntakeSaved> {
   const clean = validateIntake(input as IntakeInput);
   if (!clean.ok) return { ok: false, error: clean.error };
+
+  // Best-effort signed-in user id for context — never block on it (seekers are usually anonymous),
+  // same posture as submitIntake/requestIntro in app/get-matched/actions.ts.
+  let userId: string | null = null;
   try {
-    await db.seekerIntake.create({ data: { ...clean.value, fieldValues: { __source: source }, userId: null } });
+    userId = (await getCurrentDbUser())?.id ?? null;
+  } catch {
+    /* anonymous is fine */
+  }
+
+  try {
+    await db.seekerIntake.create({ data: { ...clean.value, fieldValues: { __source: source }, userId } });
     return { ok: true, name: clean.value.name };
   } catch {
     return { ok: false, error: "I couldn't send that just now — could you try once more in a moment?" };
