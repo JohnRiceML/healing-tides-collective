@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@/app/_components/ui";
 import { getPractitioner } from "@/lib/auth";
 import { authEnabled } from "@/lib/clerk-enabled";
+import { toPractitionerEditorView } from "@/app/_lib/practitioner-view";
 
 import { ProfileEditor } from "../ProfileEditor";
 
@@ -56,9 +57,11 @@ export default async function EditProfilePage() {
   // explicit choice (rather than promoting on this GET).
   if (!result.practitioner) redirect("/practitioner");
 
+  // Project the row before it crosses the client boundary — reserved (`__`) fieldValues
+  // keys (admin notes, hold internals, scans, …) must never reach the browser payload.
   return (
     <Shell>
-      <ProfileEditor practitioner={result.practitioner} />
+      <ProfileEditor practitioner={toPractitionerEditorView(result.practitioner)} />
     </Shell>
   );
 }

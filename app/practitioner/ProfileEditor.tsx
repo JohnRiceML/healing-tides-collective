@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 
 import { Button, ChoiceChip, Field, LinkButton, TextArea, TextInput } from "@/app/_components/ui";
-import type { Modality, Practitioner, ProfileVisibility } from "@/lib/generated/prisma/client";
+import type { Modality, ProfileVisibility } from "@/lib/generated/prisma/client";
+import type { PractitionerEditorView } from "@/app/_lib/practitioner-view";
 
 import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
 import { completenessOf } from "@/lib/completeness";
@@ -11,12 +12,10 @@ import { completenessOf } from "@/lib/completeness";
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
 import { extractProfileFromSources } from "./extract-actions";
-import { readImportUrl } from "@/app/_lib/import-url";
 import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
 import { describeSource, type ImportData } from "./_extract/types";
 import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
-import { holdMessage, readHold } from "@/app/_lib/moderation";
 import { Stepper, WIZARD_STEPS } from "./_components/Stepper";
 import { LivePreview } from "./_components/LivePreview";
 import { CoverThemePicker } from "./_components/CoverThemePicker";
@@ -30,7 +29,7 @@ const NEXT_HINTS = [
   "a final review, then publish",
 ];
 
-export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) {
+export function ProfileEditor({ practitioner }: { practitioner: PractitionerEditorView }) {
   const [displayName, setDisplayName] = useState(practitioner.displayName ?? "");
   const [region, setRegion] = useState(practitioner.region ?? "");
   const [website, setWebsite] = useState(practitioner.website ?? "");
@@ -58,15 +57,15 @@ export function ProfileEditor({ practitioner }: { practitioner: Practitioner }) 
   const isPublished = visibility === "PUBLISHED";
 
   // Admin hold (set in /admin or by the Clerk webhook) — the practitioner can still edit
-  // while held, but can't publish/unpublish. Read from the original row (admins, not the
+  // while held, but can't publish/unpublish. Derived server-side (admins, not the
   // practitioner, change this), so it's a constant for the session.
-  const held = readHold(practitioner.fieldValues) !== null;
-  const heldMsg = held ? holdMessage(practitioner.fieldValues) : "";
+  const held = practitioner.held;
+  const heldMsg = practitioner.holdMessage;
 
   // AI "drop your links / paste a bio → draft" assist — fills the form for review; never saves/publishes.
   // A profile link (e.g. Psychology Today) saved on their invite → pre-seed the importer so
   // claiming → "Build my profile" is one tap. They trigger it themselves (their own profile).
-  const savedImportUrl = readImportUrl(practitioner.fieldValues);
+  const savedImportUrl = practitioner.importUrl;
   const [paste, setPaste] = useState("");
   const [links, setLinks] = useState(savedImportUrl ?? "");
   const [importView, setImportView] = useState<ImportView | null>(null);

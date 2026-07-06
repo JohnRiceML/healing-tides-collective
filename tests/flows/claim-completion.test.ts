@@ -109,6 +109,69 @@ describe("claim completion: prefill the empty fields, mark the invite claimed", 
     expect(h.getOrCreatePractitioner).not.toHaveBeenCalled(); // not promoted
   });
 
+  it("keeps an existing practitioner's rich fieldValues intact (own title untouched)", async () => {
+    h.token = "tok-5";
+    const richFieldValues = {
+      title: "Somatic Therapist", // their own — the invite's title must NOT win
+      about_you: "I work gently, at your pace.",
+      age_groups: ["adults", "teens"],
+      __verified: ["licensed_professional"], // reserved sibling — must survive too
+    };
+    h.db = makeMockDb({
+      invites: [anInvite({ token: "tok-5", email: "jordan@example.com", prefill: { title: "Therapist", importUrl: "https://example.com/jordan" }, claimedAt: null })],
+      practitioners: [aPractitioner({ id: "p5", userId: "u5", fieldValues: richFieldValues })],
+    });
+    signInAs({ userId: "u5", email: "jordan@example.com", practitionerId: "p5" });
+
+    const url = await runRedirecting(completeClaim);
+    expect(url).toBe("/practitioner/edit");
+
+    const fv = db().practitioner.rows()[0].fieldValues as Record<string, unknown>;
+    expect(fv.title).toBe("Somatic Therapist"); // kept — never overwritten by the invite
+    expect(fv.about_you).toBe("I work gently, at your pace."); // nothing lost
+    expect(fv.age_groups).toEqual(["adults", "teens"]);
+    expect(fv.__verified).toEqual(["licensed_professional"]);
+    expect(fv.__importUrl).toBe("https://example.com/jordan"); // the carried link still lands
+  });
+
+  it("fills an empty title from the invite without dropping the other fieldValues", async () => {
+    h.token = "tok-6";
+    h.db = makeMockDb({
+      invites: [anInvite({ token: "tok-6", email: "jordan@example.com", prefill: { title: "Therapist" }, claimedAt: null })],
+      practitioners: [aPractitioner({ id: "p6", userId: "u6", fieldValues: { about_you: "Already written.", __verified: ["insured"] } })],
+    });
+    signInAs({ userId: "u6", email: "jordan@example.com", practitionerId: "p6" });
+
+    await runRedirecting(completeClaim);
+
+    const fv = db().practitioner.rows()[0].fieldValues as Record<string, unknown>;
+    expect(fv.title).toBe("Therapist"); // was empty → filled
+    expect(fv.about_you).toBe("Already written."); // preserved
+    expect(fv.__verified).toEqual(["insured"]); // reserved sibling preserved
+  });
+
+  it("un-burns the invite when the prefill update fails, so the claim can be retried", async () => {
+    h.token = "tok-7";
+    h.db = makeMockDb({
+      invites: [anInvite({ token: "tok-7", email: "jordan@example.com", displayName: "Jordan Lake", prefill: { region: "Saint Paul, MN" }, claimedAt: null })],
+      practitioners: [aPractitioner({ id: "p7", userId: "u7", displayName: null, region: null })],
+    });
+    // The practitioner row the update targets doesn't exist in the store → the update
+    // throws (P2025), exercising the rollback path.
+    h.getCurrentDbUser.mockResolvedValue(aUser({ id: "u7", email: "jordan@example.com" }));
+    h.getOrCreatePractitioner.mockResolvedValue({
+      user: aUser({ id: "u7", email: "jordan@example.com" }),
+      practitioner: aPractitioner({ id: "ghost", userId: "u7", displayName: null, region: null }),
+    });
+
+    const url = await runRedirecting(completeClaim);
+    expect(url).toBe("/claim/tok-7?e=update_failed");
+
+    const inv = db().invite.rows()[0];
+    expect(inv.claimedAt).toBeNull(); // rolled back — retryable
+    expect(inv.claimedByUserId).toBeNull();
+  });
+
   it("is a no-op for an already-claimed invite", async () => {
     h.token = "tok-4";
     h.db = makeMockDb({

@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCurrentDbUser, getOrCreatePractitioner } from "@/lib/auth";
 import { getInviteByToken, inviteIsClaimable, buildClaimUpdate, readPrefill, IMPORT_URL_KEY } from "@/lib/invites";
-import { mergeFieldValues } from "@/app/_lib/verification";
 import { completenessOf } from "@/lib/completeness";
 import { safeWebsite } from "@/lib/url";
 import type { Prisma } from "@/lib/generated/prisma/client";
@@ -16,7 +15,9 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 const CLAIM_COOKIE = "ht_claim";
 const CLAIM_MAX_AGE = 60 * 60; // 60 min — room for a slow sign-up / email verification
 
-type ClaimResult = { ok: true } | { ok: false; reason: "claimed" | "email_mismatch" | "no_user" };
+type ClaimResult =
+  | { ok: true }
+  | { ok: false; reason: "claimed" | "email_mismatch" | "no_user" | "update_failed" };
 
 /**
  * Step 1 — from the /claim/[token] page. If already signed in, claim now; otherwise
@@ -98,12 +99,15 @@ async function applyClaim(token: string): Promise<ClaimResult> {
   }
   if (fill.specialties) data.specialties = fill.specialties;
 
-  // fieldValues: practitioner-safe merge for `title`, then the reserved __importUrl (their
-  // own profile link, for the editor's one-tap self-import) via DIRECT spread — mergeFieldValues
-  // strips `__` keys, so it can't carry a reserved key.
-  let nextFieldValues = fill.title
-    ? (mergeFieldValues(p.fieldValues, { title: fill.title }) as Record<string, unknown>)
-    : null;
+  // fieldValues: DIRECT spreads over the existing blob, preserving every key (the
+  // practitioner's rich answers AND the reserved `__` siblings). NOT mergeFieldValues —
+  // that REBUILDS the non-reserved set from `incoming`, which would wipe an existing
+  // practitioner's fieldValues on claim. `title` is fill-if-empty: buildClaimUpdate only
+  // sets fill.title when the existing title is blank, so a typed title is never touched.
+  let nextFieldValues: Record<string, unknown> | null = null;
+  if (fill.title) {
+    nextFieldValues = { ...((p.fieldValues ?? {}) as Record<string, unknown>), title: fill.title };
+  }
   if (prefill.importUrl) {
     const base = nextFieldValues ?? ((p.fieldValues ?? {}) as Record<string, unknown>);
     nextFieldValues = { ...base, [IMPORT_URL_KEY]: prefill.importUrl };
@@ -122,7 +126,17 @@ async function applyClaim(token: string): Promise<ClaimResult> {
       insuranceAccepted: p.insuranceAccepted,
       website: data.website ?? p.website,
     });
-    await db.practitioner.update({ where: { id: p.id }, data });
+    try {
+      await db.practitioner.update({ where: { id: p.id }, data });
+    } catch {
+      // The invite was already burned above; if the prefill write fails, un-burn it
+      // (best-effort) so the practitioner can simply try the claim again — otherwise
+      // the prefill is lost forever. The burn stays atomic; this only reopens it.
+      await db.invite
+        .updateMany({ where: { token }, data: { claimedAt: null, claimedByUserId: null } })
+        .catch(() => {});
+      return { ok: false, reason: "update_failed" };
+    }
   }
   return { ok: true };
 }
