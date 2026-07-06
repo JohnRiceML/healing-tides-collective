@@ -74,6 +74,22 @@ describe("createInvitesFromRows — bulk invite from hand-edited rows", () => {
     expect(res.summary.created).toBe(2);
   });
 
+  it("skips an email that's already a member (has a practitioner row), but still mints fresh ones", async () => {
+    const member = await db().user.create({ data: { email: "member@example.com" } });
+    await db().practitioner.create({ data: { userId: member.id, displayName: "Already Here" } });
+
+    const res = await createInvitesFromRows([
+      { email: "member@example.com" }, // skipped (already a practitioner)
+      { email: "fresh@example.com" }, // new — still mints
+    ]);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.summary.skippedExisting).toBe(1);
+    expect(res.summary.created).toBe(1);
+    expect(res.rows.find((r) => r.email === "member@example.com")?.error).toBe("Already a member — skipped.");
+    expect(db().invite.rows().map((r) => r.email)).toEqual(["fresh@example.com"]);
+  });
+
   it("carries a Psychology Today link into the invite prefill", async () => {
     await createInvitesFromRows([{ email: "c@example.com", importUrl: "https://www.psychologytoday.com/x" }]);
     const inv = db().invite.rows().find((r) => r.email === "c@example.com");

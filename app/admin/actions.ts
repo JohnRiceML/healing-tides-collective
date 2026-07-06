@@ -76,7 +76,10 @@ export async function createInvite(input: {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "Not authorized." };
   const res = await mintAndEmailInvite(input);
-  if (res.ok) revalidatePath("/admin");
+  if (res.ok) {
+    revalidatePath("/admin"); // command-center counts
+    revalidatePath("/admin/practitioners"); // the invites list lives here
+  }
   return res;
 }
 
@@ -142,9 +145,37 @@ export async function createInvitesFromRows(
     /* a read failure shouldn't block inviting — just lose the dedupe safety this run */
   }
 
+  // Skip emails that already belong to a practitioner (claimed invite OR direct sign-up) —
+  // a member shouldn't get a "join us" email. Two scalar `in` reads (users by email, then
+  // practitioners by userId) rather than a relation filter, so the flow-test mock db can run it.
+  let alreadyMembers = new Set<string>();
+  try {
+    const users = await db.user.findMany({
+      where: { email: { in: clean.map((r) => r.email) } },
+      select: { id: true, email: true },
+    });
+    if (users.length > 0) {
+      const practitioners = await db.practitioner.findMany({
+        where: { userId: { in: users.map((u) => u.id) } },
+        select: { userId: true },
+      });
+      const memberUserIds = new Set(practitioners.map((p) => p.userId));
+      alreadyMembers = new Set(
+        users.flatMap((u) => (u.email && memberUserIds.has(u.id) ? [u.email.toLowerCase()] : [])),
+      );
+    }
+  } catch {
+    /* a read failure shouldn't block inviting — just lose the dedupe safety this run */
+  }
+
   const rows: BulkInviteRow[] = [];
   let skippedExisting = 0;
   for (const r of clean) {
+    if (alreadyMembers.has(r.email)) {
+      skippedExisting++;
+      rows.push({ email: r.email, ok: false, error: "Already a member — skipped." });
+      continue;
+    }
     if (alreadyInvited.has(r.email)) {
       skippedExisting++;
       rows.push({ email: r.email, ok: false, error: "Already has a pending invite — skipped." });
@@ -162,7 +193,8 @@ export async function createInvitesFromRows(
     );
   }
 
-  revalidatePath("/admin");
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the invites list lives here
   const created = rows.filter((r) => r.ok).length;
   const emailed = rows.filter((r) => r.ok && r.emailed).length;
   return {
@@ -223,7 +255,8 @@ export async function revokeInvite(token: string): Promise<{ ok: boolean; error?
 
   const res = await db.invite.deleteMany({ where: { token, claimedAt: null } });
   if (res.count === 0) return { ok: false, error: "Couldn't revoke — it may already be claimed." };
-  revalidatePath("/admin");
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the invites list lives here
   return { ok: true };
 }
 
@@ -263,7 +296,8 @@ export async function sendCompletenessReminders(): Promise<
     sent += 1;
   }
 
-  revalidatePath("/admin");
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the reminders panel lives here
   return { ok: true, sent, eligible: recipients.length };
 }
 
@@ -322,7 +356,8 @@ export async function recordCredentialVerification(
   } catch {
     return { ok: false, error: "Couldn't save — please try again." };
   }
-  revalidatePath("/admin");
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the verification panel lives here
   revalidatePath("/practitioners", "layout"); // the badge shows publicly
   return { ok: true, status: input.status };
 }
@@ -357,7 +392,8 @@ export async function setVerificationBadges(
   } catch {
     return { ok: false, error: "Couldn't update — please try again." };
   }
-  revalidatePath("/admin");
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the practitioners table lives here
   revalidatePath("/practitioners", "layout"); // directory + every profile under it
   return { ok: true, badges: clean };
 }
@@ -416,7 +452,8 @@ export async function setProfileHold(
     return { ok: false, error: "Couldn't update — please try again." };
   }
 
-  revalidatePath("/admin");
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the practitioners table lives here
   revalidatePath("/practitioners", "layout"); // directory + every profile under it
   revalidatePath("/practitioner"); // the held practitioner's own editor banner
   return { ok: true, held: input.held };

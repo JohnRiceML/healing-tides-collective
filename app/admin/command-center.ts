@@ -53,7 +53,7 @@ export function buildCommandCenter(
   },
   now: Date,
 ): CommandCenter {
-  // "NEW" mirrors countNewIntakes — an intake nobody's started a shortlist for yet.
+  // "NEW" = an intake nobody's started a shortlist for yet.
   const newIntakes = input.intakes.filter((i) => i.status === "NEW");
 
   // Most urgent first (urgency "soon"), then newest — so the person who needs care soonest is on top.

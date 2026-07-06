@@ -58,9 +58,12 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
   // One practitioner read + three lightweight grouped reads over profile_views
   // (viewedAt is indexed). The grouped reads give recent-window counts + last-viewed
   // without pulling every view row.
+  // NOTE: the groupBy reads scan ALL views (unbounded) — they'll want a viewedAt horizon
+  // when volume grows, but bounding them now would change the last-viewed semantics.
   const [rows, v7, v30, lastViewed] = await Promise.all([
     db.practitioner.findMany({
       orderBy: [{ updatedAt: "desc" }],
+      take: 500,
       select: {
         id: true,
         displayName: true,
@@ -168,6 +171,7 @@ export async function getAdminPractitionerDetail(id: string): Promise<AdminPract
 // selectReminderRecipients). ADMIN-ONLY (page/action gate).
 export async function getReminderCandidates(): Promise<ReminderCandidate[]> {
   const rows = await db.practitioner.findMany({
+    take: 500,
     select: {
       id: true,
       displayName: true,
@@ -184,13 +188,6 @@ export async function getReminderCandidates(): Promise<ReminderCandidate[]> {
   }));
 }
 
-export type AdminStats = {
-  total: number;
-  published: number;
-  draft: number;
-  totalViews: number;
-};
-
 export type AdminInviteRow = {
   id: string;
   token: string;
@@ -206,6 +203,7 @@ export type AdminInviteRow = {
 export async function getAdminInvites(): Promise<AdminInviteRow[]> {
   const rows = await db.invite.findMany({
     orderBy: [{ createdAt: "desc" }],
+    take: 500,
     select: {
       id: true,
       token: true,
@@ -222,16 +220,6 @@ export async function getAdminInvites(): Promise<AdminInviteRow[]> {
     claimedAt,
     status: claimedAt ? ("claimed" as const) : ("pending" as const),
   }));
-}
-
-export async function getAdminStats(): Promise<AdminStats> {
-  const [total, published, draft, views] = await Promise.all([
-    db.practitioner.count(),
-    db.practitioner.count({ where: { visibility: "PUBLISHED" } }),
-    db.practitioner.count({ where: { visibility: "DRAFT" } }),
-    db.practitioner.aggregate({ _sum: { viewCount: true } }),
-  ]);
-  return { total, published, draft, totalViews: views._sum.viewCount ?? 0 };
 }
 
 export type AdminFeedbackRow = {
@@ -324,14 +312,5 @@ export async function getSeekerIntakes(): Promise<AdminSeekerRow[]> {
     return rows.map(({ _count, ...r }) => ({ ...r, matchCount: _count.matches }));
   } catch {
     return [];
-  }
-}
-
-// New (un-reviewed) intakes for the Overview "needs attention" tile. Resilient → 0.
-export async function countNewIntakes(): Promise<number> {
-  try {
-    return await db.seekerIntake.count({ where: { status: "NEW" } });
-  } catch {
-    return 0;
   }
 }

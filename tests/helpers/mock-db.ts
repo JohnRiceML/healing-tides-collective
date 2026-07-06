@@ -49,7 +49,10 @@ function collection(initial: Row[] = []) {
     rows: () => rows,
     findUnique: async ({ where }: { where: Row }) => rows.find((r) => matches(r, where)) ?? null,
     findFirst: async ({ where = {} }: { where?: Row } = {}) => rows.find((r) => matches(r, where)) ?? null,
-    findMany: async ({ where = {} }: { where?: Row } = {}) => rows.filter((r) => matches(r, where)),
+    findMany: async ({ where = {}, take }: { where?: Row; take?: number } = {}) => {
+      const out = rows.filter((r) => matches(r, where));
+      return typeof take === "number" ? out.slice(0, take) : out;
+    },
     count: async ({ where = {} }: { where?: Row } = {}) => rows.filter((r) => matches(r, where)).length,
     create: async ({ data }: { data: Row }) => {
       const row = { id: data.id ?? `row_${(auto += 1)}`, ...data };

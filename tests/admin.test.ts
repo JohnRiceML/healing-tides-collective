@@ -2,11 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Clerk + the DB before importing the modules under test.
 const { auth, currentUser } = vi.hoisted(() => ({ auth: vi.fn(), currentUser: vi.fn() }));
-const { findUnique, create, count, aggregate, findMany, groupBy } = vi.hoisted(() => ({
+const { findUnique, create, findMany, groupBy } = vi.hoisted(() => ({
   findUnique: vi.fn(),
   create: vi.fn(),
-  count: vi.fn(),
-  aggregate: vi.fn(),
   findMany: vi.fn(),
   groupBy: vi.fn(),
 }));
@@ -15,16 +13,16 @@ vi.mock("@/lib/clerk-enabled", () => ({ clerkEnabled: true }));
 vi.mock("@/lib/db", () => ({
   db: {
     user: { findUnique, create },
-    practitioner: { count, aggregate, findMany },
+    practitioner: { findMany },
     profileView: { groupBy },
   },
 }));
 
 import { requireAdmin } from "@/lib/auth";
-import { getAdminStats, getAdminPractitioners } from "@/app/admin/_data";
+import { getAdminPractitioners } from "@/app/admin/_data";
 
 beforeEach(() => {
-  for (const m of [auth, currentUser, findUnique, create, count, aggregate, findMany, groupBy]) m.mockReset();
+  for (const m of [auth, currentUser, findUnique, create, findMany, groupBy]) m.mockReset();
 });
 
 describe("requireAdmin — the /admin gate", () => {
@@ -75,18 +73,6 @@ describe("requireAdmin — the /admin gate", () => {
 });
 
 describe("admin data", () => {
-  it("getAdminStats shapes the counts + view sum", async () => {
-    count.mockResolvedValueOnce(5).mockResolvedValueOnce(3).mockResolvedValueOnce(2);
-    aggregate.mockResolvedValue({ _sum: { viewCount: 42 } });
-    expect(await getAdminStats()).toEqual({ total: 5, published: 3, draft: 2, totalViews: 42 });
-  });
-
-  it("getAdminStats defaults the view sum to 0 when null", async () => {
-    count.mockResolvedValue(0);
-    aggregate.mockResolvedValue({ _sum: { viewCount: null } });
-    expect((await getAdminStats()).totalViews).toBe(0);
-  });
-
   it("getAdminPractitioners flattens the related user email + derives recent-view counts", async () => {
     findMany.mockResolvedValue([
       {
