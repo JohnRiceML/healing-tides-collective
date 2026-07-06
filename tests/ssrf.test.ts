@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { isPrivateIp, guardPublicUrl } from "@/lib/ssrf";
+import { isPrivateIp, guardPublicUrl, fetchGuarded } from "@/lib/ssrf";
 
 describe("isPrivateIp", () => {
   it("flags loopback, RFC1918, and link-local ranges (incl. cloud metadata)", () => {
@@ -106,5 +106,65 @@ describe("guardPublicUrl", () => {
   it("allows a public literal IP without touching DNS", async () => {
     const r = await guardPublicUrl("http://8.8.8.8/", noDns);
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("fetchGuarded — redirects can't escape the guard", () => {
+  const publicDns = async () => "93.184.216.34";
+
+  /** Fake fetch keyed by exact URL; throws on any URL it wasn't told about. */
+  const fake = (routes: Record<string, () => Response>): typeof fetch =>
+    (async (input: unknown) => {
+      const key = new URL(String(input)).href;
+      const route = routes[key];
+      if (!route) throw new Error(`unexpected fetch: ${key}`);
+      return route();
+    }) as typeof fetch;
+
+  const redirect = (to: string) => () => new Response(null, { status: 302, headers: { location: to } });
+
+  it("follows a public→public redirect to the final response", async () => {
+    const fetchImpl = fake({
+      "https://a.example.com/": redirect("https://b.example.com/bio"),
+      "https://b.example.com/bio": () => new Response("hi", { status: 200 }),
+    });
+    const r = await fetchGuarded(new URL("https://a.example.com/"), publicDns, {}, 3, fetchImpl);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(await r.response.text()).toBe("hi");
+  });
+
+  it("resolves a RELATIVE Location against the current URL", async () => {
+    const fetchImpl = fake({
+      "https://a.example.com/old": redirect("/new"),
+      "https://a.example.com/new": () => new Response("moved", { status: 200 }),
+    });
+    const r = await fetchGuarded(new URL("https://a.example.com/old"), publicDns, {}, 3, fetchImpl);
+    expect(r.ok).toBe(true);
+  });
+
+  it("blocks a redirect that bounces to the metadata IP (never fetches it)", async () => {
+    const fetchImpl = fake({
+      "https://a.example.com/": redirect("http://169.254.169.254/latest/meta-data/"),
+      // the private target is NOT routed — fetching it would throw "unexpected fetch"
+    });
+    const r = await fetchGuarded(new URL("https://a.example.com/"), publicDns, {}, 3, fetchImpl);
+    expect(r).toMatchObject({ ok: false, reason: "private_ip" });
+  });
+
+  it("blocks a redirect to a host that RESOLVES private (rebinding via redirect)", async () => {
+    const dns = async (host: string) => (host === "evil.example.net" ? "10.0.0.5" : "93.184.216.34");
+    const fetchImpl = fake({
+      "https://a.example.com/": redirect("https://evil.example.net/"),
+    });
+    const r = await fetchGuarded(new URL("https://a.example.com/"), dns, {}, 3, fetchImpl);
+    expect(r).toMatchObject({ ok: false, reason: "private_ip" });
+  });
+
+  it("gives up after the redirect cap instead of looping forever", async () => {
+    const fetchImpl = fake({
+      "https://loop.example.com/": redirect("https://loop.example.com/"),
+    });
+    const r = await fetchGuarded(new URL("https://loop.example.com/"), publicDns, {}, 3, fetchImpl);
+    expect(r).toMatchObject({ ok: false, reason: "too_many_redirects" });
   });
 });

@@ -13,7 +13,7 @@ vi.mock("next/headers", () => ({
   headers: async () => ({ get: (k: string) => (k === "x-forwarded-for" ? h.ip : null) }),
 }));
 
-import { requestIntro } from "@/app/get-matched/actions";
+import { requestIntro, submitIntake } from "@/app/get-matched/actions";
 
 const db = () => h.db;
 const valid = { name: "Sam Rivera", email: "sam@example.com" };
@@ -79,5 +79,25 @@ describe("requestIntro — consent + the warm-intro write", () => {
     const ninth = await requestIntro({ ...valid, slugs: ["maya"], consent: true });
     expect(ninth.ok).toBe(false); // blocked
     expect(db().seekerIntake.rows()).toHaveLength(8); // the 9th never wrote
+  });
+});
+
+describe("submitIntake — the public intake write", () => {
+  const intake = { ...valid, story: "Looking for somatic support after a hard year." };
+
+  it("stores a valid intake", async () => {
+    h.ip = "4.4.4.4";
+    expect((await submitIntake(intake)).ok).toBe(true);
+    expect(db().seekerIntake.rows()).toHaveLength(1);
+  });
+
+  it("rate-limits a flood from one IP (10/hour)", async () => {
+    h.ip = "10.10.10.10";
+    for (let i = 0; i < 10; i++) {
+      expect((await submitIntake(intake)).ok).toBe(true);
+    }
+    const eleventh = await submitIntake(intake);
+    expect(eleventh.ok).toBe(false); // blocked
+    expect(db().seekerIntake.rows()).toHaveLength(10); // the 11th never wrote
   });
 });

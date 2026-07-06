@@ -6,7 +6,7 @@ import { generateObject } from "ai";
 
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
-import { guardPublicUrl } from "@/lib/ssrf";
+import { guardPublicUrl, fetchGuarded } from "@/lib/ssrf";
 import { IMPORTED_LICENSE_KEY } from "@/app/_lib/credentials";
 import { fieldLabel } from "@/app/_lib/profile-fields";
 import { profileExtractSchema, type ProfileExtract } from "@/app/_lib/profile-extract-schema";
@@ -137,11 +137,16 @@ async function fetchPage(
     return { ok: false, error: "LinkedIn blocks automated visits — paste your About section instead." };
   }
   try {
-    const res = await fetch(url, {
-      redirect: "follow",
+    // fetchGuarded follows redirects manually, re-guarding every hop (a 3xx could
+    // otherwise bounce us to a private host after the initial check above).
+    const fetched = await fetchGuarded(url, dnsResolve, {
       signal: AbortSignal.timeout(8000),
       headers: { "user-agent": BROWSER_UA, accept: "text/html,application/xhtml+xml" },
     });
+    if (!fetched.ok) {
+      return { ok: false, error: "Couldn't open that page — try pasting the text instead." };
+    }
+    const res = fetched.response;
     if (!res.ok) {
       return { ok: false, error: "Couldn't open that page — try pasting the text instead." };
     }

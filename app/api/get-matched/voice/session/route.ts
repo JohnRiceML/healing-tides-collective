@@ -74,8 +74,13 @@ export async function POST(req: Request) {
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    return NextResponse.json({ error: `OpenAI session error: ${res.status} ${text}` }, { status: 502 });
+    // Log the upstream detail server-side only — never relay a provider error body to the client.
+    const text = await res.text().catch(() => "");
+    console.error(`[voice/session] OpenAI session error: ${res.status} ${text}`);
+    return NextResponse.json(
+      { error: "Voice couldn't start just now — please try again, or use the text chat." },
+      { status: 502 },
+    );
   }
   const secret = (await res.json()) as { value: string; expires_at: number; session?: { id?: string } };
 

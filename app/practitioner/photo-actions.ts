@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
-import { guardPublicUrl } from "@/lib/ssrf";
+import { guardPublicUrl, fetchGuarded } from "@/lib/ssrf";
 
 const MAX_BYTES = 6 * 1024 * 1024; // 6 MB
 const ALLOWED: Record<string, string> = {
@@ -81,7 +81,10 @@ export async function adoptImportedPhoto(rawUrl: string): Promise<SaveResult> {
   const { url } = guard;
 
   try {
-    const res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(8000) });
+    // Redirects are followed manually with the guard re-run on every hop (see lib/ssrf).
+    const fetched = await fetchGuarded(url, dnsResolve, { signal: AbortSignal.timeout(8000) });
+    if (!fetched.ok) return { ok: false, error: "Couldn't fetch that image — upload one instead." };
+    const res = fetched.response;
     if (!res.ok) return { ok: false, error: "Couldn't fetch that image — upload one instead." };
     const ct = (res.headers.get("content-type") ?? "").split(";")[0].trim();
     const ext = ALLOWED[ct];

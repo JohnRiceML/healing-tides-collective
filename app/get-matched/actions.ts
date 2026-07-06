@@ -10,6 +10,10 @@ import { createRateLimiter } from "@/lib/onboarding/voice/rate-limit";
 // Best-effort per-IP guard on the public intro write (same posture as the voice endpoints).
 const introLimiter = createRateLimiter(8, 60 * 60 * 1000); // 8 intro requests / IP / hour
 
+// Same guard for the public intake write — the same PII surface, slightly looser (the full form
+// invites a retry or two more than the one-click intro).
+const intakeLimiter = createRateLimiter(10, 60 * 60 * 1000); // 10 intakes / IP / hour
+
 /**
  * Store a seeker's intake. Anonymous-friendly (no account needed — most seekers don't want one).
  * Resilient: validation errors + a DB failure both return a gentle { ok:false } so the flow never
@@ -18,6 +22,15 @@ const introLimiter = createRateLimiter(8, 60 * 60 * 1000); // 8 intro requests /
 export async function submitIntake(input: IntakeInput): Promise<{ ok: true } | { ok: false; error: string }> {
   const clean = validateIntake(input);
   if (!clean.ok) return clean;
+
+  try {
+    const ip = ((await headers()).get("x-forwarded-for")?.split(",")[0] || "unknown").trim();
+    if (!intakeLimiter.check(ip, Date.now()).ok) {
+      return { ok: false, error: "That's a lot of requests in a short time — please try again a little later." };
+    }
+  } catch {
+    /* headers unavailable → skip the guard rather than block a legitimate request */
+  }
 
   // Best-effort signed-in user id for context — never block on it (seekers are usually anonymous).
   let userId: string | null = null;

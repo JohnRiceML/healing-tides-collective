@@ -65,3 +65,39 @@ export async function guardPublicUrl(
   if (isPrivateIp(addr)) return { ok: false, reason: "private_ip" };
   return { ok: true, url, host };
 }
+
+export type GuardedFetchResult =
+  | { ok: true; response: Response }
+  | { ok: false; reason: SsrfReason | "too_many_redirects" };
+
+/**
+ * Fetch an ALREADY-GUARDED URL without letting redirects escape the guard: `redirect: "follow"`
+ * would happily bounce to a private host AFTER the initial check, so redirects are followed
+ * manually here, re-running guardPublicUrl on every hop, capped at `maxRedirects`. Network
+ * errors still throw (same as fetch) — callers keep their existing try/catch + friendly copy.
+ * `fetchImpl` is injected for tests, same pattern as `resolveHost`.
+ */
+export async function fetchGuarded(
+  startUrl: URL,
+  resolveHost: (host: string) => Promise<string>,
+  init: RequestInit = {},
+  maxRedirects = 3,
+  fetchImpl: typeof fetch = fetch,
+): Promise<GuardedFetchResult> {
+  let url = startUrl;
+  for (let hop = 0; ; hop++) {
+    const res = await fetchImpl(url, { ...init, redirect: "manual" });
+    const location = res.headers.get("location");
+    if (res.status < 300 || res.status >= 400 || !location) return { ok: true, response: res };
+    if (hop >= maxRedirects) return { ok: false, reason: "too_many_redirects" };
+    let next: URL;
+    try {
+      next = new URL(location, url); // relative Locations resolve against the current URL
+    } catch {
+      return { ok: false, reason: "invalid_url" };
+    }
+    const guard = await guardPublicUrl(next.href, resolveHost);
+    if (!guard.ok) return guard;
+    url = guard.url;
+  }
+}
