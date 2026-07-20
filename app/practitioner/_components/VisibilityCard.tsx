@@ -162,6 +162,10 @@ function CoverageMap({ coverage }: { coverage: Coverage }) {
               </span>
             ))}
           </div>
+          <p className="mt-3 max-w-prose text-[12.5px] leading-[1.55] text-ink-muted">
+            Search engines quietly match what a seeker types with the words on your page — so when your
+            bio naturally uses the same language, the right people are more likely to find you.
+          </p>
         </div>
       ) : null}
     </div>

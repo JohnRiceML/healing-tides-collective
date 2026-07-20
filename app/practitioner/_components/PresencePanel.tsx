@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FINDABILITY_CRITERIA } from "@/lib/presence";
 import type { Findability, WeeklyViews, PresenceStep } from "@/lib/presence";
 
 /**
@@ -51,6 +52,40 @@ export function PresencePanel({
             ))}
           </div>
         </div>
+
+        {/* What earns each stage — a quiet, on-demand reference. Copy comes from lib/presence.ts
+            so the UI can't drift from the logic that sets the stage. */}
+        <details className="group mt-4">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[12.5px] text-ink-muted underline-offset-2 transition-colors hover:text-teal">
+            <span className="group-open:hidden">What earns each stage</span>
+            <span className="hidden group-open:inline">Hide</span>
+            <span aria-hidden className="transition-transform group-open:rotate-180">↓</span>
+          </summary>
+          <ul className="mt-3 space-y-3.5">
+            {FINDABILITY_CRITERIA.map((c) => (
+              <li key={c.stage}>
+                <p
+                  className={`text-[13px] font-medium ${
+                    findability.stage === c.stage ? "text-teal" : "text-charcoal"
+                  }`}
+                >
+                  {c.label}
+                </p>
+                <ul className="mt-1 space-y-1">
+                  {c.criteria.map((line) => (
+                    <li
+                      key={line}
+                      className="flex items-start gap-2 text-[12.5px] leading-[1.5] text-ink-soft"
+                    >
+                      <span aria-hidden className="mt-[6px] inline-block h-1 w-1 shrink-0 rounded-full bg-sage" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
 
       {/* This week — gains and neutral facts only, tied to meaning */}

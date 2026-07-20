@@ -151,15 +151,15 @@ export default async function PractitionerBrandPage() {
         overall={brand.overall}
       />
 
-      {/* ── What this is: the plain-language thesis, so a nervous first-timer is anchored ─ */}
+      {/* ── What this is: the plain-language explainer (the thesis now leads in the hero) ─ */}
       <section className="mt-8 rounded-3xl border border-rule/70 bg-white p-6 md:p-7">
         <p className="font-display text-[17px] leading-[1.4] text-charcoal">
-          This isn&rsquo;t marketing — it&rsquo;s helping the right person find help.
+          Your &ldquo;brand&rdquo; is simply how the right person recognizes you.
         </p>
         <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-ink-soft">
-          Your &ldquo;brand&rdquo; is simply how the right person recognizes you when they go looking
-          for care. Below is where that&rsquo;s already clear and where one small step would help —
-          your own pace, your own path. There&rsquo;s no grade here, and nothing to do all at once.
+          When they go looking for care, it&rsquo;s what helps them find and remember you. Below is
+          where that&rsquo;s already clear and where one small step would help — your own pace, your own
+          path. There&rsquo;s no grade here, and nothing to do all at once.
         </p>
       </section>
 
@@ -249,7 +249,22 @@ export default async function PractitionerBrandPage() {
       <p className="mt-1.5 text-[14px] text-ink-muted">
         Open any one to see where you are and the next small thing you might do.
       </p>
-      <div className="mt-4 space-y-3.5">
+      {/* Lift legend — the reference before the parts, so a step's effort is clear as you read. */}
+      <dl className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-[13px] leading-[1.5] text-ink-muted">
+        <div className="inline-flex gap-1.5">
+          <dt className="font-medium text-ink-soft">Gentle</dt>
+          <dd>a small, easy step</dd>
+        </div>
+        <div className="inline-flex gap-1.5">
+          <dt className="font-medium text-ink-soft">Moderate</dt>
+          <dd>a little more care</dd>
+        </div>
+        <div className="inline-flex gap-1.5">
+          <dt className="font-medium text-ink-soft">Deeper</dt>
+          <dd>a piece worth sitting with</dd>
+        </div>
+      </dl>
+      <div className="mt-5 space-y-3.5">
         {brand.dimensions.map((d) => {
           const open = d.id === (groundedStep?.dimensionId ?? "where_found");
           return (
@@ -268,26 +283,12 @@ export default async function PractitionerBrandPage() {
         })}
       </div>
 
-      {/* ── Reassurance + lift legend ──────────────────────────────────────────── */}
+      {/* ── Reassurance ────────────────────────────────────────────────────────── */}
       <footer className="mt-12 border-t border-rule/70 pt-6">
         <p className="text-[15px] leading-[1.65] text-ink-soft">
           We&rsquo;ll never compare you to other practitioners. This is only ever a
           read of your own presence — your pace, your path.
         </p>
-        <dl className="mt-5 flex flex-wrap gap-x-7 gap-y-2 text-[13px] leading-[1.5] text-ink-muted">
-          <div className="inline-flex gap-1.5">
-            <dt className="font-medium text-ink-soft">Gentle</dt>
-            <dd>a small, easy step</dd>
-          </div>
-          <div className="inline-flex gap-1.5">
-            <dt className="font-medium text-ink-soft">Moderate</dt>
-            <dd>a little more care</dd>
-          </div>
-          <div className="inline-flex gap-1.5">
-            <dt className="font-medium text-ink-soft">Deeper</dt>
-            <dd>a piece worth sitting with</dd>
-          </div>
-        </dl>
       </footer>
     </Shell>
   );

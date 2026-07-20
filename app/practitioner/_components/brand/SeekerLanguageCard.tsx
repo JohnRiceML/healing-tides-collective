@@ -114,6 +114,10 @@ export function SeekerLanguageCard({
             feels true to how you work, it might find a place in your bio someday. No rush, and only
             ever in your own voice.
           </p>
+          <p className="mt-2 max-w-2xl text-[12.5px] leading-[1.55] text-ink-muted">
+            It helps in a quiet, practical way too: search engines match what a seeker types with the
+            words on your page, so naturally using the same language helps the right person find you.
+          </p>
         </div>
       ) : null}
     </div>

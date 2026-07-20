@@ -65,7 +65,7 @@ export function BrandHero({
           {identity ? <p className="mt-1.5 text-[14px] text-ink-soft">{identity}</p> : null}
         </div>
         <p className="mt-5 max-w-2xl text-[15.5px] leading-[1.65] text-ink-soft">
-          Your home base for growing how the right people find and remember you. {overall}
+          This isn&rsquo;t marketing — it&rsquo;s helping the right person find help. {overall}
         </p>
       </div>
     </div>

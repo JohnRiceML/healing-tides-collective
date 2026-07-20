@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { findabilityStage, weeklyViewBuckets, presenceNextStep } from "@/lib/presence";
+import { findabilityStage, weeklyViewBuckets, presenceNextStep, FINDABILITY_CRITERIA } from "@/lib/presence";
 
 describe("findabilityStage", () => {
   it("is 'setup' until published with the basics", () => {
@@ -23,6 +23,35 @@ describe("findabilityStage", () => {
   it("never returns a comparative/relative value — only own-profile signals", () => {
     // sanity: the function takes no competitor input at all
     expect(Object.keys({ published: true } as never)).not.toContain("rank");
+  });
+});
+
+describe("FINDABILITY_CRITERIA", () => {
+  it("covers all three stages, in order, each with at least one criterion", () => {
+    expect(FINDABILITY_CRITERIA.map((c) => c.stage)).toEqual(["setup", "findable", "established"]);
+    for (const c of FINDABILITY_CRITERIA) {
+      expect(c.criteria.length).toBeGreaterThan(0);
+      expect(c.label.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("labels match the labels findabilityStage returns (so UI can't drift from logic)", () => {
+    const byStage = Object.fromEntries(FINDABILITY_CRITERIA.map((c) => [c.stage, c.label]));
+    expect(byStage.setup).toBe(
+      findabilityStage({ published: false, completeness: 0, hasContactLink: false, specialtiesCount: 0, hasRegion: false }).label,
+    );
+    expect(byStage.findable).toBe(
+      findabilityStage({ published: true, completeness: 60, hasContactLink: false, specialtiesCount: 1, hasRegion: true }).label,
+    );
+    expect(byStage.established).toBe(
+      findabilityStage({ published: true, completeness: 85, hasContactLink: true, specialtiesCount: 4, hasRegion: true }).label,
+    );
+  });
+
+  it("keeps criteria copy free of raw digits (the presence/brand surfaces avoid numbers)", () => {
+    for (const c of FINDABILITY_CRITERIA) {
+      for (const line of c.criteria) expect(/\d/.test(line)).toBe(false);
+    }
   });
 });
 

@@ -53,6 +53,49 @@ export function findabilityStage(s: FindabilitySignals): Findability {
   };
 }
 
+export type StageCriteria = {
+  stage: FindabilityStage;
+  label: string;
+  /** What earns this stage, in plain language — derived from findabilityStage's own thresholds. */
+  criteria: string[];
+};
+
+/**
+ * The plain-language answer to "what earns each stage?", kept right beside findabilityStage
+ * so the UI copy and the logic can't drift. Digit-free on purpose: the presence/brand surfaces
+ * avoid raw numbers, and the descriptions map the thresholds to what a person would actually do
+ * (completeness ≥ 50 → "more than half complete", ≥ 80 → "nearly complete", specialties ≥ 1/≥ 3 →
+ * "at least one" / "a few", hasRegion → location, hasContactLink → website or booking link).
+ */
+export const FINDABILITY_CRITERIA: readonly StageCriteria[] = [
+  {
+    stage: "setup",
+    label: "Getting set up",
+    criteria: [
+      "You’ve started your profile — a name and a short bio are all it takes to begin.",
+    ],
+  },
+  {
+    stage: "findable",
+    label: "Findable",
+    criteria: [
+      "Your profile is published",
+      "Your location is added",
+      "At least one focus area is named",
+      "Your profile is more than half complete",
+    ],
+  },
+  {
+    stage: "established",
+    label: "Well-established",
+    criteria: [
+      "Your profile is published and nearly complete",
+      "A website or booking link is added",
+      "A few focus areas are named",
+    ],
+  },
+];
+
 export type WeeklyViews = {
   /** Oldest → newest, one count per week. Length === weeks. */
   buckets: number[];

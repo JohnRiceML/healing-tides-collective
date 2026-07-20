@@ -12,7 +12,9 @@ import { holdMessage, isOnHold } from "@/app/_lib/moderation";
 import { badgesFor, grantedBadgesFrom } from "@/app/_lib/verification";
 import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { PublicPagePreview } from "./_components/PublicPagePreview";
+import { CopyLinkButton } from "./_components/CopyLinkButton";
 import { VisibilityCard } from "./_components/VisibilityCard";
+import { SITE_URL } from "@/lib/site";
 import { PresencePanel } from "./_components/PresencePanel";
 import { findabilityStage, weeklyViewBuckets, presenceNextStep } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
@@ -351,9 +353,12 @@ export default async function PractitionerHome() {
             />
           </div>
           {isLive && p.slug ? (
-            <LinkButton href={`/practitioners/${p.slug}`} target="_blank" rel="noreferrer" tone="secondary" className="mt-4 w-full">
-              View public page →
-            </LinkButton>
+            <div className="mt-4 flex flex-col gap-2">
+              <LinkButton href={`/practitioners/${p.slug}`} target="_blank" rel="noreferrer" tone="secondary" className="w-full">
+                View public page →
+              </LinkButton>
+              <CopyLinkButton url={`${SITE_URL}/practitioners/${p.slug}`} className="w-full" />
+            </div>
           ) : (
             <p className="mt-4 text-[13px] leading-[1.55] text-ink-muted">
               {held ? "Hidden while on hold." : "Publish your profile to get a public page."}
