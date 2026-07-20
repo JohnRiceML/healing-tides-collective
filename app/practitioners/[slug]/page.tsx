@@ -55,6 +55,26 @@ function initialOf(name: string): string {
   return first ? first.toUpperCase() : "·";
 }
 
+/** Bigger, bolder section headers so each section reads clearly as a category
+ *  (Nora's feedback). Follows the font-display / tight-tracking idiom used elsewhere. */
+const SECTION_H2 =
+  "font-display text-[22px] leading-[1.2] tracking-[-0.01em] text-charcoal sm:text-[25px]";
+
+/** Public-page-only: warm the second-person section titles with the practitioner's
+ *  first name. The editor keeps its own generic labels — profile-fields.ts is untouched. */
+function personalizeSectionTitle(title: string, first: string): string {
+  switch (title) {
+    case "Your story":
+      return `${first}'s story`;
+    case "Your approach":
+      return `${first}'s approach`;
+    case "Who you support":
+      return `Who ${first} supports`;
+    default:
+      return title;
+  }
+}
+
 /** Free-text profile fields that hold a URL — rendered as a sanitized link, not raw
  *  text. (booking_link + website are surfaced elsewhere; these two only live here.) */
 const URL_FIELDS = new Set(["video_url", "socials"]);
@@ -63,9 +83,11 @@ const URL_FIELDS = new Set(["video_url", "socials"]);
 function RichProfile({
   fieldValues,
   exclude,
+  first,
 }: {
   fieldValues: Record<string, string | string[]>;
   exclude: Set<string>;
+  first: string;
 }) {
   const filled = (v: string | string[] | undefined) =>
     Array.isArray(v) ? v.length > 0 : Boolean(v && v.trim());
@@ -78,8 +100,8 @@ function RichProfile({
     <>
       {sections.map((section) => (
         <section key={section.id} className="mt-10 border-t border-rule pt-8">
-          <h2 className="meta text-ink-muted">{section.title}</h2>
-          <dl className="mt-2">
+          <h2 className={SECTION_H2}>{personalizeSectionTitle(section.title, first)}</h2>
+          <dl className="mt-4">
             {section.fields.map((field) => {
               const v = fieldValues[field.id];
               // URL fields → a safe external link (drops javascript:/data:/… schemes).
@@ -147,9 +169,12 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     `mailto:nora@healingtides.co?subject=${encodeURIComponent(`Connecting with ${p.displayName} on Healing Tides`)}`;
   const contactExternal = /^https?:\/\//i.test(contactHref);
 
-  const credentials = arrify(fv.credentials).join(", ");
   const styleItems = arrify(fv.style).map((id) => optionLabel("style", id));
   const approachText = fstr(fv.client_expectations);
+  const idealClient = fstr(fv.ideal_client);
+  // Nora: drop the "What would you like clients to know…" prompt on the client-facing
+  // page, but keep any answer — folded quietly into the About narrative below.
+  const closingNote = fstr(fv.client_message);
   const availState = fstr(fv.availability_state);
   const focus = fstr(fv.populations) || arrify(fv.age_groups).map((id) => optionLabel("age_groups", id)).join(", ") || null;
   const languages = arrify(fv.languages).join(", ");
@@ -166,10 +191,15 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     { label: "Investment", value: fstr(fv.session_cost), Icon: IconTag },
   ].filter((r) => Boolean(r.value));
 
-  // Fields surfaced in the hero/sidebar — don't repeat them in the long-tail list.
+  // Fields surfaced in the hero/sidebar OR pulled into their own section — don't repeat
+  // them in the long-tail RichProfile list. `credentials` is intentionally NOT here: it
+  // now renders under "Background & training" (Nora asked licensure to live there).
+  // `why_healing_tides` + `client_message` are dropped from the client-facing page;
+  // `ideal_client` is promoted to its own "Who thrives working with {First}?" section.
   const surfaced = new Set([
-    "title", "credentials", "availability_state", "populations", "age_groups",
+    "title", "availability_state", "populations", "age_groups",
     "style", "client_expectations", "languages", "earliest_start", "session_cost", "booking_link",
+    "why_healing_tides", "client_message", "ideal_client",
   ]);
 
   const contactProps = contactExternal ? { target: "_blank", rel: "noopener noreferrer" as const } : {};
@@ -201,42 +231,41 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               <ProfileCover seed={p.slug} design={p.coverDesign} color={p.coverColor} className="h-full w-full" />
             </div>
 
-            {/* Portrait overlapping the cover */}
-            <div className="relative z-10 -mt-12 px-1 sm:-mt-14">
+            {/* Portrait centered, overlapping the cover (warmer than a left-aligned hero) */}
+            <div className="relative z-10 -mt-12 flex justify-center px-1 sm:-mt-14">
               {p.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={p.photoUrl}
                   alt={`Portrait of ${p.displayName}`}
-                  width={128}
-                  height={128}
+                  width={144}
+                  height={144}
                   loading="eager"
-                  className="h-24 w-24 rounded-full border-4 border-sand object-cover shadow-sm sm:h-28 sm:w-28"
+                  className="h-28 w-28 rounded-full border-4 border-sand object-cover shadow-sm sm:h-32 sm:w-32"
                 />
               ) : (
                 <div
                   aria-hidden
-                  className="font-display flex h-24 w-24 select-none items-center justify-center rounded-full border-4 border-sand bg-sand-deep text-[34px] leading-none text-teal shadow-sm sm:h-28 sm:w-28"
+                  className="font-display flex h-28 w-28 select-none items-center justify-center rounded-full border-4 border-sand bg-sand-deep text-[38px] leading-none text-teal shadow-sm sm:h-32 sm:w-32"
                 >
                   {initialOf(p.displayName)}
                 </div>
               )}
             </div>
 
-            <header className="mt-5 px-1">
+            <header className="mt-5 flex flex-col items-center px-1 text-center">
               <p className="meta text-teal">Practitioner</p>
               <h1 className="font-display mt-3 text-[clamp(30px,5vw,46px)] leading-[1.05] tracking-[-0.02em] text-charcoal">
                 {p.displayName}
               </h1>
-              {credentials ? <p className="mt-2 text-[15px] tracking-[0.01em] text-ink-soft">{credentials}</p> : null}
               {p.region ? <p className="mt-2 text-[15px] text-ink-soft">{p.region}</p> : null}
               <VerificationBadges
                 practitioner={{ createdAt: p.createdAt, verificationBadges: p.verificationBadges }}
-                className="mt-4"
+                className="mt-4 justify-center"
               />
 
               {/* Primary actions */}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <a
                   href={contactHref}
                   {...contactProps}
@@ -251,7 +280,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             {/* Areas of care */}
             {p.specialties.length > 0 ? (
               <section className="mt-10 border-t border-rule pt-8">
-                <h2 className="meta text-ink-muted">Areas of care</h2>
+                <h2 className={SECTION_H2}>Areas of care</h2>
                 <ul className="mt-5 flex flex-wrap gap-2.5">
                   {p.specialties.map((id) => (
                     <li key={id} className="rounded-full border border-charcoal/15 bg-white px-4 py-2 text-[14px] text-ink-soft">
@@ -262,14 +291,19 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               </section>
             ) : null}
 
-            {/* About */}
-            {p.bio?.trim() ? (
+            {/* About — bio, plus any "before reaching out" note folded in quietly (no prompt) */}
+            {p.bio?.trim() || closingNote ? (
               <section className="mt-10 border-t border-rule pt-8">
-                <h2 className="meta text-ink-muted">About</h2>
+                <h2 className={SECTION_H2}>About {firstName}</h2>
                 <div className="mt-4 space-y-4 text-[16px] leading-[1.7] text-ink-soft">
-                  {p.bio.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean).map((para, i) => (
-                    <p key={i}>{para}</p>
+                  {(p.bio?.trim() ? p.bio : "").split(/\n{2,}/).map((s) => s.trim()).filter(Boolean).map((para, i) => (
+                    <p key={`bio-${i}`}>{para}</p>
                   ))}
+                  {closingNote
+                    ? closingNote.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean).map((para, i) => (
+                        <p key={`note-${i}`}>{para}</p>
+                      ))
+                    : null}
                 </div>
               </section>
             ) : null}
@@ -280,7 +314,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                 <div className="grid gap-x-10 gap-y-8 sm:grid-cols-[1.5fr_1fr]">
                   {approachText ? (
                     <div>
-                      <h2 className="meta text-ink-muted">My approach</h2>
+                      <h2 className={SECTION_H2}>My approach</h2>
                       <div className="mt-4 space-y-4 text-[15.5px] leading-[1.7] text-ink-soft">
                         {approachText.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean).map((para, i) => (
                           <p key={i}>{para}</p>
@@ -290,7 +324,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                   ) : null}
                   {styleItems.length > 0 ? (
                     <div>
-                      <h2 className="meta text-ink-muted">How I work</h2>
+                      <h2 className={SECTION_H2}>How I work</h2>
                       <ul className="mt-4 grid grid-cols-1 gap-x-5 gap-y-2.5 sm:grid-cols-1">
                         {styleItems.map((label) => (
                           <li key={label} className="flex items-center gap-2.5 text-[14.5px] text-charcoal">
@@ -301,6 +335,18 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                       </ul>
                     </div>
                   ) : null}
+                </div>
+              </section>
+            ) : null}
+
+            {/* Who thrives working with {First}? — the strong-fit / ideal-client note */}
+            {idealClient ? (
+              <section className="mt-10 border-t border-rule pt-8">
+                <h2 className={SECTION_H2}>Who thrives working with {firstName}?</h2>
+                <div className="mt-4 space-y-4 text-[16px] leading-[1.7] text-ink-soft">
+                  {idealClient.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean).map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
                 </div>
               </section>
             ) : null}
@@ -319,13 +365,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
               </section>
             ) : null}
 
-            {/* Remaining rich detail (education, ideal client, logistics, …) */}
-            <RichProfile fieldValues={fv as Record<string, string | string[]>} exclude={surfaced} />
+            {/* Remaining rich detail (background & training w/ licensure, logistics, …) */}
+            <RichProfile fieldValues={fv as Record<string, string | string[]>} exclude={surfaced} first={firstName} />
 
-            {/* Gender + website (kept understated) */}
+            {/* Additional details — the small factual leftovers, kept quiet at the bottom */}
             {p.gender || safeWebsite ? (
-              <section className="mt-10 border-t border-rule pt-2">
-                <dl>
+              <section className="mt-10 border-t border-rule pt-8">
+                <h2 className={SECTION_H2}>Additional details</h2>
+                <dl className="mt-4">
                   {p.gender ? <DLRow label="Gender">{p.gender}</DLRow> : null}
                   {safeWebsite ? (
                     <DLRow label="Website">
