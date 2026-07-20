@@ -150,6 +150,16 @@ Step-by-step for the launch-hardening items: **[RUNBOOK-prelaunch.md](RUNBOOK-pr
 
 ## Recently shipped
 
+### 2026-07-19 — Nora's feedback round 1 (walkthrough videos → confirmed list → built)
+Nora recorded walkthrough videos; the asks were read back to her and confirmed by email 2026-07-18 ("I think you got everything!"). All built on `feat/nora-feedback`:
+- ✅ **Editor guidance** — degree-year prompt, honest start-times nudge, per-session-type pricing hint, socials placeholder examples, her strong-fit example on who-thrives; "Your style" HARD-capped at 3 picks + focus areas at 8 (new `ProfileField.max` enforced in the editor).
+- ✅ **Public profile** — centered portrait + centered header; personalized headings ("About Nora", "Nora's story", "Who Nora supports", new "Who thrives working with {First}?"); "Why Healing Tides" + the reach-out prompt removed from the client-facing page (editor untouched); licensure under Background & training; display-size section headers; "Additional details" at the bottom.
+- ✅ **Dashboard/brand** — copy-link button for the public URL; hero leads with the thesis ("This isn't marketing — it's helping the right person find help."); Gentle/Moderate/Deeper legend moved under "Tend each part"; plain-English search note on both "words seekers use" surfaces; "What earns each stage" criteria surfaced from `FINDABILITY_CRITERIA` in lib/presence.ts (drift-guarded, digit-free).
+- ✅ **Site-wide** — every user-facing email → nora@healingtides.co (25 occurrences).
+- ✅ **NEW: AI writing assist** (Nora green-lit) — optional "Help me phrase this" on narrative fields (config textareas + bio/values): rephrases ONLY the practitioner's own draft (never invents facts; injection-fenced; ±30% length), suggestion shown below with "Use this"/"Keep mine", 20/hr per-practitioner limit, gateway haiku (no new keys). Deferred per Nora: in-app video recording (post-launch).
+- **Verified:** tsc · **484 tests** (+12) · build · profile screenshots reviewed. No migrations.
+
+
 ### 2026-06-28 — admin command center: daily-action home + bulk invite + practitioner triage/AI
 Turned `/admin` from a stats grid into a daily driver, and added the "people management" layer Nora asked for. Architecture/why: ADR [0003](decisions/0003-admin-people-management-and-ai-triage.md).
 - ✅ **Command-center home** — greeting + "N things waiting on you today" + a people-waiting-to-be-matched queue (urgent first) + a card per non-empty action queue, each deep-linking in. Pure `buildCommandCenter` (`app/admin/command-center.ts`, tested).

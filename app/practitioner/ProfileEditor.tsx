@@ -12,6 +12,7 @@ import { completenessOf } from "@/lib/completeness";
 import { MODALITY_OPTIONS, SPECIALTY_OPTIONS } from "./_taxonomy";
 import { saveProfile } from "./actions";
 import { extractProfileFromSources } from "./extract-actions";
+import { polishFieldText } from "./assist-actions";
 import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
 import { describeSource, type ImportData } from "./_extract/types";
 import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
@@ -323,7 +324,10 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
             return (
               <Field key={field.id} label={field.label} hint={field.hint} optional>
                 {field.type === "textarea" ? (
-                  <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                  <>
+                    <TextArea value={str} placeholder={field.placeholder} onChange={(e) => setField(field.id, e.target.value)} />
+                    <PhraseAssist fieldId={field.id} draft={str} onUse={(text) => setField(field.id, text)} />
+                  </>
                 ) : field.type === "chips" && field.options ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {field.options.map((opt) =>
@@ -549,9 +553,11 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
             <div className="mt-8 space-y-7">
               <Field label="What healing means to me" hint="The heart of your profile. Plain, warm, in your own voice.">
                 <TextArea value={values} onChange={(e) => { setValues(e.target.value); dirty(); }} placeholder="When I sit with someone…" className="min-h-[180px]" />
+                <PhraseAssist fieldId="values" draft={values} onUse={(text) => { setValues(text); dirty(); }} />
               </Field>
               <Field label="Short bio">
                 <TextArea value={bio} onChange={(e) => { setBio(e.target.value); dirty(); }} placeholder="A couple of sentences about you and your practice." />
+                <PhraseAssist fieldId="bio" draft={bio} onUse={(text) => { setBio(text); dirty(); }} />
               </Field>
               <div className="pt-1">{VOICE_SECTION_IDS.map(richSection)}</div>
             </div>
@@ -692,5 +698,84 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
         />
       ) : null}
     </form>
+  );
+}
+
+// "Help me phrase this" — the OPTIONAL AI writing assist for a narrative field.
+// It drafts a warmer version FROM the practitioner's own words (polishFieldText) and
+// shows it in a calm inline card BELOW the textarea. It proposes; they choose — "Use
+// this" replaces the value (via the parent's setField, which marks dirty), "Keep mine"
+// dismisses. Nothing is ever overwritten without the click.
+function PhraseAssist({
+  fieldId,
+  draft,
+  onUse,
+}: {
+  fieldId: string;
+  draft: string;
+  onUse: (text: string) => void;
+}) {
+  const [pending, start] = useTransition();
+  const [suggestion, setSuggestion] = useState<{ text: string; note?: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Match the server floor — no point offering to shape a near-empty field.
+  const tooShort = draft.trim().length < 40;
+
+  function onShape() {
+    setError(null);
+    setSuggestion(null);
+    start(async () => {
+      const res = await polishFieldText(fieldId, draft);
+      if (res.ok) setSuggestion({ text: res.suggestion, note: res.note });
+      else setError(res.error);
+    });
+  }
+
+  return (
+    <div className="mt-2.5">
+      {!suggestion ? (
+        <button
+          type="button"
+          onClick={onShape}
+          disabled={pending || tooShort}
+          aria-busy={pending}
+          className="rounded-full px-1 text-[13px] font-medium text-teal underline-offset-2 hover:text-ocean hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15 disabled:cursor-not-allowed disabled:no-underline disabled:opacity-50"
+        >
+          {pending ? "Shaping…" : "Help me phrase this"}
+        </button>
+      ) : null}
+
+      <div aria-live="polite">
+        {suggestion ? (
+          <div className="mt-2 rounded-2xl border border-teal/25 bg-seafoam/20 p-4">
+            <p className="meta text-teal">A shaped version — yours to take or leave</p>
+            <p className="mt-2 whitespace-pre-wrap text-[14.5px] leading-[1.6] text-charcoal">{suggestion.text}</p>
+            {suggestion.note ? (
+              <p className="mt-2 text-[12px] leading-[1.5] text-ink-muted">{suggestion.note}</p>
+            ) : null}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={() => {
+                  onUse(suggestion.text);
+                  setSuggestion(null);
+                }}
+              >
+                Use this
+              </Button>
+              <button
+                type="button"
+                onClick={() => setSuggestion(null)}
+                className="rounded-full px-1 text-[13px] font-medium text-ink-muted underline-offset-4 transition-colors hover:text-charcoal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15"
+              >
+                Keep mine
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {error ? <p role="alert" className="mt-2 text-[13px] leading-[1.5] text-ocean">{error}</p> : null}
+      </div>
+    </div>
   );
 }
