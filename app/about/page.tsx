@@ -249,7 +249,7 @@ export default function MeetNoraPage() {
               </span>
             </a>
             <a
-              href="mailto:hello@healingtides.co?subject=Consultation%20with%20Nora"
+              href="mailto:nora@healingtides.co?subject=Consultation%20with%20Nora"
               className="group inline-flex items-center gap-3 rounded-full border border-charcoal/25 px-6 py-3.5 text-charcoal transition-colors hover:border-charcoal/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
             >
               <span className="meta">Email Nora</span>

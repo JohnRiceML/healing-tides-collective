@@ -10,7 +10,7 @@ import { readHold } from "@/app/_lib/moderation";
 // An admin hold is a hard stop: while held, the practitioner can edit but cannot change
 // their own published status (publish OR unpublish). Only an admin release lifts it.
 const HELD_MESSAGE =
-  "Your profile is on hold with the Healing Tides team, so it can’t be published right now. Please reach out to hello@healingtides.co — we’re happy to help.";
+  "Your profile is on hold with the Healing Tides team, so it can’t be published right now. Please reach out to nora@healingtides.co — we’re happy to help.";
 
 // Minimum bar to go public: a name + something to read. Keeps empty shells out of
 // the directory. (The completeness % is a separate, softer nudge — not a gate.)

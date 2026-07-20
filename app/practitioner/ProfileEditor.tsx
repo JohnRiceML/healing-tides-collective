@@ -159,19 +159,27 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
   }
 
   const dirty = () => setSaved(false);
+  // Focus areas are capped at 8 (the "pick 3–8" rule — taxonomy.ts leaves enforcement to the
+  // editor). The minimum of 3 stays advisory via the hint + publish checklist.
+  const MAX_SPECIALTIES = 8;
   const toggleSpecialty = (id: string) => {
     dirty();
-    setSpecialties((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    setSpecialties((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : s.length >= MAX_SPECIALTIES ? s : [...s, id],
+    );
   };
   const setField = (id: string, value: string | string[]) => {
     dirty();
     setFieldValues((f) => ({ ...f, [id]: value }));
   };
-  const toggleChip = (id: string, opt: string) => {
+  const toggleChip = (id: string, opt: string, max?: number) => {
     dirty();
     setFieldValues((f) => {
       const cur = Array.isArray(f[id]) ? (f[id] as string[]) : [];
-      return { ...f, [id]: cur.includes(opt) ? cur.filter((x) => x !== opt) : [...cur, opt] };
+      if (cur.includes(opt)) return { ...f, [id]: cur.filter((x) => x !== opt) };
+      // Hard cap (e.g. "Your style" is 1–3): ignore adds beyond the field's max.
+      if (typeof max === "number" && cur.length >= max) return f;
+      return { ...f, [id]: [...cur, opt] };
     });
   };
 
@@ -322,7 +330,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
                       field.single ? (
                         <ChoiceChip key={opt.id} label={opt.label} selected={str === opt.id} onClick={() => setField(field.id, str === opt.id ? "" : opt.id)} />
                       ) : (
-                        <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id)} />
+                        <ChoiceChip key={opt.id} label={opt.label} selected={arr.includes(opt.id)} onClick={() => toggleChip(field.id, opt.id, field.max)} />
                       ),
                     )}
                   </div>
@@ -401,7 +409,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
               <p className="mt-2 text-[13.5px] leading-[1.6] text-ink-soft">
                 It isn&rsquo;t public right now and publishing is paused — but nothing is lost, and you
                 can still edit. Questions? Email{" "}
-                <a href="mailto:hello@healingtides.co" className="link-underline font-medium text-charcoal">hello@healingtides.co</a>.
+                <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
               </p>
             </div>
           ) : null}
@@ -586,7 +594,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
                 {held ? (
                   <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-soft">
                     Publishing is paused while your profile is on hold. You can still edit everything;
-                    reach out to <a href="mailto:hello@healingtides.co" className="link-underline font-medium text-charcoal">hello@healingtides.co</a> with questions.
+                    reach out to <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a> with questions.
                   </p>
                 ) : (
                   <>

@@ -92,10 +92,10 @@ export default function NotFound() {
           <p className="meta text-sand/55">
             or write to{" "}
             <a
-              href="mailto:hello@healingtides.co"
+              href="mailto:nora@healingtides.co"
               className="text-seafoam underline-offset-4 hover:underline"
             >
-              hello@healingtides.co
+              nora@healingtides.co
             </a>
           </p>
           <p className="meta text-sand/55">© 2026 / Care, matched. By a person.</p>

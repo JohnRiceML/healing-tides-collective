@@ -21,6 +21,8 @@ export type ProfileField = {
   options?: ProfileFieldOption[];
   /** `chips`: single-select instead of multi */
   single?: boolean;
+  /** `chips`: hard cap on selections — the editor ignores adds beyond this */
+  max?: number;
 };
 
 export type ProfileSection = {
@@ -58,7 +60,7 @@ export const PROFILE_SECTIONS: ProfileSection[] = [
       { id: "title", label: "Professional title", type: "text", placeholder: "e.g. Licensed Independent Clinical Social Worker" },
       { id: "credentials", label: "Credentials & licensure", type: "tags", hint: "Comma-separated. e.g. LICSW, LADC" },
       { id: "years_experience", label: "Years of experience", type: "text", placeholder: "e.g. 12" },
-      { id: "education", label: "Education & training", type: "textarea" },
+      { id: "education", label: "Education & training", type: "textarea", hint: "Where you trained, and what shaped how you practice. Include the year of your degree — “MSW, University of Minnesota, 2011.”" },
       { id: "languages", label: "Languages spoken", type: "tags", hint: "Comma-separated. e.g. English, Spanish" },
     ],
   },
@@ -71,7 +73,8 @@ export const PROFILE_SECTIONS: ProfileSection[] = [
         id: "style",
         label: "Your style",
         type: "chips",
-        hint: "Pick what fits.",
+        hint: "Pick 1–3 that fit you best.",
+        max: 3,
         options: ["Warm", "Direct", "Collaborative", "Structured", "Intuitive", "Strengths-based", "Trauma-informed", "Educational", "Playful"].map((l) => ({ id: l.toLowerCase().replace(/[^a-z]+/g, "_"), label: l })),
       },
       { id: "approaches", label: "Modalities & approaches", type: "tags", hint: "Techniques you use, comma-separated. e.g. EMDR, Somatic Experiencing, IFS, Reiki" },
@@ -88,7 +91,7 @@ export const PROFILE_SECTIONS: ProfileSection[] = [
         type: "chips",
         options: AGE_GROUP_OPTIONS,
       },
-      { id: "ideal_client", label: "Who thrives working with you?", type: "textarea", hint: "The clients, goals, or experiences that tend to be a strong fit." },
+      { id: "ideal_client", label: "Who thrives working with you?", type: "textarea", hint: "The clients, goals, or experiences that tend to be a strong fit. If there’s a group you especially connect with, say so — “I especially connect well with children ages 3–5.”" },
     ],
   },
   {
@@ -107,17 +110,17 @@ export const PROFILE_SECTIONS: ProfileSection[] = [
         ],
       },
       { id: "typical_availability", label: "Typical availability", type: "text", placeholder: "e.g. Weekday mornings, evenings" },
-      { id: "earliest_start", label: "Earliest start for new clients", type: "text", placeholder: "e.g. Within 2 weeks" },
+      { id: "earliest_start", label: "Earliest start for new clients", type: "text", placeholder: "e.g. Within 2 weeks", hint: "Be honest about realistic start times — transparency helps the right clients reach you sooner." },
     ],
   },
   {
     id: "investment",
     title: "Investment & logistics",
     fields: [
-      { id: "session_cost", label: "Session cost", type: "text", placeholder: "e.g. $150 / 50 min" },
+      { id: "session_cost", label: "Session cost", type: "text", placeholder: "e.g. $150 / 50 min", hint: "If pricing differs by session type, say so — “$250 initial session, $185 ongoing.”" },
       { id: "sliding_scale", label: "Sliding scale", type: "text", placeholder: "e.g. Yes — a few spots" },
       { id: "booking_link", label: "Booking link", type: "text", placeholder: "https://… (Calendly, SimplePractice)" },
-      { id: "socials", label: "Social media", type: "text", placeholder: "Optional" },
+      { id: "socials", label: "Social media", type: "text", placeholder: "LinkedIn, Instagram, X, Facebook…" },
     ],
   },
   {

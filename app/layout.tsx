@@ -70,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               name: "Healing Tides Collective",
               url: SITE_URL,
               logo: `${SITE_URL}/og.jpg`,
-              email: "hello@healingtides.co",
+              email: "nora@healingtides.co",
               description: DESCRIPTION,
               areaServed: { "@type": "State", name: "Minnesota" },
             }).replace(/</g, "\\u003c"),

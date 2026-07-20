@@ -106,8 +106,8 @@ export function SiteFooter() {
                 </li>
               ))}
               <li>
-                <a href="mailto:hello@healingtides.co" className={linkClass}>
-                  hello@healingtides.co
+                <a href="mailto:nora@healingtides.co" className={linkClass}>
+                  nora@healingtides.co
                 </a>
               </li>
             </ul>

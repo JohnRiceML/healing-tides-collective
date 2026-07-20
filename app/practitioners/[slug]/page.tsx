@@ -144,7 +144,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const contactHref =
     bookingLink ||
     safeWebsite ||
-    `mailto:hello@healingtides.co?subject=${encodeURIComponent(`Connecting with ${p.displayName} on Healing Tides`)}`;
+    `mailto:nora@healingtides.co?subject=${encodeURIComponent(`Connecting with ${p.displayName} on Healing Tides`)}`;
   const contactExternal = /^https?:\/\//i.test(contactHref);
 
   const credentials = arrify(fv.credentials).join(", ");
