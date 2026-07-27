@@ -27,7 +27,7 @@ const expertise = [
   "Women's issues",
 ];
 
-const atAGlance: Array<{ label: string; lines: string[] }> = [
+const atAGlance: Array<{ label: string; lines: string[]; link?: { label: string; href: string } }> = [
   {
     label: "Sessions",
     lines: ["$160 per session", "Sliding scale by application"],
@@ -47,6 +47,11 @@ const atAGlance: Array<{ label: string; lines: string[] }> = [
   {
     label: "Credentials",
     lines: ["LICSW · Minnesota #25149", "MSW, University of Minnesota, 2016"],
+    // Verifiability is a trust signal: the license number above can be checked at the source.
+    link: {
+      label: "Verify with the MN Board of Social Work ↗",
+      href: "https://mn.gov/boards/social-work/licenseelookup/",
+    },
   },
   {
     label: "Payment",
@@ -199,6 +204,18 @@ export default function MeetNoraPage() {
                   {b.lines.map((l) => (
                     <p key={l}>{l}</p>
                   ))}
+                  {b.link && (
+                    <p className="pt-1 text-[13px]">
+                      <a
+                        href={b.link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="link-underline text-ink-soft"
+                      >
+                        {b.link.label}
+                      </a>
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

@@ -7,6 +7,7 @@ import {client} from '@/sanity/lib/client'
 import {urlFor} from '@/sanity/lib/image'
 import {POST_BY_SLUG_QUERY, POST_SLUGS_QUERY} from '@/sanity/lib/queries'
 import {PortableTextRenderer} from '../_components/PortableTextRenderer'
+import {buildStructuredData} from '@/lib/journal-seo'
 
 export const dynamicParams = true
 
@@ -58,76 +59,6 @@ export async function generateMetadata({
   }
 }
 
-type FaqItem = {question?: string; answer?: string}
-type FaqSectionBlock = {_type?: string; faqs?: FaqItem[]}
-
-function escapeJsonLd(json: string): string {
-  return json.replace(/</g, '\\u003c').replace(/-->/g, '--\\u003e')
-}
-
-function buildStructuredData(post: {
-  title?: string | null
-  excerpt?: string | null
-  publishedAt?: string | null
-  canonicalUrl?: string | null
-  structuredData?: string | null
-  heroImage?: {asset?: unknown} | null
-  author?: {name?: string | null} | null
-  body?: unknown[] | null
-}): string | null {
-  if (post.structuredData) {
-    try {
-      const parsed = JSON.parse(post.structuredData)
-      return escapeJsonLd(JSON.stringify(parsed))
-    } catch {
-      return null
-    }
-  }
-
-  const article: Record<string, unknown> = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-  }
-  if (post.title) article.headline = post.title
-  if (post.excerpt) article.description = post.excerpt
-  if (post.publishedAt) article.datePublished = post.publishedAt
-  if (post.canonicalUrl) article.mainEntityOfPage = post.canonicalUrl
-  if (post.author?.name) {
-    article.author = {'@type': 'Person', name: post.author.name}
-  }
-  if (post.heroImage?.asset) {
-    const heroUrl = urlFor(post.heroImage as Parameters<typeof urlFor>[0])
-      .width(1200)
-      .height(630)
-      .fit('crop')
-      .auto('format')
-      .url()
-    if (heroUrl) article.image = heroUrl
-  }
-
-  const faqBlocks = ((post.body ?? []) as FaqSectionBlock[]).filter(
-    (b) => b?._type === 'faqSection' && Array.isArray(b.faqs) && b.faqs.length > 0,
-  )
-  const faqItems = faqBlocks
-    .flatMap((b) => b.faqs ?? [])
-    .filter((f): f is Required<FaqItem> => Boolean(f?.question && f?.answer))
-    .map((f) => ({
-      '@type': 'Question',
-      name: f.question,
-      acceptedAnswer: {'@type': 'Answer', text: f.answer},
-    }))
-
-  if (faqItems.length === 0) {
-    return escapeJsonLd(JSON.stringify(article))
-  }
-
-  const faqPage = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems,
-  }
-  return escapeJsonLd(JSON.stringify([article, faqPage]))
-}
 
 export default async function PostPage({params}: {params: Promise<{slug: string}>}) {
   const {slug} = await params
@@ -135,7 +66,10 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
 
   if (!post) notFound()
 
-  const jsonLd = buildStructuredData(post)
+  const heroImageUrl = post.heroImage?.asset
+    ? urlFor(post.heroImage).width(1200).height(630).fit('crop').auto('format').url()
+    : null
+  const jsonLd = buildStructuredData({...post, heroImageUrl})
 
   return (
     <main id="main-content" className="min-h-screen bg-sand">
@@ -206,6 +140,18 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
             </div>
           </div>
         )}
+        {post.reviewedBy?.name && (
+          <p className="mt-5 text-[13px] leading-relaxed text-ink-soft">
+            Clinically reviewed by{' '}
+            <Link href="/about" className="link-underline font-medium text-charcoal">
+              {post.reviewedBy.name}
+            </Link>
+            {post.reviewedBy.role ? `, ${post.reviewedBy.role}` : ''}
+            {post.reviewedAt
+              ? ` · ${new Date(post.reviewedAt).toLocaleDateString('en-US', {month: 'long', year: 'numeric'})}`
+              : ''}
+          </p>
+        )}
       </header>
 
       {post.heroImage?.asset && (
@@ -230,6 +176,28 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
       <article className="mx-auto max-w-2xl px-6 py-16 md:px-10 md:py-24">
         {post.body && <PortableTextRenderer value={post.body} />}
       </article>
+
+      {(post.citations?.length ?? 0) > 0 && (
+        <section className="mx-auto max-w-2xl px-6 pb-16 md:px-10">
+          <p className="meta text-ink-muted">Sources</p>
+          <ul className="mt-3 space-y-1.5">
+            {(post.citations ?? [])
+              .filter((c) => c?.label && c?.url)
+              .map((c, i) => (
+                <li key={`${c.url}-${i}`} className="text-[14px] leading-relaxed text-ink-soft">
+                  <a
+                    href={c.url as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link-underline"
+                  >
+                    {c.label}
+                  </a>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
       <footer className="border-t border-rule">
         <div className="mx-auto max-w-2xl px-6 py-16 md:px-10 md:py-24">

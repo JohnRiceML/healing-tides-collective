@@ -58,6 +58,37 @@ export const postType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'reviewedBy',
+      title: 'Clinically reviewed by',
+      type: 'reference',
+      to: [{type: 'author'}],
+      description:
+        'The credentialed clinician who reviewed this post (e.g. Nora). Renders the visible ' +
+        '"Clinically reviewed by" line and the reviewedBy schema — required for clinical/YMYL topics.',
+    }),
+    defineField({
+      name: 'reviewedAt',
+      title: 'Reviewed on',
+      type: 'datetime',
+      description: 'When the clinical review happened. Re-review every 6–12 months and update this date.',
+    }),
+    defineField({
+      name: 'citations',
+      title: 'Sources & citations',
+      type: 'array',
+      description: 'Primary sources only (NIMH, SAMHSA, MN DHS, peer-reviewed…). Rendered as a Sources list.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'citation',
+          fields: [
+            defineField({name: 'label', type: 'string', validation: (rule) => rule.required()}),
+            defineField({name: 'url', type: 'url', validation: (rule) => rule.required()}),
+          ],
+        }),
+      ],
+    }),
+    defineField({
       name: 'categories',
       type: 'array',
       of: [defineArrayMember({type: 'reference', to: [{type: 'category'}]})],

@@ -36,6 +36,9 @@ export const POST_BY_SLUG_QUERY = defineQuery(`
       website,
       social
     },
+    "reviewedBy": reviewedBy->{name, role},
+    reviewedAt,
+    citations[]{label, url},
     "categories": categories[]->{title, "slug": slug.current, color}
   }
 `)
