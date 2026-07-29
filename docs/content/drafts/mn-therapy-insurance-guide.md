@@ -1,3 +1,20 @@
+# NOT PUBLISHABLE — never audited, and presumed to carry the same defects
+
+**This draft was NOT part of the two audit rounds** — it was hand-written before them, so it has
+never been checked by an adversarial pass. Do not read the absence of findings as a clean bill.
+
+It restates Minnesota statute in exactly the way the audits found to be unreliable, and its
+`62Q.47` / `62J.81`-adjacent and Good-Faith-Estimate passages are the same *kinds* of claim that
+failed elsewhere — a conditional right stated flatly, or a scope quietly widened. The one claim I did
+verify personally against primary text is the `62Q.58` standing-referral reading, which is why that
+section is hedged the way it is.
+
+Before this goes anywhere: run it through the audit, or drop it in favour of the routing approach in
+[../DECISION-statute-content.md](../DECISION-statute-content.md). See also
+[AUDIT-FINDINGS.md](AUDIT-FINDINGS.md).
+
+---
+
 # DRAFT — for Nora's clinical review. Not publishable as-is.
 
 **Working title:** Paying for therapy in Minnesota: what your insurance actually owes you
