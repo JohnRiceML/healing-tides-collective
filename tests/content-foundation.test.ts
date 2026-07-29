@@ -124,6 +124,35 @@ describe("robots.txt directives", () => {
   });
 });
 
+describe("retired posts — the stopgap block", () => {
+  it("blocks every fabricated post at all three enforcement points", async () => {
+    const { RETIRED_POST_SLUGS, isRetiredPost } = await import("@/lib/retired-posts");
+    const fs = await import("node:fs/promises");
+
+    // The six that carry fabricated memoir and fabricated sources. If one is dropped from the set
+    // it goes live again, so pin them explicitly rather than trusting the set's own length.
+    for (const slug of [
+      "what-an-intake-call-should-feel-like",
+      "insurance-vs-cashpay",
+      "somatic-or-talk",
+      "on-waiting-lists",
+      "on-building-a-front-door-for-care",
+      "awareness-was-never-the-problem",
+    ]) {
+      expect(isRetiredPost(slug)).toBe(true);
+    }
+    expect(RETIRED_POST_SLUGS.size).toBe(6);
+    expect(isRetiredPost("somatic-series-part-1")).toBe(false); // Nora's own writing stays
+    expect(isRetiredPost(null)).toBe(false);
+
+    // A block is only real if every route that can serve or advertise a post consults it: the page
+    // itself, the prerender list, the listing, and the sitemap.
+    for (const file of ["app/journal/[slug]/page.tsx", "app/journal/page.tsx", "app/sitemap.ts"]) {
+      expect(await fs.readFile(file, "utf8")).toContain("isRetiredPost");
+    }
+  });
+});
+
 describe("post queries — the publish gate", () => {
   it("EVERY post query filters on publishedAt", async () => {
     // There is no preview/draft mode here, so `publishedAt < now()` is the only thing keeping an

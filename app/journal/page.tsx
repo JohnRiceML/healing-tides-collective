@@ -4,6 +4,7 @@ import Link from 'next/link'
 import {sanityFetch} from '@/sanity/lib/live'
 import {urlFor} from '@/sanity/lib/image'
 import {POSTS_LIST_QUERY} from '@/sanity/lib/queries'
+import {isRetiredPost} from '@/lib/retired-posts'
 
 const TITLE = 'Journal — Healing Tides Collective'
 const DESCRIPTION = 'Notes on care, practice, and the spaces in between.'
@@ -25,7 +26,8 @@ function formatDate(iso: string | null | undefined) {
 }
 
 export default async function BlogIndexPage() {
-  const {data: posts} = await sanityFetch({query: POSTS_LIST_QUERY})
+  const {data: allPosts} = await sanityFetch({query: POSTS_LIST_QUERY})
+  const posts = allPosts.filter((p) => !isRetiredPost(p.slug))
 
   return (
     <main id="main-content" className="min-h-screen bg-sand">

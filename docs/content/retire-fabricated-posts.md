@@ -74,6 +74,21 @@ Sanity, so this is fully reversible by setting the date back.
    carry her clinical credential instead, for E-E-A-T. That's her call.
 5. Check Search Console afterward for the retired URLs, and confirm they've dropped from the sitemap.
 
+## Interim: they are already blocked in code
+
+Because Sanity write access wasn't available and the content was live, all six are blocked at the
+application layer via `lib/retired-posts.ts`. The journal page 404s them, `generateStaticParams`
+won't prerender them, and they're filtered from the listing and the sitemap. Verified by production
+build: seven journal pages prerender, all of them Nora's own writing.
+
+**This is a stopgap, and step 6 below removes it.** Nothing in Sanity was touched — every document
+is intact.
+
+6. Once the six are retired in Sanity, **delete `lib/retired-posts.ts` and its three call sites**
+   (`app/journal/[slug]/page.tsx`, `app/journal/page.tsx`, `app/sitemap.ts`), plus the
+   "retired posts — the stopgap block" test. Then confirm the URLs still 404, now because
+   `publishedAt` is clear rather than because a constant says so.
+
 ## Then what
 
 Three of the six were on genuinely good topics — insurance vs. cash-pay, what an intake call is like,

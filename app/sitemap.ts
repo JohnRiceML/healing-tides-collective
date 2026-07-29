@@ -6,6 +6,7 @@ import { mnCitiesFromText } from "@/lib/mn-cities";
 import { SITE_URL } from "@/lib/site";
 import { client } from "@/sanity/lib/client";
 import { POST_SITEMAP_QUERY } from "@/sanity/lib/queries";
+import { isRetiredPost } from "@/lib/retired-posts";
 
 // Per-request so a newly published practitioner or journal post appears without a
 // redeploy (and so `next build` never depends on the DB/CMS being reachable at build).
@@ -62,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   const journalRoutes: MetadataRoute.Sitemap = posts
+    .filter((p) => !isRetiredPost(p.slug))
     .filter((p): p is { slug: string; lastModified: string | null } => Boolean(p.slug))
     .map((p) => ({
       url: `${SITE_URL}/journal/${p.slug}`,

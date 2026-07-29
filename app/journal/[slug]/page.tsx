@@ -8,13 +8,17 @@ import {urlFor} from '@/sanity/lib/image'
 import {POST_BY_SLUG_QUERY, POST_SLUGS_QUERY} from '@/sanity/lib/queries'
 import {PortableTextRenderer} from '../_components/PortableTextRenderer'
 import {buildStructuredData} from '@/lib/journal-seo'
+import {isRetiredPost} from '@/lib/retired-posts'
 import {SITE_URL} from '@/lib/site'
 
 export const dynamicParams = true
 
 export async function generateStaticParams() {
   const slugs = await client.fetch(POST_SLUGS_QUERY)
-  return slugs.map((s) => ({slug: s.slug as string}))
+  // Don't prerender a retired post — a prerendered page is a served page.
+  return slugs
+    .filter((s) => !isRetiredPost(s.slug as string))
+    .map((s) => ({slug: s.slug as string}))
 }
 
 function formatDate(iso: string | null | undefined) {
@@ -32,6 +36,7 @@ export async function generateMetadata({
   params: Promise<{slug: string}>
 }): Promise<Metadata> {
   const {slug} = await params
+  if (isRetiredPost(slug)) return {title: 'Not found', robots: {index: false, follow: false}}
   const post = await client.fetch(POST_BY_SLUG_QUERY, {slug})
   if (!post) return {title: 'Not found'}
   const title = post.seo?.metaTitle ?? post.title ?? 'Healing Tides Collective'
@@ -64,6 +69,8 @@ export async function generateMetadata({
 
 export default async function PostPage({params}: {params: Promise<{slug: string}>}) {
   const {slug} = await params
+  // Retired ahead of the Sanity cleanup — checked before the fetch, so the body never loads.
+  if (isRetiredPost(slug)) notFound()
   const {data: post} = await sanityFetch({query: POST_BY_SLUG_QUERY, params: {slug}})
 
   if (!post) notFound()
