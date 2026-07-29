@@ -1,6 +1,19 @@
 # Retiring the six fabricated posts
 
-**Status: not done. Blocked on a Sanity write token — the one in `.env.local` is read-only.**
+**Status: not done. Blocked on Sanity write access — see below.**
+
+There is **no Sanity token at all** in `.env.local` (only `NEXT_PUBLIC_SANITY_DATASET` and
+`NEXT_PUBLIC_SANITY_PROJECT_ID`); reads work because the dataset is public-read, and every write
+fails with `Insufficient permissions; permission "update" required`. The Sanity CLI is a dead end
+too — it's logged in as `aipeekaboofounder@gmail.com`, which isn't a member of this project
+(`project user not found for user ID … in project b1sa414t`).
+
+Two ways to unblock, in order of preference:
+
+1. **`npx sanity login`** in this repo, as whichever account owns project `b1sa414t`. The CLI then
+   carries real credentials and no secret has to exist on disk. Cleanest option.
+2. An **Editor token** from sanity.io/manage → project → API → Tokens, set as `SANITY_API_TOKEN`
+   in `.env.local`.
 
 Six published journal posts were written under two invented author personas, "Maya Chen" and
 "Daniel Park". The byline was the smaller half of the problem.
@@ -31,10 +44,24 @@ not the label.
 
 **The seven posts already bylined to Nora are her own genuine writing and are not affected.**
 
+## Before you start: this only works as of commit `0f2c66f`
+
+Clearing `publishedAt` is what retires a post — but when this runbook was first written, **that
+wasn't actually true**, and following it would have accomplished nothing visible.
+
+Two of the four post queries didn't filter on `publishedAt`. `POST_BY_SLUG_QUERY` matched on slug
+alone, so a retired post would have vanished from the listing and the sitemap while still serving in
+full at its own URL — to anyone holding the link, and to every crawler that had already indexed it.
+`POST_SLUGS_QUERY` feeds `generateStaticParams`, so it would also have been prerendered to disk. The
+cleanup would have looked complete and left all six readable.
+
+That's fixed and deployed, with a regression test. **If you are somehow running against code older
+than `0f2c66f`, deploy first** — otherwise this whole procedure is theatre.
+
 ## The steps
 
-Unpublishing here means clearing `publishedAt` — that's what the journal's queries filter on. Nothing
-is deleted and every document stays in Sanity, so this is fully reversible by setting the date back.
+Unpublishing here means clearing `publishedAt`. Nothing is deleted and every document stays in
+Sanity, so this is fully reversible by setting the date back.
 
 1. **Unpublish `post-intake-call-qa` first.** It's live, indexed, and attributes clinical advice to a
    nonexistent clinician. If only one thing happens today, this is it.
