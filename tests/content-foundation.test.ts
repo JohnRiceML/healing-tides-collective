@@ -123,3 +123,20 @@ describe("robots.txt directives", () => {
     expect(robots().sitemap).toBe("https://www.healingtides.co/sitemap.xml");
   });
 });
+
+describe("post queries — the publish gate", () => {
+  it("EVERY post query filters on publishedAt", async () => {
+    // There is no preview/draft mode here, so `publishedAt < now()` is the only thing keeping an
+    // unpublished post off the public web. Two queries were missing it: a post could be pulled from
+    // the listing and the sitemap and still serve at its own URL, and generateStaticParams would
+    // prerender it to disk. Future-dated posts leaked the same way. If you add a post query, gate it.
+    const queries = await import("@/sanity/lib/queries");
+    const postQueries = Object.entries(queries).filter(
+      ([, q]) => typeof q === "string" && q.includes('_type == "post"'),
+    );
+    expect(postQueries.length).toBeGreaterThanOrEqual(4);
+    for (const [name, q] of postQueries) {
+      expect(`${name} :: ${q}`).toContain("publishedAt < now()");
+    }
+  });
+});

@@ -378,7 +378,7 @@ export type POSTS_LIST_QUERY_RESULT = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: POST_BY_SLUG_QUERY
-// Query: *[_type == "post" && slug.current == $slug][0]{    _id,    title,    "slug": slug.current,    excerpt,    heroImage,    publishedAt,    body,    seo,    canonicalUrl,    structuredData,    "author": author->{      name,      "slug": slug.current,      role,      image,      bio,      email,      website,      social    },    "reviewedBy": reviewedBy->{name, role},    reviewedAt,    citations[]{label, url},    "categories": categories[]->{title, "slug": slug.current, color}  }
+// Query: *[_type == "post" && slug.current == $slug && publishedAt < now()][0]{    _id,    title,    "slug": slug.current,    excerpt,    heroImage,    publishedAt,    body,    seo,    canonicalUrl,    structuredData,    "author": author->{      name,      "slug": slug.current,      role,      image,      bio,      email,      website,      social    },    "reviewedBy": reviewedBy->{name, role},    reviewedAt,    citations[]{label, url},    "categories": categories[]->{title, "slug": slug.current, color}  }
 export type POST_BY_SLUG_QUERY_RESULT = {
   _id: string;
   title: string | null;
@@ -525,7 +525,7 @@ export type POST_BY_SLUG_QUERY_RESULT = {
 
 // Source: sanity/lib/queries.ts
 // Variable: POST_SLUGS_QUERY
-// Query: *[_type == "post" && defined(slug.current)]{ "slug": slug.current }
+// Query: *[_type == "post" && defined(slug.current) && publishedAt < now()]{ "slug": slug.current }
 export type POST_SLUGS_QUERY_RESULT = Array<{
   slug: string | null;
 }>;
@@ -543,8 +543,8 @@ import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
     '\n  *[_type == "post" && defined(slug.current) && publishedAt < now()]\n    | order(publishedAt desc) {\n      _id,\n      title,\n      "slug": slug.current,\n      excerpt,\n      heroImage,\n      publishedAt,\n      "author": author->{name, "slug": slug.current, image},\n      "categories": categories[]->{title, "slug": slug.current, color}\n    }\n': POSTS_LIST_QUERY_RESULT;
-    '\n  *[_type == "post" && slug.current == $slug][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    heroImage,\n    publishedAt,\n    body,\n    seo,\n    canonicalUrl,\n    structuredData,\n    "author": author->{\n      name,\n      "slug": slug.current,\n      role,\n      image,\n      bio,\n      email,\n      website,\n      social\n    },\n    "reviewedBy": reviewedBy->{name, role},\n    reviewedAt,\n    citations[]{label, url},\n    "categories": categories[]->{title, "slug": slug.current, color}\n  }\n': POST_BY_SLUG_QUERY_RESULT;
-    '\n  *[_type == "post" && defined(slug.current)]{ "slug": slug.current }\n': POST_SLUGS_QUERY_RESULT;
+    '\n  *[_type == "post" && slug.current == $slug && publishedAt < now()][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    heroImage,\n    publishedAt,\n    body,\n    seo,\n    canonicalUrl,\n    structuredData,\n    "author": author->{\n      name,\n      "slug": slug.current,\n      role,\n      image,\n      bio,\n      email,\n      website,\n      social\n    },\n    "reviewedBy": reviewedBy->{name, role},\n    reviewedAt,\n    citations[]{label, url},\n    "categories": categories[]->{title, "slug": slug.current, color}\n  }\n': POST_BY_SLUG_QUERY_RESULT;
+    '\n  *[_type == "post" && defined(slug.current) && publishedAt < now()]{ "slug": slug.current }\n': POST_SLUGS_QUERY_RESULT;
     '\n  *[_type == "post" && defined(slug.current) && publishedAt < now()]\n    | order(publishedAt desc) {\n      "slug": slug.current,\n      "lastModified": coalesce(_updatedAt, publishedAt)\n    }\n': POST_SITEMAP_QUERY_RESULT;
   }
 }

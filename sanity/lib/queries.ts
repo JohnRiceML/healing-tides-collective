@@ -14,8 +14,13 @@ export const POSTS_LIST_QUERY = defineQuery(`
     }
 `)
 
+// `publishedAt < now()` is the ONLY thing standing between a draft and the public web — there is no
+// preview/draft mode in this app. Without it, clearing a post's date removed it from the listing and
+// the sitemap while leaving it fully readable at its own URL, so "unpublishing" didn't unpublish
+// anything a crawler or a shared link could still reach. A future-dated post leaked the same way.
+// Every post query filters on it. Don't add one that doesn't.
 export const POST_BY_SLUG_QUERY = defineQuery(`
-  *[_type == "post" && slug.current == $slug][0]{
+  *[_type == "post" && slug.current == $slug && publishedAt < now()][0]{
     _id,
     title,
     "slug": slug.current,
@@ -43,8 +48,9 @@ export const POST_BY_SLUG_QUERY = defineQuery(`
   }
 `)
 
+// Feeds generateStaticParams — prerendering an unpublished post would put it on disk and serve it.
 export const POST_SLUGS_QUERY = defineQuery(`
-  *[_type == "post" && defined(slug.current)]{ "slug": slug.current }
+  *[_type == "post" && defined(slug.current) && publishedAt < now()]{ "slug": slug.current }
 `)
 
 // Published, live posts (matches the listing's `publishedAt < now()` filter) with a
