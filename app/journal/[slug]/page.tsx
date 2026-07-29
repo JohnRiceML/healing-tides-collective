@@ -8,6 +8,7 @@ import {urlFor} from '@/sanity/lib/image'
 import {POST_BY_SLUG_QUERY, POST_SLUGS_QUERY} from '@/sanity/lib/queries'
 import {PortableTextRenderer} from '../_components/PortableTextRenderer'
 import {buildStructuredData} from '@/lib/journal-seo'
+import {SITE_URL} from '@/lib/site'
 
 export const dynamicParams = true
 
@@ -43,7 +44,8 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: post.canonicalUrl ? {canonical: post.canonicalUrl} : undefined,
+    // Always emit a canonical — the Sanity field is a manual override, not the source of truth.
+    alternates: {canonical: post.canonicalUrl ?? `${SITE_URL}/journal/${slug}`},
     openGraph: {
       title,
       description,
@@ -69,7 +71,11 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
   const heroImageUrl = post.heroImage?.asset
     ? urlFor(post.heroImage).width(1200).height(630).fit('crop').auto('format').url()
     : null
-  const jsonLd = buildStructuredData({...post, heroImageUrl})
+  const jsonLd = buildStructuredData({
+    ...post,
+    heroImageUrl,
+    canonicalUrl: post.canonicalUrl ?? `${SITE_URL}/journal/${slug}`,
+  })
 
   return (
     <main id="main-content" className="min-h-screen bg-sand">

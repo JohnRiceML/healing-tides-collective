@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { allCarePages, carePagePath, isIndexable } from "@/lib/care-pages";
 import { getPublishedPractitioners, getPublishedSlugs } from "@/lib/practitioners";
-import { mnCityFromText } from "@/lib/mn-cities";
+import { mnCitiesFromText } from "@/lib/mn-cities";
 import { SITE_URL } from "@/lib/site";
 import { client } from "@/sanity/lib/client";
 import { POST_SITEMAP_QUERY } from "@/sanity/lib/queries";
@@ -42,14 +42,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // same rule the page's robots meta uses). One read of the published set, matched in memory,
   // rather than a query per specialty×city.
   const published = await getPublishedPractitioners().catch(() => []);
-  const supply = new Set<string>();
+  // COUNT per specialty×city with the same set semantics the page query uses (a region may
+  // match several cities), so the sitemap and the page's robots meta can never disagree.
+  const supply = new Map<string, number>();
   for (const p of published) {
-    const city = mnCityFromText(p.region);
-    if (!city) continue;
-    for (const specialty of p.specialties) supply.add(`${specialty}/${city.slug}`);
+    for (const city of mnCitiesFromText(p.region)) {
+      for (const specialty of p.specialties) {
+        const key = `${specialty}/${city.slug}`;
+        supply.set(key, (supply.get(key) ?? 0) + 1);
+      }
+    }
   }
   const careRoutes: MetadataRoute.Sitemap = allCarePages()
-    .filter(({ specialty, city }) => isIndexable(supply.has(`${specialty.id}/${city.slug}`) ? 1 : 0))
+    .filter(({ specialty, city }) => isIndexable(supply.get(`${specialty.id}/${city.slug}`) ?? 0))
     .map((page) => ({
       url: `${SITE_URL}${carePagePath(page)}`,
       changeFrequency: "weekly" as const,

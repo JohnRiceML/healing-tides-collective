@@ -4,6 +4,8 @@
 // schema.org home of `reviewedBy`/`lastReviewed` — the structured E-E-A-T signal for YMYL health
 // content. A hand-authored `structuredData` override always wins (validated in the Sanity schema).
 
+import { SITE_URL } from '@/lib/site'
+
 export type JournalFaqItem = {question?: string; answer?: string}
 export type JournalFaqSectionBlock = {_type?: string; faqs?: JournalFaqItem[]}
 
@@ -43,8 +45,18 @@ export function buildStructuredData(post: JournalSeoPost): string | null {
   }
   if (post.title) article.headline = post.title
   if (post.excerpt) article.description = post.excerpt
-  if (post.publishedAt) article.datePublished = post.publishedAt
+  if (post.publishedAt) {
+    article.datePublished = post.publishedAt
+    // dateModified defaults to publish; a clinical review overwrites it below.
+    article.dateModified = post.publishedAt
+  }
   if (post.canonicalUrl) article.mainEntityOfPage = post.canonicalUrl
+  article.inLanguage = 'en-US'
+  article.publisher = {
+    '@type': 'Organization',
+    name: 'Healing Tides Collective',
+    url: SITE_URL,
+  }
   if (post.author?.name) {
     const author: Record<string, unknown> = {'@type': 'Person', name: post.author.name}
     if (post.author.role) author.jobTitle = post.author.role

@@ -11,14 +11,30 @@ import {
 import { DirectoryFilters } from "./_components/DirectoryFilters";
 import { DirectoryHeaderArt } from "./_components/DirectoryHeaderArt";
 import { GetMatchedBar } from "./_components/GetMatchedBar";
+import { SITE_URL } from "@/lib/site";
 import { PractitionerCard } from "./_components/PractitionerCard";
 import { SortSelect } from "./_components/SortSelect";
 
-export const metadata: Metadata = {
-  title: "Find a practitioner — Healing Tides Collective",
-  description:
-    "Browse the collective — a considered group of therapists and holistic practitioners. Filter by specialty, location, and format to find someone whose way of working fits you.",
-};
+// Filtered views (?specialty=…&region=…) are the SAME content re-cut — and they duplicate the
+// /care/[specialty]/[city] pages. Canonical always points at the clean directory URL, and a
+// filtered view is noindex/follow so crawl budget goes to the pages meant to rank.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const filtered = ["specialty", "modality", "region", "ageGroups", "q", "acceptingNew", "sort"].some(
+    (k) => Boolean(params[k]),
+  );
+  return {
+    title: "Find a practitioner — Healing Tides Collective",
+    description:
+      "Browse the collective — a considered group of therapists and holistic practitioners. Filter by specialty, location, and format to find someone whose way of working fits you.",
+    alternates: { canonical: `${SITE_URL}/practitioners` },
+    ...(filtered ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 // Reads the live DB on every request — keep it dynamic, don't cache the list.
 export const dynamic = "force-dynamic";

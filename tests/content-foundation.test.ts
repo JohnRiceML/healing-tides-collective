@@ -1,10 +1,18 @@
 import { describe, it, expect } from "vitest";
 
 import { buildStructuredData, escapeJsonLd } from "@/lib/journal-seo";
-import { MN_CITIES, mnCityBySlug, mnCityFromText } from "@/lib/mn-cities";
+import { MN_CITIES, mnCitiesFromText, mnCityBySlug, mnCityFromText } from "@/lib/mn-cities";
 
 describe("buildStructuredData — journal JSON-LD", () => {
   const base = { title: "Finding care in Minnesota", excerpt: "A calm guide.", publishedAt: "2026-07-01" };
+
+  it("always carries publisher, inLanguage and dateModified", () => {
+    const out = JSON.parse(buildStructuredData({ ...base, canonicalUrl: "https://x/y" })!);
+    expect(out.publisher).toMatchObject({ "@type": "Organization", name: "Healing Tides Collective" });
+    expect(out.inLanguage).toBe("en-US");
+    expect(out.dateModified).toBe("2026-07-01"); // defaults to publish date
+    expect(out.mainEntityOfPage).toBe("https://x/y");
+  });
 
   it("emits a plain Article when there's no clinical review", () => {
     const out = JSON.parse(buildStructuredData({ ...base, author: { name: "Nora Hollenkamp" } })!);
@@ -76,9 +84,42 @@ describe("mn-cities — the canonical registry + normalizer", () => {
     expect(mnCityFromText("St. Louis Park, MN")?.slug).toBe("st-louis-park");
   });
 
+  it("mnCitiesFromText returns EVERY matching city (the sitemap's set semantics)", () => {
+    const both = mnCitiesFromText("Minneapolis and St. Paul").map((c) => c.slug).sort();
+    expect(both).toEqual(["minneapolis", "saint-paul"]);
+    expect(mnCitiesFromText("Duluth").map((c) => c.slug)).toEqual(["duluth"]);
+    expect(mnCitiesFromText("Fargo, ND")).toEqual([]);
+    expect(mnCitiesFromText(null)).toEqual([]);
+  });
+
   it("returns null (never guesses) for unlisted places or empty input", () => {
     expect(mnCityFromText("Fargo, ND")).toBeNull();
     expect(mnCityFromText("")).toBeNull();
     expect(mnCityFromText(null)).toBeNull();
+  });
+});
+
+describe("robots.txt directives", () => {
+  it("never blocks the public directory with a bare /practitioner prefix", async () => {
+    const { default: robots } = await import("@/app/robots");
+    const rules = robots().rules;
+    const rule = Array.isArray(rules) ? rules[0] : rules;
+    const disallow = (Array.isArray(rule.disallow) ? rule.disallow : [rule.disallow]).filter(Boolean) as string[];
+
+    // robots.txt paths are PREFIX matches: a bare "/practitioner" also blocks "/practitioners",
+    // "/practitioners/[slug]" — the entire public, indexable directory. This shipped once.
+    expect(disallow).not.toContain("/practitioner");
+    // The private dashboard is still blocked, precisely.
+    expect(disallow).toEqual(expect.arrayContaining(["/practitioner$", "/practitioner/"]));
+    // Nothing in the list may swallow /practitioners.
+    for (const path of disallow) {
+      expect("/practitioners".startsWith(path)).toBe(false);
+      expect("/practitioners/nora-l-hollenkamp".startsWith(path)).toBe(false);
+    }
+  });
+
+  it("points at the canonical sitemap", async () => {
+    const { default: robots } = await import("@/app/robots");
+    expect(robots().sitemap).toBe("https://www.healingtides.co/sitemap.xml");
   });
 });

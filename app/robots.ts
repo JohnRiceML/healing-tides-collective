@@ -15,7 +15,11 @@ export default function robots(): MetadataRoute.Robots {
           "/admin",
           "/api/",
           "/dashboard",
-          "/practitioner", // the practitioner's private dashboard/editor (NOT /practitioners)
+          // robots.txt paths are PREFIX matches, so a bare "/practitioner" also blocks
+          // "/practitioners" — the entire public directory. These two rules block the private
+          // dashboard and its sub-routes ONLY. Do not collapse them back into one.
+          "/practitioner$",
+          "/practitioner/",
           "/welcome",
           "/save-account",
           "/sign-in",

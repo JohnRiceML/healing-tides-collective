@@ -48,6 +48,18 @@ function fold(text: string): string {
 }
 
 /**
+ * EVERY listed city a free-text region matches — the set semantics of the directory query
+ * (`region contains <any alias>`), so a practitioner in "Minneapolis and St. Paul" counts toward
+ * both city pages. Use this wherever supply is COUNTED (the sitemap), so it can never disagree
+ * with what the page itself renders. Use mnCityFromText when you need a single best city.
+ */
+export function mnCitiesFromText(text: string | null | undefined): MnCity[] {
+  if (!text || !text.trim()) return [];
+  const hay = fold(text);
+  return MN_CITIES.filter((city) => city.aliases.some((alias) => hay.includes(` ${alias} `)));
+}
+
+/**
  * Find the canonical MN city in a free-text region string ("St. Paul, MN", "Minneapolis,
  * Minnesota, United States", "Telehealth from Edina"). Longest alias wins so "st louis park"
  * beats "st paul"-style prefix collisions. Null when no listed city matches — callers must

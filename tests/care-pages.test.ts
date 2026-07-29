@@ -10,6 +10,7 @@ import {
   carePageTitle,
   carePageTopics,
   isIndexable,
+  MIN_INDEXABLE_MATCHES,
   nearbyCities,
   resolveCarePage,
   siblingSpecialties,
@@ -42,10 +43,15 @@ describe("the page inventory", () => {
 });
 
 describe("isIndexable — the doorway-page guard", () => {
-  it("indexes only pages with real local supply behind them", () => {
-    expect(isIndexable(0)).toBe(false); // renders, but noindex + out of the sitemap
-    expect(isIndexable(1)).toBe(true);
-    expect(isIndexable(7)).toBe(true);
+  it("requires real local supply — a lone practitioner is NOT enough", () => {
+    // At a bar of 1 every indexable page surfaced the same single practitioner: the doorway
+    // pattern. Below the bar a page still renders honestly; it's just noindex + unlisted.
+    expect(MIN_INDEXABLE_MATCHES).toBeGreaterThanOrEqual(3);
+    expect(isIndexable(0)).toBe(false);
+    expect(isIndexable(1)).toBe(false);
+    expect(isIndexable(MIN_INDEXABLE_MATCHES - 1)).toBe(false);
+    expect(isIndexable(MIN_INDEXABLE_MATCHES)).toBe(true);
+    expect(isIndexable(12)).toBe(true);
   });
 });
 

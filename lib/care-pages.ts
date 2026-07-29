@@ -27,11 +27,28 @@ export function allCarePages(): CarePage[] {
 }
 
 /**
+ * The minimum local supply a page needs before it may be indexed.
+ *
+ * Raised from 1 → 3 after an SEO audit (2026-07-28): at a bar of 1, every indexable page
+ * surfaced the SAME single practitioner, which is precisely the doorway pattern Google
+ * demotes — near-identical city×service pages funnelling to one destination. Three distinct
+ * practitioners is the point where the page is genuinely *about the local supply* rather than
+ * a template wrapper around one profile.
+ *
+ * NEXT GATE (not yet built): even at 3, each page should carry city-specific human prose
+ * (local wait times, which MN networks are accepted, telehealth vs in-person here) before it's
+ * truly unique. Until that exists, 3 is the floor that keeps thin pages out of the index.
+ */
+export const MIN_INDEXABLE_MATCHES = 3;
+
+/**
  * A page may be indexed only with real local supply behind it. `matchCount` is the number of
- * PUBLISHED practitioners matching this specialty in (or serving) this city.
+ * PUBLISHED practitioners matching this specialty in (or serving) this city. Everything below
+ * the bar still RENDERS (honestly, with the get-matched CTA) — it's just noindex + out of the
+ * sitemap until the network fills in.
  */
 export function isIndexable(matchCount: number): boolean {
-  return matchCount >= 1;
+  return matchCount >= MIN_INDEXABLE_MATCHES;
 }
 
 /** The <title>/H1 pair — natural language, never keyword soup. */
