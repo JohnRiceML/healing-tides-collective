@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 
-import { getPublishedSlugs } from "@/lib/practitioners";
+import { allCarePages, carePagePath, isIndexable } from "@/lib/care-pages";
+import { getPublishedPractitioners, getPublishedSlugs } from "@/lib/practitioners";
+import { mnCityFromText } from "@/lib/mn-cities";
 import { SITE_URL } from "@/lib/site";
 import { client } from "@/sanity/lib/client";
 import { POST_SITEMAP_QUERY } from "@/sanity/lib/queries";
@@ -36,6 +38,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
+  // Care pages: ONLY the ones with real local supply behind them (the doorway-page guard —
+  // same rule the page's robots meta uses). One read of the published set, matched in memory,
+  // rather than a query per specialty×city.
+  const published = await getPublishedPractitioners().catch(() => []);
+  const supply = new Set<string>();
+  for (const p of published) {
+    const city = mnCityFromText(p.region);
+    if (!city) continue;
+    for (const specialty of p.specialties) supply.add(`${specialty}/${city.slug}`);
+  }
+  const careRoutes: MetadataRoute.Sitemap = allCarePages()
+    .filter(({ specialty, city }) => isIndexable(supply.has(`${specialty.id}/${city.slug}`) ? 1 : 0))
+    .map((page) => ({
+      url: `${SITE_URL}${carePagePath(page)}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
+
   const journalRoutes: MetadataRoute.Sitemap = posts
     .filter((p): p is { slug: string; lastModified: string | null } => Boolean(p.slug))
     .map((p) => ({
@@ -45,5 +65,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-  return [...staticRoutes, ...profileRoutes, ...journalRoutes];
+  return [...staticRoutes, ...profileRoutes, ...careRoutes, ...journalRoutes];
 }

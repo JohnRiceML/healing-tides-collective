@@ -168,7 +168,8 @@ describe("buildPractitionerWhere", () => {
 
   it("filters accepting-new clients via the fieldValues JSON path", () => {
     const where = buildPractitionerWhere({ acceptingNew: true });
-    expect(where.fieldValues).toEqual({ path: ["availability_state"], equals: "accepting" });
+    // Every additive condition lives in the single AND array (uniform, collision-proof).
+    expect(where.AND).toEqual([{ fieldValues: { path: ["availability_state"], equals: "accepting" } }]);
   });
 
   it("does not add the availability filter when acceptingNew is false", () => {
@@ -177,7 +178,7 @@ describe("buildPractitionerWhere", () => {
 
   it("filters age groups via the fieldValues JSON array (array_contains)", () => {
     const where = buildPractitionerWhere({ ageGroups: "adults" });
-    expect(where.fieldValues).toEqual({ path: ["age_groups"], array_contains: "adults" });
+    expect(where.AND).toEqual([{ fieldValues: { path: ["age_groups"], array_contains: "adults" } }]);
   });
 
   it("ANDs the two JSON filters when both are active (no fieldValues collision)", () => {
@@ -201,7 +202,7 @@ describe("buildPractitionerWhere", () => {
     expect(where.specialties).toEqual({ has: "grief_loss" });
     expect(where.modality).toBe("VIRTUAL");
     expect(where.gender).toEqual({ contains: "female", mode: "insensitive" });
-    expect(where.fieldValues).toEqual({ path: ["availability_state"], equals: "accepting" });
+    expect(where.AND).toEqual([{ fieldValues: { path: ["availability_state"], equals: "accepting" } }]);
     expect(Array.isArray(where.OR)).toBe(true);
   });
 
@@ -210,7 +211,7 @@ describe("buildPractitionerWhere", () => {
     await getPublishedPractitioners({ gender: "male", acceptingNew: true });
     const where = findMany.mock.calls[0][0].where;
     expect(where.gender).toEqual({ contains: "male", mode: "insensitive" });
-    expect(where.fieldValues).toEqual({ path: ["availability_state"], equals: "accepting" });
+    expect(where.AND).toEqual([{ fieldValues: { path: ["availability_state"], equals: "accepting" } }]);
   });
 });
 

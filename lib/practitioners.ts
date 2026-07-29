@@ -6,6 +6,7 @@
 import { db } from "@/lib/db";
 import type { Modality, Prisma } from "@/lib/generated/prisma/client";
 import { grantedBadgesFrom } from "@/app/_lib/verification";
+import { mnCityBySlug } from "@/lib/mn-cities";
 
 /** Read a trimmed string out of a fieldValues blob, or null. */
 function fieldString(fieldValues: unknown, key: string): string | null {
@@ -61,6 +62,10 @@ export type DirectoryFilters = {
   specialty?: string; // a SPECIALTY_OPTIONS id
   modality?: string; // a Modality enum value
   region?: string; // an exact region string (from the Location dropdown / getDistinctRegions)
+  /** A canonical MN city slug — matches the FREE-TEXT region loosely (any alias, case-insensitive),
+   *  because practitioners type "St. Paul", "Saint Paul, MN", "Telehealth from Edina"… Used by the
+   *  /care/[specialty]/[city] pages, where an exact match would return almost nothing. */
+  citySlug?: string;
   q?: string; // free-text search
   gender?: string; // free-text, matched case-insensitively (contains) — backend-only, not in the UI
   acceptingNew?: boolean; // availability_state === "accepting" (fieldValues JSON path)
@@ -78,14 +83,26 @@ export type DirectoryFilters = {
  * filter until those values are normalized to a controlled vocabulary.
  */
 export function buildPractitionerWhere(filters: DirectoryFilters = {}) {
-  const { specialty, modality, region, q, gender, acceptingNew, ageGroups } = filters;
+  const { specialty, modality, region, citySlug, q, gender, acceptingNew, ageGroups } = filters;
 
-  // Each JSON filter targets the single `fieldValues` column. Two of them spread into
-  // the same `fieldValues` key would collide (the second wins), so when more than one
-  // is active we AND them. A single condition stays flat for back-compat.
-  const jsonConds: Prisma.PractitionerWhereInput[] = [];
-  if (acceptingNew) jsonConds.push({ fieldValues: { path: ["availability_state"], equals: "accepting" } });
-  if (ageGroups) jsonConds.push({ fieldValues: { path: ["age_groups"], array_contains: ageGroups } });
+  // City match: OR over the city's aliases against the free-text region (practitioners type
+  // "St. Paul", "Saint Paul, MN", "Telehealth from Edina"…).
+  const city = citySlug ? mnCityBySlug(citySlug) : null;
+  const cityOr: Prisma.PractitionerWhereInput[] | null = citySlug
+    ? (city?.aliases ?? []).map((alias) => ({
+        region: { contains: alias, mode: "insensitive" as const },
+      }))
+    : null;
+
+  // Every additive condition goes in ONE `AND` array. (Two separate `AND:` spreads would
+  // collide — the later key silently wins — and two `fieldValues:` keys would too.)
+  const andConds: Prisma.PractitionerWhereInput[] = [];
+  if (acceptingNew) andConds.push({ fieldValues: { path: ["availability_state"], equals: "accepting" } });
+  if (ageGroups) andConds.push({ fieldValues: { path: ["age_groups"], array_contains: ageGroups } });
+  if (cityOr) {
+    // An unknown city slug must match NOTHING rather than silently widening to everyone.
+    andConds.push({ OR: cityOr.length > 0 ? cityOr : [{ slug: "__no_such_city__" }] });
+  }
 
   return {
     visibility: "PUBLISHED" as const,
@@ -95,8 +112,7 @@ export function buildPractitionerWhere(filters: DirectoryFilters = {}) {
     ...(modality ? { modality: modality as Modality } : {}),
     ...(region ? { region: { equals: region } } : {}),
     ...(gender ? { gender: { contains: gender, mode: "insensitive" as const } } : {}),
-    ...(jsonConds.length === 1 ? jsonConds[0] : {}),
-    ...(jsonConds.length > 1 ? { AND: jsonConds } : {}),
+    ...(andConds.length > 0 ? { AND: andConds } : {}),
     ...(q
       ? {
           OR: [

@@ -1,0 +1,85 @@
+// The programmatic "care in a place" layer: /care/[specialty]/[city].
+// Pure + client-safe (no db) so the inventory, copy, and — most importantly — the
+// INDEXABILITY RULE are unit-testable.
+//
+// Why the indexability rule is load-bearing: a city×specialty template that differs only by
+// place name is a doorway page, and Google demotes those. A page here earns indexing ONLY when
+// it carries real local supply (at least one published practitioner who actually matches).
+// Everything else still RENDERS — a seeker who lands there gets the guided agent and nearby
+// options, which is honest and useful — but it's noindex'd and kept out of the sitemap until
+// the network fills in. That's the cold-start truth: we never fake counts to look bigger.
+
+import { CATEGORIES, type Category } from "@/app/_lib/taxonomy";
+import { MN_CITIES, mnCityBySlug, type MnCity } from "@/lib/mn-cities";
+
+export type CarePage = { specialty: Category; city: MnCity };
+
+/** Resolve a URL pair to a real page, or null (→ 404). Never guesses. */
+export function resolveCarePage(specialtySlug: string, citySlug: string): CarePage | null {
+  const specialty = CATEGORIES.find((c) => c.id === specialtySlug.toLowerCase().trim()) ?? null;
+  const city = mnCityBySlug(citySlug);
+  return specialty && city ? { specialty, city } : null;
+}
+
+/** Every specialty × city combination — the full route inventory. */
+export function allCarePages(): CarePage[] {
+  return CATEGORIES.flatMap((specialty) => MN_CITIES.map((city) => ({ specialty, city })));
+}
+
+/**
+ * A page may be indexed only with real local supply behind it. `matchCount` is the number of
+ * PUBLISHED practitioners matching this specialty in (or serving) this city.
+ */
+export function isIndexable(matchCount: number): boolean {
+  return matchCount >= 1;
+}
+
+/** The <title>/H1 pair — natural language, never keyword soup. */
+export function carePageTitle({ specialty, city }: CarePage): string {
+  return `${specialty.label} support in ${city.name}, Minnesota`;
+}
+
+export function carePageDescription({ specialty, city }: CarePage, matchCount: number): string {
+  const focus = specialty.subcategories
+    .slice(0, 3)
+    .map((s) => s.label.toLowerCase())
+    .join(", ");
+  return matchCount > 0
+    ? `Practitioners in and around ${city.name} who work with ${focus}. Read how each person practices, then reach out directly — or let a real person help you find the right fit.`
+    : `Looking for ${specialty.label.toLowerCase()} support near ${city.name}? Our Minnesota network is growing. Tell us what you need and a real person will help you find the right practitioner.`;
+}
+
+/**
+ * The topic phrases this page is genuinely about — pulled from Nora's taxonomy, so the copy is
+ * real editorial substance rather than keyword padding. Flattened across subcategories, capped.
+ */
+export function carePageTopics(specialty: Category, limit = 12): string[] {
+  const out: string[] = [];
+  // Round-robin across subcategories so one big subcategory can't crowd the others out.
+  const lists = specialty.subcategories.map((s) => s.topics);
+  for (let i = 0; out.length < limit; i++) {
+    let added = false;
+    for (const list of lists) {
+      if (i < list.length && out.length < limit) {
+        out.push(list[i]);
+        added = true;
+      }
+    }
+    if (!added) break;
+  }
+  return out;
+}
+
+/** Sibling cities in the same area — the internal-linking mesh (never links to itself). */
+export function nearbyCities(city: MnCity, limit = 6): MnCity[] {
+  return MN_CITIES.filter((c) => c.area === city.area && c.slug !== city.slug).slice(0, limit);
+}
+
+/** Other specialties in the same city — the second axis of the mesh. */
+export function siblingSpecialties(specialty: Category, limit = 6): Category[] {
+  return CATEGORIES.filter((c) => c.id !== specialty.id).slice(0, limit);
+}
+
+export function carePagePath({ specialty, city }: CarePage): string {
+  return `/care/${specialty.id}/${city.slug}`;
+}
