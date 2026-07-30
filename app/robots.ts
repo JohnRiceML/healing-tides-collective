@@ -26,6 +26,11 @@ export default function robots(): MetadataRoute.Robots {
           "/join",
           "/claim/",
           "/studio",
+          // NEVER add /journal paths here. Six retired posts now return 404 so Google will drop
+          // them — but only if it can still CRAWL them. Disallowing a URL stops the crawl, so the
+          // 404 is never seen and the page lingers in the index (as a "Indexed, though blocked by
+          // robots.txt" entry) far longer than doing nothing. Blocking a page you want de-indexed
+          // achieves the opposite. Let them 404 in peace.
         ],
       },
     ],

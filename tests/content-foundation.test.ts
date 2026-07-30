@@ -118,6 +118,26 @@ describe("robots.txt directives", () => {
     }
   });
 
+  it("never blocks /journal — a blocked 404 can't be seen, so the page stays indexed", async () => {
+    // The six retired posts return 404 so Google drops them. That only works if Google can still
+    // crawl them. Disallowing a URL prevents the crawl, the 404 is never observed, and the page
+    // lingers as "Indexed, though blocked by robots.txt" — the opposite of the intent. This is the
+    // obvious-looking "help" someone adds while cleaning up, so pin it.
+    const { default: robots } = await import("@/app/robots");
+    const rules = robots().rules;
+    const rule = Array.isArray(rules) ? rules[0] : rules;
+    const disallow = (Array.isArray(rule.disallow) ? rule.disallow : [rule.disallow]).filter(
+      Boolean,
+    ) as string[];
+
+    const { RETIRED_POST_SLUGS } = await import("@/lib/retired-posts");
+    for (const slug of RETIRED_POST_SLUGS) {
+      const url = `/journal/${slug}`;
+      for (const path of disallow) expect(url.startsWith(path)).toBe(false);
+    }
+    for (const path of disallow) expect("/journal".startsWith(path)).toBe(false);
+  });
+
   it("points at the canonical sitemap", async () => {
     const { default: robots } = await import("@/app/robots");
     expect(robots().sitemap).toBe("https://www.healingtides.co/sitemap.xml");
