@@ -28,6 +28,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.8,
     },
+    // The two conversion pages. Both were already indexable but missing here, so nothing
+    // advertised them — /for-practitioners especially, which is the recruitment landing page for
+    // the side of the marketplace we're actually short on.
+    { url: `${SITE_URL}/get-matched`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/for-practitioners`, changeFrequency: "monthly", priority: 0.9 },
+    // High-intent and useful on its own — someone searching for crisis support in Minnesota
+    // should be able to land here directly.
+    { url: `${SITE_URL}/crisis`, changeFrequency: "yearly", priority: 0.5 },
   ];
 
   const profileRoutes: MetadataRoute.Sitemap = slugs.map(
