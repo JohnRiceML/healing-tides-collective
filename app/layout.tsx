@@ -48,6 +48,14 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     images: [`${SITE_URL}/og.jpg`],
   },
+  // Site-ownership verification. Renders as a <meta> tag in <head> on every page, which is what
+  // these engines want — they re-check periodically, so removing it later un-verifies the property.
+  // Public by design: the token proves control of the site and grants nothing on its own.
+  verification: {
+    other: {
+      "msvalidate.01": "1DF1B00F0F3CE6A56165EFB14B354430", // Bing Webmaster Tools
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

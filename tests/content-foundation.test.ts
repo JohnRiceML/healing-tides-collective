@@ -144,6 +144,20 @@ describe("robots.txt directives", () => {
   });
 });
 
+describe("search-engine site verification", () => {
+  it("keeps the Bing verification token in the root layout", async () => {
+    // Bing re-checks this tag periodically, so deleting it silently un-verifies the property —
+    // a failure with no visible symptom on the site itself. Pin it.
+    // Read the source rather than importing app/layout: that import pulls in sanity/env, which
+    // throws without NEXT_PUBLIC_SANITY_* set, and this assertion shouldn't need a CMS to run.
+    const fs = await import("node:fs/promises");
+    const layout = await fs.readFile("app/layout.tsx", "utf8");
+    expect(layout).toContain("msvalidate.01");
+    expect(layout).toContain("1DF1B00F0F3CE6A56165EFB14B354430");
+    expect(layout).toContain("verification:");
+  });
+});
+
 describe("retired posts — the stopgap block", () => {
   it("blocks every fabricated post at all three enforcement points", async () => {
     const { RETIRED_POST_SLUGS, isRetiredPost } = await import("@/lib/retired-posts");
