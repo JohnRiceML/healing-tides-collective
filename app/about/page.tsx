@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { CONTACT_MAILTO } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Meet Nora — Healing Tides Collective",
@@ -266,7 +267,7 @@ export default function MeetNoraPage() {
               </span>
             </a>
             <a
-              href="mailto:nora@healingtides.co?subject=Consultation%20with%20Nora"
+              href={`${CONTACT_MAILTO}?subject=Consultation%20with%20Nora`}
               className="group inline-flex items-center gap-3 rounded-full border border-charcoal/25 px-6 py-3.5 text-charcoal transition-colors hover:border-charcoal/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
             >
               <span className="meta">Email Nora</span>

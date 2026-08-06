@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button, Container } from "@/app/_components/ui";
 import { getInviteByToken, inviteIsClaimable, readPrefill } from "@/lib/invites";
 import { startClaim } from "../claim-actions";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 
 // Tokenized, per-person — never index these.
 export const metadata: Metadata = {
@@ -42,7 +43,7 @@ export default async function ClaimPage({
         <p className="mt-3 text-[15px] leading-[1.65] text-ink-soft">
           This claim link has expired or was mistyped. If you&rsquo;re a practitioner who&rsquo;d
           like to join, you can <Link href="/join" className="underline">start here</Link> — or reach
-          out to <a href="mailto:nora@healingtides.co" className="underline">nora@healingtides.co</a>.
+          out to <a href={CONTACT_MAILTO} className="underline">{CONTACT_EMAIL}</a>.
         </p>
       </Shell>
     );
@@ -55,7 +56,7 @@ export default async function ClaimPage({
         <h1 className="font-display mt-3 text-2xl text-charcoal">This profile&rsquo;s already claimed</h1>
         <p className="mt-3 text-[15px] leading-[1.65] text-ink-soft">
           Looks like this one&rsquo;s been set up. <Link href="/sign-in" className="underline">Sign in</Link> to
-          manage your profile, or email <a href="mailto:nora@healingtides.co" className="underline">nora@healingtides.co</a> if
+          manage your profile, or email <a href={CONTACT_MAILTO} className="underline">{CONTACT_EMAIL}</a> if
           something looks off.
         </p>
       </Shell>
@@ -81,7 +82,7 @@ export default async function ClaimPage({
         <p className="mt-5 rounded-xl border border-ocean/25 bg-ocean/5 px-4 py-3 text-[14px] leading-[1.55] text-charcoal">
           This invitation was sent to a specific email address. Please sign in with the email it
           was sent to, or email{" "}
-          <a href="mailto:nora@healingtides.co" className="font-medium text-ocean underline-offset-2 hover:underline">nora@healingtides.co</a>{" "}
+          <a href={CONTACT_MAILTO} className="font-medium text-ocean underline-offset-2 hover:underline">{CONTACT_EMAIL}</a>{" "}
           and we&rsquo;ll update it.
         </p>
       ) : null}

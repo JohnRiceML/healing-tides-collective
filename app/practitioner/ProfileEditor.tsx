@@ -20,6 +20,7 @@ import { publishProfile, unpublishProfile } from "./publish-actions";
 import { Stepper, WIZARD_STEPS } from "./_components/Stepper";
 import { LivePreview } from "./_components/LivePreview";
 import { CoverThemePicker } from "./_components/CoverThemePicker";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 
 // Which rich (optional) profile sections live under which wizard step.
 const PRACTICE_SECTION_IDS = ["background", "approach", "who", "availability", "investment"];
@@ -426,7 +427,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
               <p className="mt-2 text-[13.5px] leading-[1.6] text-ink-soft">
                 It isn&rsquo;t public right now and publishing is paused — but nothing is lost, and you
                 can still edit. Questions? Email{" "}
-                <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
+                <a href={CONTACT_MAILTO} className="link-underline font-medium text-charcoal">{CONTACT_EMAIL}</a>.
               </p>
             </div>
           ) : null}
@@ -619,7 +620,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
                 {held ? (
                   <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-soft">
                     Publishing is paused while your profile is on hold. You can still edit everything;
-                    reach out to <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a> with questions.
+                    reach out to <a href={CONTACT_MAILTO} className="link-underline font-medium text-charcoal">{CONTACT_EMAIL}</a> with questions.
                   </p>
                 ) : inReview ? (
                   <>
@@ -631,7 +632,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
                     <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-soft">
                       Nothing is lost, and you can keep editing — anything you save is part of what she
                       reads. Questions, or want to tell her about your practice? Email{" "}
-                      <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
+                      <a href={CONTACT_MAILTO} className="link-underline font-medium text-charcoal">{CONTACT_EMAIL}</a>.
                     </p>
                     <div className="mt-5">
                       <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>

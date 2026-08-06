@@ -14,7 +14,7 @@ import { VerificationBadges } from "@/app/_components/VerificationBadges";
 import { PublicPagePreview } from "./_components/PublicPagePreview";
 import { CopyLinkButton } from "./_components/CopyLinkButton";
 import { VisibilityCard } from "./_components/VisibilityCard";
-import { SITE_URL } from "@/lib/site";
+import { CONTACT_EMAIL, CONTACT_MAILTO, SITE_URL } from "@/lib/site";
 import { PresencePanel } from "./_components/PresencePanel";
 import { findabilityStage, weeklyViewBuckets, presenceNextStep } from "@/lib/presence";
 import { getWeeklyViewDates } from "@/lib/presence-data";
@@ -253,7 +253,7 @@ export default async function PractitionerHome() {
           <p className="mt-2 text-[14px] leading-[1.6] text-ink-muted">
             It isn&rsquo;t public right now and publishing is paused — but nothing is lost, and you can
             still edit it. Questions? Email{" "}
-            <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
+            <a href={CONTACT_MAILTO} className="link-underline font-medium text-charcoal">{CONTACT_EMAIL}</a>.
           </p>
         </div>
       ) : null}
@@ -268,7 +268,7 @@ export default async function PractitionerHome() {
           </p>
           <p className="mt-2 text-[14px] leading-[1.6] text-ink-muted">
             Nothing is lost, and you can keep editing in the meantime. Questions? Email{" "}
-            <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
+            <a href={CONTACT_MAILTO} className="link-underline font-medium text-charcoal">{CONTACT_EMAIL}</a>.
           </p>
         </div>
       ) : null}
@@ -450,13 +450,13 @@ export default async function PractitionerHome() {
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
               <a
-                href="mailto:nora@healingtides.co?subject=Boost%20my%20presence%20waitlist"
+                href={`${CONTACT_MAILTO}?subject=Boost%20my%20presence%20waitlist`}
                 className="inline-flex items-center justify-center rounded-full bg-charcoal px-5 py-2.5 text-[14px] font-medium text-sand transition-colors hover:bg-charcoal/90"
               >
                 Join the waitlist
               </a>
               <a
-                href="mailto:nora@healingtides.co?subject=How%20does%20Boost%20work%3F"
+                href={`${CONTACT_MAILTO}?subject=How%20does%20Boost%20work%3F`}
                 className="text-[14px] font-medium text-teal transition-colors hover:text-ocean"
               >
                 Learn how it works →

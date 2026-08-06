@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { photos } from "@/app/_lib/images";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Page not found — Healing Tides Collective",
@@ -92,10 +93,10 @@ export default function NotFound() {
           <p className="meta text-sand/55">
             or write to{" "}
             <a
-              href="mailto:nora@healingtides.co"
+              href={CONTACT_MAILTO}
               className="text-seafoam underline-offset-4 hover:underline"
             >
-              nora@healingtides.co
+              {CONTACT_EMAIL}
             </a>
           </p>
           <p className="meta text-sand/55">© 2026 / Care, matched. By a person.</p>

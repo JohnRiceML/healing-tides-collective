@@ -12,6 +12,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { photos, type PhotoKey } from "@/app/_lib/images";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 
 // Internal navigation has to stay client-side routing, so the animated CTAs wrap
 // next/link rather than a bare <a>. motion.create() is the Framer Motion 12 way to
@@ -779,10 +780,10 @@ export default function ImmersiveScrollDesign() {
                 {/* The one mailto left on the page: a real human address for anyone who
                     would rather reach Nora than start with the product. */}
                 <a
-                  href="mailto:nora@healingtidestherapy.com"
+                  href={CONTACT_MAILTO}
                   className="text-seafoam underline-offset-4 hover:underline"
                 >
-                  nora@healingtidestherapy.com
+                  {CONTACT_EMAIL}
                 </a>
               </motion.p>
 

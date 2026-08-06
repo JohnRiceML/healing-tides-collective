@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Container } from "@/app/_components/ui";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 
 /**
  * The app-wide footer. Calm + on-brand per docs/design/STYLE-GUIDE.md — sand ground,
@@ -106,8 +107,8 @@ export function SiteFooter() {
                 </li>
               ))}
               <li>
-                <a href="mailto:nora@healingtides.co" className={linkClass}>
-                  nora@healingtides.co
+                <a href={CONTACT_MAILTO} className={linkClass}>
+                  {CONTACT_EMAIL}
                 </a>
               </li>
             </ul>

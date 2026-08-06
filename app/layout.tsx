@@ -8,7 +8,7 @@ import { AccountButton } from "@/app/_components/account-button";
 import { FeedbackWidget } from "@/app/_components/FeedbackWidget";
 import { SiteNav } from "@/app/_components/site-nav";
 import { SiteFooter } from "@/app/_components/site-footer";
-import { SITE_URL } from "@/lib/site";
+import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               name: "Healing Tides Collective",
               url: SITE_URL,
               logo: `${SITE_URL}/og.jpg`,
-              email: "nora@healingtides.co",
+              email: CONTACT_EMAIL,
               description: DESCRIPTION,
               areaServed: { "@type": "State", name: "Minnesota" },
             }).replace(/</g, "\\u003c"),

@@ -15,6 +15,7 @@ import { GetMatchedBar } from "../_components/GetMatchedBar";
 import { ViewBeacon } from "./ViewBeacon";
 import { SaveProfileButton } from "./SaveProfileButton";
 import { ExpandableValue } from "./ExpandableValue";
+import { CONTACT_MAILTO } from "@/lib/site";
 
 // ── tiny field helpers (arrify lives in ./seo, shared with the metadata builders) ──
 function fstr(v: unknown): string | null {
@@ -166,7 +167,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const contactHref =
     bookingLink ||
     safeWebsite ||
-    `mailto:nora@healingtides.co?subject=${encodeURIComponent(`Connecting with ${p.displayName} on Healing Tides`)}`;
+    `${CONTACT_MAILTO}?subject=${encodeURIComponent(`Connecting with ${p.displayName} on Healing Tides`)}`;
   const contactExternal = /^https?:\/\//i.test(contactHref);
 
   const styleItems = arrify(fv.style).map((id) => optionLabel("style", id));
