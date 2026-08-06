@@ -12,6 +12,16 @@ test.describe("Public surfaces", () => {
     await expect(page).toHaveTitle(/Healing Tides/i);
   });
 
+  // Regression: every landing CTA once pointed at mailto:nora@healingtidestherapy.com
+  // (her private-practice domain), so /get-matched, /practitioners and /crisis were
+  // unreachable from the front page. The product must be one click from the landing.
+  test("homepage CTAs reach the product, not an inbox", async ({ page }) => {
+    await page.goto("/");
+    for (const href of ["/get-matched", "/for-practitioners", "/practitioners", "/crisis"]) {
+      await expect(page.locator(`a[href="${href}"]`).first()).toBeAttached();
+    }
+  });
+
   test("crisis page lists the 988 lifeline", async ({ page }) => {
     await page.goto("/crisis");
     await expect(page.getByText("988 Suicide & Crisis Lifeline")).toBeVisible();

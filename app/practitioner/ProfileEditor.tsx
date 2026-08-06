@@ -56,6 +56,9 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishing, startPublish] = useTransition();
   const isPublished = visibility === "PUBLISHED";
+  // Submitted, waiting on Nora. Publishing is gated (see app/_lib/directory-approval.ts):
+  // a practitioner we haven't invited lands here instead of going straight into the directory.
+  const inReview = visibility === "NEEDS_REVIEW";
 
   // Admin hold (set in /admin or by the Clerk webhook) — the practitioner can still edit
   // while held, but can't publish/unpublish. Derived server-side (admins, not the
@@ -113,7 +116,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
     .map((f) => f.label);
   const canPublish = missingToPublish.length === 0;
 
-  const statusLabel = held ? "On hold" : isPublished ? "Live" : "Draft";
+  const statusLabel = held ? "On hold" : isPublished ? "Live" : inReview ? "In review" : "Draft";
 
   function runSave() {
     start(async () => {
@@ -145,7 +148,8 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
     startPublish(async () => {
       const res = await publishProfile();
       if (res.ok) {
-        setVisibility("PUBLISHED");
+        // Not everyone goes straight live — an uninvited profile is submitted for review.
+        setVisibility(res.pendingReview ? "NEEDS_REVIEW" : "PUBLISHED");
         setSlug(res.slug);
       } else setPublishError(res.error);
     });
@@ -349,12 +353,21 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
     );
   };
 
+  // Availability lives in the optional "Availability" section, so it's easy to skip — but
+  // seekers filter on it, so an unset field means we can't show the "Accepting new clients"
+  // badge. The checklist names it rather than letting it stay quietly blank.
+  const availabilityValue = fieldValues.availability_state;
+  const availabilitySet = Array.isArray(availabilityValue)
+    ? availabilityValue.length > 0
+    : typeof availabilityValue === "string" && availabilityValue.trim() !== "";
+
   const checklist = [
     { label: "Add your name", done: !!displayName.trim() },
     { label: "Write a short bio", done: !!bio.trim() },
     { label: "Add how you work", done: Boolean(modality) },
     { label: "Choose 3–8 focus areas", done: specialties.length >= 3 },
     { label: "Write your healing note", done: !!values.trim() },
+    { label: "Say if you’re taking new clients", done: availabilitySet },
   ];
 
   const coverDesignValue = typeof fieldValues.cover_design === "string" ? fieldValues.cover_design : "";
@@ -384,7 +397,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[13px] text-ink-soft">
                   Profile status:{" "}
-                  <span className={`ml-1 rounded-full px-2 py-0.5 text-[12px] font-medium ${held ? "bg-ocean/10 text-ocean" : isPublished ? "bg-teal/15 text-teal" : "bg-charcoal/[0.06] text-ink-muted"}`}>
+                  <span className={`ml-1 rounded-full px-2 py-0.5 text-[12px] font-medium ${held ? "bg-ocean/10 text-ocean" : isPublished ? "bg-teal/15 text-teal" : inReview ? "bg-sage/25 text-ocean" : "bg-charcoal/[0.06] text-ink-muted"}`}>
                     {statusLabel}
                   </span>
                 </span>
@@ -591,9 +604,15 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
               {/* Publish / status */}
               <section aria-labelledby="publish-heading" className="rounded-2xl border border-rule/70 bg-white p-6">
                 <div className="flex items-center gap-3">
-                  <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full ${held ? "bg-ocean" : isPublished ? "bg-teal" : "bg-rule-strong/30"}`} />
+                  <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full ${held ? "bg-ocean" : isPublished ? "bg-teal" : inReview ? "bg-sage" : "bg-rule-strong/30"}`} />
                   <h2 id="publish-heading" className="font-display text-[19px] leading-tight text-charcoal">
-                    {held ? "Your profile is on hold" : isPublished ? "Your profile is live" : "Ready to publish?"}
+                    {held
+                      ? "Your profile is on hold"
+                      : isPublished
+                        ? "Your profile is live"
+                        : inReview
+                          ? "Your profile is with Nora for a read"
+                          : "Ready to publish?"}
                   </h2>
                 </div>
 
@@ -602,12 +621,31 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
                     Publishing is paused while your profile is on hold. You can still edit everything;
                     reach out to <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a> with questions.
                   </p>
+                ) : inReview ? (
+                  <>
+                    <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-soft">
+                      Thank you — it&rsquo;s submitted. Everyone listed here is offering real care to people
+                      in Minnesota, so Nora reads each new profile before it joins the directory. Yours
+                      isn&rsquo;t public yet.
+                    </p>
+                    <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-soft">
+                      Nothing is lost, and you can keep editing — anything you save is part of what she
+                      reads. Questions, or want to tell her about your practice? Email{" "}
+                      <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
+                    </p>
+                    <div className="mt-5">
+                      <Button type="button" tone="ghost" onClick={onUnpublish} disabled={publishing}>
+                        {publishing ? "Moving it back…" : "Move it back to draft"}
+                      </Button>
+                    </div>
+                    {publishError ? <p role="alert" className="mt-4 text-[14px] leading-[1.6] text-ocean">{publishError}</p> : null}
+                  </>
                 ) : (
                   <>
                     <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-soft">
                       {isPublished
                         ? "People looking for care can find you. You can take it down any time — nothing is permanent."
-                        : "Only you can see this right now. Publish when you’re ready, at your own pace. You need at least a name and a short bio."}
+                        : "Only you can see this right now. Publish when you’re ready, at your own pace. You need at least a name and a short bio. If we haven’t met you yet, Nora reads your profile before it joins the directory."}
                     </p>
                     {isPublished ? (
                       <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3">

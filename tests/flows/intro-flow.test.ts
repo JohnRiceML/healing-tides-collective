@@ -9,6 +9,9 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/lib/auth", () => ({ getCurrentDbUser: async () => null })); // anonymous seeker
+// The admin notification has its own suite (flows/intake-notify.test.ts); stub it here so these
+// tests stay about the write itself and don't log "email isn't configured" on every intake.
+vi.mock("@/lib/seeker-notify", () => ({ notifyAdminOfIntake: async () => {} }));
 vi.mock("next/headers", () => ({
   headers: async () => ({ get: (k: string) => (k === "x-forwarded-for" ? h.ip : null) }),
 }));

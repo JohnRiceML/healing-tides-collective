@@ -7,6 +7,7 @@ import { classifyActivity, relativeShort, type ActivityState } from "@/app/_lib/
 import { categoryMeta, type TriageTone } from "@/app/_lib/triage";
 import { BadgeEditor } from "./BadgeEditor";
 import { HoldControl } from "./HoldControl";
+import { ApprovalControl } from "./ApprovalControl";
 import type { AdminPractitionerRow } from "./_data";
 
 const TRIAGE_CHIP: Record<TriageTone, string> = {
@@ -228,7 +229,14 @@ export function PractitionersTable({ rows, now }: { rows: AdminPractitionerRow[]
                       <BadgeEditor practitionerId={r.id} current={r.verificationBadges} />
                     </td>
                     <td className="px-5 py-3">
-                      <HoldControl practitionerId={r.id} held={r.held} />
+                      <div className="flex flex-col gap-2">
+                        <ApprovalControl
+                          practitionerId={r.id}
+                          approved={r.directoryApproved}
+                          needsReview={r.visibility === "NEEDS_REVIEW"}
+                        />
+                        <HoldControl practitionerId={r.id} held={r.held} />
+                      </div>
                     </td>
                     <td className="px-5 py-3">
                       {r.visibility === "PUBLISHED" && r.slug ? (

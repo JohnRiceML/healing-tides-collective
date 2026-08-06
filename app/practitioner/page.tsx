@@ -39,11 +39,12 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-type Status = "held" | "live" | "draft";
+type Status = "held" | "live" | "review" | "draft";
 function StatusPill({ status }: { status: Status }) {
   const m = {
     live: { label: "Live", dot: "bg-teal", pill: "bg-teal/15 text-teal" },
     held: { label: "On hold", dot: "bg-ocean", pill: "bg-ocean/10 text-ocean" },
+    review: { label: "In review", dot: "bg-sage", pill: "bg-sage/25 text-ocean" },
     draft: { label: "Draft", dot: "bg-rule-strong/40", pill: "bg-charcoal/5 text-ink-muted" },
   }[status];
   return (
@@ -161,7 +162,8 @@ export default async function PractitionerHome() {
 
   const fv = (p.fieldValues ?? {}) as Record<string, unknown>;
   const held = isOnHold(p);
-  const status: Status = held ? "held" : p.visibility === "PUBLISHED" ? "live" : "draft";
+  const status: Status =
+    held ? "held" : p.visibility === "PUBLISHED" ? "live" : p.visibility === "NEEDS_REVIEW" ? "review" : "draft";
   const isLive = status === "live";
   const firstName = (p.displayName ?? "").trim().split(/\s+/)[0] || "there";
   const memberSince = new Date(p.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -251,6 +253,21 @@ export default async function PractitionerHome() {
           <p className="mt-2 text-[14px] leading-[1.6] text-ink-muted">
             It isn&rsquo;t public right now and publishing is paused — but nothing is lost, and you can
             still edit it. Questions? Email{" "}
+            <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
+          </p>
+        </div>
+      ) : null}
+
+      {/* In-review banner — submitted, waiting on Nora's read (see app/_lib/directory-approval.ts) */}
+      {status === "review" ? (
+        <div className="mt-7 rounded-3xl border border-sage/40 bg-sage/[0.08] p-6">
+          <p className="font-display text-[18px] leading-tight text-charcoal">Your profile is with Nora for a read</p>
+          <p className="mt-2 text-[15px] leading-[1.6] text-ink-soft">
+            Everyone listed here is offering real care to people in Minnesota, so Nora reads each new
+            profile before it joins the directory. Yours isn&rsquo;t public yet.
+          </p>
+          <p className="mt-2 text-[14px] leading-[1.6] text-ink-muted">
+            Nothing is lost, and you can keep editing in the meantime. Questions? Email{" "}
             <a href="mailto:nora@healingtides.co" className="link-underline font-medium text-charcoal">nora@healingtides.co</a>.
           </p>
         </div>

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { getCurrentDbUser } from "@/lib/auth";
 import { validateIntake, type IntakeInput } from "@/lib/seeker-intake";
+import { notifyAdminOfIntake } from "@/lib/seeker-notify";
 import { createRateLimiter } from "@/lib/onboarding/voice/rate-limit";
 
 // Best-effort per-IP guard on the public intro write (same posture as the voice endpoints).
@@ -40,12 +41,25 @@ export async function submitIntake(input: IntakeInput): Promise<{ ok: true } | {
     /* anonymous is fine */
   }
 
+  let intakeId: string | null = null;
   try {
-    await db.seekerIntake.create({ data: { ...clean.value, userId } });
-    return { ok: true };
+    intakeId = (await db.seekerIntake.create({ data: { ...clean.value, userId } })).id;
   } catch {
     return { ok: false, error: "We couldn't send that just now — please try again in a moment." };
   }
+
+  // Outside the try on purpose: the row is written, so nothing this call does — not even an
+  // unexpected throw — may turn the seeker's submission into an error. notifyAdminOfIntake
+  // swallows and logs its own failures.
+  await notifyAdminOfIntake({
+    id: intakeId,
+    name: clean.value.name,
+    email: clean.value.email,
+    story: clean.value.story,
+    urgency: clean.value.urgency,
+    region: clean.value.region,
+  });
+  return { ok: true };
 }
 
 /**
@@ -92,6 +106,7 @@ export async function requestIntro(input: {
     /* anonymous is fine */
   }
 
+  let intakeId: string | null = null;
   try {
     // Only PUBLISHED practitioners can be matched to.
     const pracs = await db.practitioner.findMany({
@@ -112,6 +127,7 @@ export async function requestIntro(input: {
         userId,
       },
     });
+    intakeId = intake.id;
     if (pracs.length > 0) {
       await db.match.createMany({
         data: pracs.map((p) => ({
@@ -123,8 +139,21 @@ export async function requestIntro(input: {
         skipDuplicates: true,
       });
     }
-    return { ok: true };
   } catch {
     return { ok: false, error: "We couldn't send that just now — please try again in a moment." };
   }
+
+  // Same posture as submitIntake: notify outside the write's try, so a notification fault can
+  // never surface to the seeker as a failed submission.
+  if (intakeId) {
+    await notifyAdminOfIntake({
+      id: intakeId,
+      name: clean.value.name,
+      email: clean.value.email,
+      story: clean.value.story,
+      urgency: clean.value.urgency,
+      region: clean.value.region,
+    });
+  }
+  return { ok: true };
 }

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getOrCreatePractitioner } from "@/lib/auth";
 import { slugify } from "@/lib/slug";
 import { readHold } from "@/app/_lib/moderation";
+import { readDirectoryApproval } from "@/app/_lib/directory-approval";
 
 // An admin hold is a hard stop: while held, the practitioner can edit but cannot change
 // their own published status (publish OR unpublish). Only an admin release lifts it.
@@ -38,7 +39,32 @@ function isUniqueClash(e: unknown): boolean {
   return Boolean(e && typeof e === "object" && (e as { code?: string }).code === "P2002");
 }
 
-/** Publish the signed-in practitioner's profile (DRAFT/HIDDEN → PUBLISHED). */
+/**
+ * May this person's profile go straight into the public directory?
+ *
+ * Two ways in: they claimed an Invite we sent them (Nora chose them off the waitlist), or an
+ * admin approved them by hand afterwards. Anyone else — a stranger who simply signed up — is
+ * NOT vouched for, so their publish lands in NEEDS_REVIEW instead of going live under Nora's
+ * license. Fails CLOSED: if the invite read errors we route to review rather than publish.
+ */
+async function isDirectoryApproved(userId: string, fieldValues: unknown): Promise<boolean> {
+  if (readDirectoryApproval(fieldValues)) return true;
+  try {
+    const invite = await db.invite.findFirst({
+      where: { claimedByUserId: userId },
+      select: { id: true },
+    });
+    return invite !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Publish the signed-in practitioner's profile. Invited/approved practitioners go
+ * DRAFT/HIDDEN → PUBLISHED; everyone else goes → NEEDS_REVIEW (submitted, not public)
+ * and the caller renders the pending-review state.
+ */
 export async function publishProfile() {
   const result = await getOrCreatePractitioner();
   if (!result) return { ok: false as const, error: "You're not signed in." };
@@ -55,7 +81,14 @@ export async function publishProfile() {
     };
   }
 
-  // Keep an existing slug stable (it may already be shared/indexed); mint one once.
+  // The directory gate. Not-approved isn't a rejection — it's a submission: the profile is
+  // saved as NEEDS_REVIEW so Nora can read it, and stays out of every public read (the
+  // directory, the slug page, the sitemap and the guide all select visibility=PUBLISHED).
+  const approved = await isDirectoryApproved(result.user.id, p.fieldValues);
+  const nextVisibility = approved ? ("PUBLISHED" as const) : ("NEEDS_REVIEW" as const);
+
+  // Keep an existing slug stable (it may already be shared/indexed); mint one once. Minted
+  // even for a review submission so approving it later is a single visibility flip.
   let slug = p.slug ?? (await uniqueSlug(slugify(p.displayName as string), p.id));
 
   // The uniqueSlug check + write isn't atomic: a concurrent publish could claim the
@@ -64,12 +97,12 @@ export async function publishProfile() {
     try {
       await db.practitioner.update({
         where: { id: p.id },
-        data: { visibility: "PUBLISHED", slug },
+        data: { visibility: nextVisibility, slug },
       });
       revalidatePath("/practitioner");
       revalidatePath("/practitioners");
       revalidatePath(`/practitioners/${slug}`);
-      return { ok: true as const, slug };
+      return { ok: true as const, slug, pendingReview: !approved };
     } catch (e) {
       if (isUniqueClash(e) && attempt === 0 && !p.slug) {
         slug = await uniqueSlug(slugify(p.displayName as string), p.id);
@@ -87,7 +120,8 @@ export async function publishProfile() {
   };
 }
 
-/** Take the profile back to DRAFT (off the public directory + slug page). */
+/** Take the profile back to DRAFT — off the public directory + slug page, and also how a
+ *  practitioner withdraws a NEEDS_REVIEW submission while they keep working on it. */
 export async function unpublishProfile() {
   const result = await getOrCreatePractitioner();
   if (!result) return { ok: false as const, error: "You're not signed in." };

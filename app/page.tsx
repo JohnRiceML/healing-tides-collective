@@ -13,6 +13,11 @@ import {
 } from "framer-motion";
 import { photos, type PhotoKey } from "@/app/_lib/images";
 
+// Internal navigation has to stay client-side routing, so the animated CTAs wrap
+// next/link rather than a bare <a>. motion.create() is the Framer Motion 12 way to
+// wrap a custom component, and it must run at module scope (never during render).
+const MotionLink = motion.create(Link);
+
 type Chapter = {
   index: string;
   label: string;
@@ -30,25 +35,35 @@ const chapters: Chapter[] = [
   { index: "06", label: "Begin", photoKey: "sunsetGather", align: "center", tone: "dark" },
 ];
 
+// `status` is the honest state of each modality, not decoration: the collective is
+// being built one practitioner at a time, so a card only says "In the collective"
+// when someone practicing it is actually published in /practitioners. Update a card
+// to "In the collective" when the first practitioner of that modality goes live —
+// the directory is the source of truth, this is the shop window.
 const modalityCards = [
   {
     name: "Therapy",
+    status: "In the collective",
     line: "Licensed clinicians who pick up the phone before the pitch.",
   },
   {
     name: "Acupuncture",
+    status: "Being gathered",
     line: "Practitioners with a real clinical record. Not a weekend course.",
   },
   {
     name: "Reiki",
+    status: "Being gathered",
     line: "Energy work, held with care. Clear consent, no mysticism.",
   },
   {
     name: "Movement",
+    status: "Being gathered",
     line: "Teachers who work with adult bodies. Yoga, somatics, breath.",
   },
   {
     name: "Trauma-informed",
+    status: "Our standard",
     line: "Across every modality. You set the pace. Not the practitioner.",
   },
 ];
@@ -57,12 +72,12 @@ const steps = [
   {
     n: "01",
     title: "Tell us where you are.",
-    body: "Two paragraphs is plenty. Plain language. No forms.",
+    body: "A conversation, out loud or typed. Plain language. Two paragraphs is plenty.",
   },
   {
     n: "02",
     title: "Read the shortlist.",
-    body: "Three to five practitioners, chosen by a person. Each one with a reason.",
+    body: "Practitioners chosen by a person, each with a reason. Sometimes that is one name.",
   },
   {
     n: "03",
@@ -74,11 +89,11 @@ const steps = [
 const faqs = [
   {
     q: "Is this a directory?",
-    a: "No. A directory hands you a list and walks away. We hand you a shortlist with the reasoning, written by a person who read what you sent.",
+    a: "You can browse the collective if you'd like to — it is small, and honestly so, opening in Minnesota one practitioner at a time. But a directory hands you a list and walks away. We hand you a shortlist with the reasoning, written by a person who read what you sent.",
   },
   {
     q: "How are practitioners vetted?",
-    a: "Licensing when it applies. Training when it matters. A working relationship when neither is enough. We turn away more practitioners than we accept.",
+    a: "Licensing when it applies. Training when it matters. A working relationship when neither is enough. Credentials are reviewed by hand before a badge appears, and a profile can be held at any time.",
   },
   {
     q: "Clinical or holistic?",
@@ -414,9 +429,11 @@ export default function ImmersiveScrollDesign() {
                   eyebrow={`${chapters[0].index} / ${chapters[0].label}`}
                   body={
                     <>
-                      Therapy, acupuncture, reiki, movement, trauma-informed care.
-                      Held side by side, without a hierarchy. A person reads what you
-                      sent and writes back with three to five names.
+                      Clinical and holistic care, held side by side, without a
+                      hierarchy. Therapy is here now; acupuncture, reiki and movement
+                      are what we are gathering next. Tell us where you are — a person
+                      reads it and writes back with names, and the reason behind each
+                      one.
                     </>
                   }
                   align={chapters[0].align}
@@ -468,7 +485,7 @@ export default function ImmersiveScrollDesign() {
                 <PinnedHeadline
                   eyebrow={`${chapters[1].index} / ${chapters[1].label}`}
                   align={chapters[1].align}
-                  body="Five forms of care in one collective. None outranks another. The right one is the one that fits when you sit with it."
+                  body="Five forms of care, gathered one practitioner at a time. None outranks another. The right one is the one that fits when you sit with it."
                 >
                   Care, held
                   <br />
@@ -490,7 +507,7 @@ export default function ImmersiveScrollDesign() {
                       className="w-[78vw] shrink-0 snap-center rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)]"
                     >
                       <span className="meta text-seafoam">
-                        {String(i + 1).padStart(2, "0")} / Modality
+                        {String(i + 1).padStart(2, "0")} / {m.status}
                       </span>
                       <h3 className="font-display mt-6 text-3xl leading-tight text-sand">
                         {m.name}
@@ -514,7 +531,7 @@ export default function ImmersiveScrollDesign() {
                       className="w-[78vw] max-w-[380px] shrink-0 rounded-3xl border border-sand/15 bg-charcoal/45 p-8 backdrop-blur-md md:w-[34vw]"
                     >
                       <span className="meta text-seafoam">
-                        {String(i + 1).padStart(2, "0")} / Modality
+                        {String(i + 1).padStart(2, "0")} / {m.status}
                       </span>
                       <h3 className="font-display mt-6 text-3xl leading-tight text-sand">
                         {m.name}
@@ -586,45 +603,42 @@ export default function ImmersiveScrollDesign() {
               <PinnedHeadline
                 eyebrow={`${chapters[3].index} / ${chapters[3].label}`}
                 align={chapters[3].align}
-                body="Real referrals, not lead lists. Each introduction arrives with context — what the seeker is working on, what they have tried, why we picked you."
+                body="Real referrals, not lead lists. When someone reaches out, it is because a person read their story, thought of you by name, and told them why."
               >
                 Fewer leads.
                 <br />
                 <span className="italic text-seafoam">Better fits.</span>
               </PinnedHeadline>
 
-              <motion.div
+              {/* Replaced a three-stat block ("5d median reply", "1:1", "0% fees") that
+                  stated numbers we have never measured. Everything left here is checkable:
+                  the collective is genuinely small, matching is genuinely by hand, the
+                  Founding Member badge is derived from join date in app/_lib/verification.ts,
+                  and there is no per-lead billing anywhere in the product (see
+                  /for-practitioners — "listing is free to begin"). No numbers, so nothing
+                  here goes stale or overstates as the collective grows. */}
+              <motion.p
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false, amount: 0.4 }}
                 transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="mt-12 grid max-w-3xl grid-cols-3 gap-4"
+                className="mt-10 max-w-xl text-[17px] leading-[1.7] text-sand/85 md:text-lg"
               >
-                {[
-                  { n: "1:1", l: "Every introduction reviewed by a person" },
-                  { n: "0%", l: "Per-lead fees, ever" },
-                  { n: "5d", l: "Median time to first reply" },
-                ].map((s) => (
-                  <div
-                    key={s.l}
-                    className="rounded-2xl border border-sand/15 bg-charcoal/40 p-5 backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)]"
-                  >
-                    <p className="font-display text-3xl text-seafoam md:text-4xl">{s.n}</p>
-                    <p className="mt-3 text-xs leading-snug text-sand/75">{s.l}</p>
-                  </div>
-                ))}
-              </motion.div>
+                We are at the beginning. The collective is small, every introduction is
+                made by a person, and practitioners who join now are founding members.
+                Listing is free to begin, and there are no per-lead fees.
+              </motion.p>
 
-              <motion.a
-                href="mailto:nora@healingtidestherapy.com?subject=Apply%20to%20the%20collective"
+              <MotionLink
+                href="/for-practitioners"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: false, amount: 0.5 }}
                 transition={{ duration: 1, delay: 0.4 }}
-                className="meta mt-10 inline-flex items-center gap-2 border border-sand/40 px-6 py-4 text-sand transition-colors hover:bg-sand hover:text-charcoal"
+                className="meta mt-10 inline-flex items-center gap-2 border border-sand/40 px-6 py-4 text-sand transition-colors hover:bg-sand hover:text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal"
               >
-                Apply to join the collective →
-              </motion.a>
+                See how listing works →
+              </MotionLink>
               </div>
             </div>
           </section>
@@ -705,9 +719,11 @@ export default function ImmersiveScrollDesign() {
                 transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 className="mx-auto mt-14 grid w-full max-w-2xl grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-5"
               >
-                {/* Primary — client / seeker */}
-                <a
-                  href="mailto:nora@healingtidestherapy.com?subject=Get%20matched"
+                {/* Primary — client / seeker. Goes to the real product (/get-matched),
+                    not an inbox: the conversation, the practitioner cards and the intake
+                    all live there. */}
+                <Link
+                  href="/get-matched"
                   className="group relative flex flex-col rounded-3xl bg-seafoam p-7 text-left text-charcoal shadow-[0_18px_40px_-20px_rgba(0,0,0,0.6)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-charcoal/70">For seekers</span>
@@ -715,7 +731,7 @@ export default function ImmersiveScrollDesign() {
                     I&rsquo;m seeking care
                   </span>
                   <span className="mt-4 text-[14px] leading-[1.6] text-charcoal/80">
-                    Two paragraphs. We choose the right person.
+                    A short conversation. Then a person reads it and writes back.
                   </span>
                   <span
                     aria-hidden
@@ -723,11 +739,11 @@ export default function ImmersiveScrollDesign() {
                   >
                     →
                   </span>
-                </a>
+                </Link>
 
                 {/* Secondary — practitioner */}
-                <a
-                  href="mailto:nora@healingtidestherapy.com?subject=Practitioner%20inquiry"
+                <Link
+                  href="/for-practitioners"
                   className="group relative flex flex-col rounded-3xl border border-sand/35 bg-charcoal/55 p-7 text-left text-sand backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.07)] transition-colors hover:border-sand/70 hover:bg-charcoal/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:p-8"
                 >
                   <span className="meta text-sand/70">For practitioners</span>
@@ -735,7 +751,7 @@ export default function ImmersiveScrollDesign() {
                     I&rsquo;m a practitioner
                   </span>
                   <span className="mt-4 text-[14px] leading-[1.6] text-sand/80">
-                    Tell us about your practice. We&rsquo;ll read it.
+                    See what a listing looks like. Free to begin.
                   </span>
                   <span
                     aria-hidden
@@ -743,7 +759,7 @@ export default function ImmersiveScrollDesign() {
                   >
                     →
                   </span>
-                </a>
+                </Link>
               </motion.div>
 
               <motion.p
@@ -753,13 +769,46 @@ export default function ImmersiveScrollDesign() {
                 transition={{ duration: 1.2, delay: 0.6 }}
                 className="meta mt-10 text-sand/65"
               >
-                or write directly to{" "}
+                <Link
+                  href="/practitioners"
+                  className="text-seafoam underline-offset-4 hover:underline"
+                >
+                  browse the collective
+                </Link>{" "}
+                first · or write to{" "}
+                {/* The one mailto left on the page: a real human address for anyone who
+                    would rather reach Nora than start with the product. */}
                 <a
                   href="mailto:nora@healingtidestherapy.com"
                   className="text-seafoam underline-offset-4 hover:underline"
                 >
                   nora@healingtidestherapy.com
                 </a>
+              </motion.p>
+
+              {/* Safety line — quiet, never alarming. The site-wide SiteFooter is
+                  suppressed on "/", so the landing page carried no crisis link at all;
+                  this is the same wording pattern used on the /care pages. */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: false, amount: 0.5 }}
+                transition={{ duration: 1.2, delay: 0.7 }}
+                className="mx-auto mt-8 max-w-md text-[13px] leading-[1.65] text-sand/60"
+              >
+                Healing Tides is Minnesota care matching, not a crisis service. If you need
+                support right now, call or text{" "}
+                <a href="tel:988" className="font-medium text-sand underline-offset-4 hover:underline">
+                  988
+                </a>{" "}
+                or see{" "}
+                <Link
+                  href="/crisis"
+                  className="font-medium text-sand underline-offset-4 hover:underline"
+                >
+                  support resources
+                </Link>
+                .
               </motion.p>
               </div>
             </div>

@@ -196,6 +196,14 @@ export function ChatOnboarding({ onSwitchToVoice }: { onSwitchToVoice?: () => vo
           you to look for support, you can tell me in your own words — even just a sentence. Where are you starting from?
         </motion.div>
 
+        {/* Said once, up front, before anyone types anything personal: this is an AI, and the words
+            leave us to run the conversation. Quiet and non-blocking on purpose — a modal here would
+            be the opposite of trauma-informed. */}
+        <p className="max-w-[85%] text-[12px] leading-[1.6] text-ink-muted">
+          You&rsquo;re talking with an AI guide — what you share is processed by a third-party service to run the
+          conversation, and Nora reads what gets sent to her.
+        </p>
+
         {messages.length === 0 ? (
           <div className="flex flex-wrap gap-2">
             {STARTERS.map((s) => (

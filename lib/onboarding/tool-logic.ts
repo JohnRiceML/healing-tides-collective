@@ -10,6 +10,7 @@ import { getCurrentDbUser } from "@/lib/auth";
 import { getPublishedPractitioners, getPractitionerBySlug } from "@/lib/practitioners";
 import { specialtyLabel, modalityLabel } from "@/app/_lib/taxonomy";
 import { validateIntake, type IntakeInput } from "@/lib/seeker-intake";
+import { notifyAdminOfIntake } from "@/lib/seeker-notify";
 import type { PractitionerHit, PractitionerDetail, PriorityReflection, CrisisResources, IntakeSaved } from "./types";
 
 const snippet = (s: string | null, max = 180): string | null =>
@@ -194,12 +195,27 @@ export async function runSaveIntake(
     /* anonymous is fine */
   }
 
+  let intakeId: string;
   try {
-    await db.seekerIntake.create({ data: { ...clean.value, fieldValues: { __source: source }, userId } });
-    return { ok: true, name: clean.value.name };
+    const intake = await db.seekerIntake.create({
+      data: { ...clean.value, fieldValues: { __source: source }, userId },
+    });
+    intakeId = intake.id;
   } catch {
     return { ok: false, error: "I couldn't send that just now — could you try once more in a moment?" };
   }
+
+  // Outside the try on purpose: the row is written, so nothing here may turn a saved intake into
+  // an error the agent reads back to the person. notifyAdminOfIntake logs its own failures.
+  await notifyAdminOfIntake({
+    id: intakeId,
+    name: clean.value.name,
+    email: clean.value.email,
+    story: clean.value.story,
+    urgency: clean.value.urgency,
+    region: clean.value.region,
+  });
+  return { ok: true, name: clean.value.name };
 }
 
 /**

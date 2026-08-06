@@ -19,6 +19,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
+// The admin notification has its own suite (flows/intake-notify.test.ts); stub it here so these
+// tests stay about the write itself and don't log "email isn't configured" on every intake.
+vi.mock("@/lib/seeker-notify", () => ({ notifyAdminOfIntake: async () => {} }));
+
 import { runSaveIntake } from "@/lib/onboarding/tool-logic";
 
 const valid = { name: "Sam Rivera", email: "sam@example.com", story: "Looking for somatic trauma support." };

@@ -43,7 +43,9 @@ export type PractitionerCard = {
   coverDesign: string | null; // chosen cover motif (fieldValues.cover_design); null → default
   coverColor: string | null; // chosen cover palette (fieldValues.cover_color); null → default
   featured: boolean;
-  acceptingNew: boolean; // availability_state === "accepting" → "Accepting new clients" badge
+  /** TRUE only when they explicitly chose "accepting" — drives the "Accepting new clients"
+   *  badge. An UNSET availability field stays false here: we don't claim what we don't know. */
+  acceptingNew: boolean;
   createdAt: Date; // for the Founding Member badge
   verificationBadges: string[]; // admin-granted badge ids (from the reserved fieldValues key)
 };
@@ -68,9 +70,33 @@ export type DirectoryFilters = {
   citySlug?: string;
   q?: string; // free-text search
   gender?: string; // free-text, matched case-insensitively (contains) — backend-only, not in the UI
-  acceptingNew?: boolean; // availability_state === "accepting" (fieldValues JSON path)
+  /** Hide only the people we KNOW aren't taking clients — see passesAcceptingNewFilter.
+   *  Applied after the query, not in the Prisma `where`. */
+  acceptingNew?: boolean;
   ageGroups?: string; // an AGE_GROUP_OPTIONS id, matched against the fieldValues.age_groups JSON array
 };
+
+/** The availability answers that mean "not taking new clients right now". Ids come from the
+ *  `availability_state` chips in app/_lib/profile-fields.ts; "limited" openings still count as
+ *  open. Anything else — above all an UNSET field — is unknown, and unknown is not a "no". */
+const NOT_ACCEPTING_STATES = ["waitlist"];
+
+/**
+ * Does this profile survive the "Accepting new clients" filter? UNSET → yes.
+ *
+ * Treating a blank availability field as "not accepting" silently deleted people from the
+ * filtered directory — it emptied the whole collective, because the only published profile
+ * said she was accepting in her own prose but had never set the structured field. Only an
+ * explicit not-accepting answer hides someone; everyone else stays visible.
+ *
+ * This runs in JS rather than in the Prisma `where` on purpose: a Postgres JSON-path
+ * comparison can't express "this key is missing" — the extraction yields NULL, and every
+ * comparison against NULL (negated ones included) drops the row.
+ */
+export function passesAcceptingNewFilter(fieldValues: unknown): boolean {
+  const state = fieldString(fieldValues, "availability_state");
+  return state === null || !NOT_ACCEPTING_STATES.includes(state);
+}
 
 /**
  * Build the Prisma `where` for the public directory from a set of filters.
@@ -83,7 +109,7 @@ export type DirectoryFilters = {
  * filter until those values are normalized to a controlled vocabulary.
  */
 export function buildPractitionerWhere(filters: DirectoryFilters = {}) {
-  const { specialty, modality, region, citySlug, q, gender, acceptingNew, ageGroups } = filters;
+  const { specialty, modality, region, citySlug, q, gender, ageGroups } = filters;
 
   // City match: OR over the city's aliases against the free-text region (practitioners type
   // "St. Paul", "Saint Paul, MN", "Telehealth from Edina"…).
@@ -96,8 +122,8 @@ export function buildPractitionerWhere(filters: DirectoryFilters = {}) {
 
   // Every additive condition goes in ONE `AND` array. (Two separate `AND:` spreads would
   // collide — the later key silently wins — and two `fieldValues:` keys would too.)
+  // (The "accepting new clients" filter is deliberately NOT here — see passesAcceptingNewFilter.)
   const andConds: Prisma.PractitionerWhereInput[] = [];
-  if (acceptingNew) andConds.push({ fieldValues: { path: ["availability_state"], equals: "accepting" } });
   if (ageGroups) andConds.push({ fieldValues: { path: ["age_groups"], array_contains: ageGroups } });
   if (cityOr) {
     // An unknown city slug must match NOTHING rather than silently widening to everyone.
@@ -154,9 +180,14 @@ export async function getPublishedPractitioners(
     orderBy: ORDER_BY[sort],
     take: 200,
   });
+  // The availability filter is applied here, not in SQL (see passesAcceptingNewFilter). Safe
+  // at this size — the query above is already capped at 200 rows.
+  const visible = filters.acceptingNew
+    ? rows.filter((r) => passesAcceptingNewFilter(r.fieldValues))
+    : rows;
   // slug + displayName are non-null by the where-filter above; tighten the type.
   // Strip raw fieldValues from the card payload — only derived bits leave here.
-  return rows.map(({ fieldValues, ...r }) => ({
+  return visible.map(({ fieldValues, ...r }) => ({
     ...r,
     slug: r.slug as string,
     displayName: r.displayName as string,

@@ -2,28 +2,44 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Clerk + the DB before importing the modules under test.
 const { auth, currentUser } = vi.hoisted(() => ({ auth: vi.fn(), currentUser: vi.fn() }));
-const { findUnique, create, findMany, groupBy } = vi.hoisted(() => ({
+const { findUnique, create, findMany, groupBy, pFindUnique, pUpdate } = vi.hoisted(() => ({
   findUnique: vi.fn(),
   create: vi.fn(),
   findMany: vi.fn(),
   groupBy: vi.fn(),
+  pFindUnique: vi.fn(),
+  pUpdate: vi.fn(),
 }));
 vi.mock("@clerk/nextjs/server", () => ({ auth, currentUser }));
 vi.mock("@/lib/clerk-enabled", () => ({ clerkEnabled: true }));
 vi.mock("@/lib/db", () => ({
   db: {
     user: { findUnique, create },
-    practitioner: { findMany },
+    practitioner: { findMany, findUnique: pFindUnique, update: pUpdate },
     profileView: { groupBy },
   },
 }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { requireAdmin } from "@/lib/auth";
 import { getAdminPractitioners } from "@/app/admin/_data";
+import { setDirectoryApproval } from "@/app/admin/actions";
+import { DIRECTORY_APPROVAL_KEY } from "@/app/_lib/directory-approval";
 
 beforeEach(() => {
-  for (const m of [auth, currentUser, findUnique, create, findMany, groupBy]) m.mockReset();
+  for (const m of [auth, currentUser, findUnique, create, findMany, groupBy, pFindUnique, pUpdate]) m.mockReset();
 });
+
+/** Sign in as Nora (the ADMIN role path). */
+function asAdmin() {
+  auth.mockResolvedValue({ userId: "clerk_admin" });
+  findUnique.mockResolvedValue({
+    id: "u_admin",
+    clerkUserId: "clerk_admin",
+    role: "ADMIN",
+    email: "nora@healingtides.co",
+  });
+}
 
 describe("requireAdmin — the /admin gate", () => {
   it("returns the user when their role is ADMIN", async () => {
@@ -101,5 +117,75 @@ describe("admin data", () => {
     expect(rows[0].views30).toBe(5);
     expect(rows[0].lastViewedAt).toEqual(new Date(1000));
     expect(rows[0].lastSeenAt).toBeNull();
+  });
+});
+
+// Nora's approval switch — the other way (besides an invite) a profile reaches the directory.
+describe("setDirectoryApproval", () => {
+  it("approves a waiting profile and publishes it in the same click", async () => {
+    asAdmin();
+    pFindUnique.mockResolvedValue({ visibility: "NEEDS_REVIEW", slug: "aspen-rivera", fieldValues: {} });
+    pUpdate.mockResolvedValue({});
+
+    const r = await setDirectoryApproval("p1", true);
+
+    expect(r).toMatchObject({ ok: true, approved: true, published: true });
+    const data = pUpdate.mock.calls[0][0].data;
+    expect(data.visibility).toBe("PUBLISHED");
+    expect(data.fieldValues[DIRECTORY_APPROVAL_KEY].by).toBe("nora@healingtides.co");
+  });
+
+  it("records the approval WITHOUT publishing a draft (they publish when they're ready)", async () => {
+    asAdmin();
+    pFindUnique.mockResolvedValue({ visibility: "DRAFT", slug: null, fieldValues: {} });
+    pUpdate.mockResolvedValue({});
+
+    const r = await setDirectoryApproval("p1", true);
+
+    expect(r).toMatchObject({ ok: true, published: false });
+    expect(pUpdate.mock.calls[0][0].data.visibility).toBeUndefined();
+  });
+
+  it("never publishes someone who is on hold, even when approved", async () => {
+    asAdmin();
+    pFindUnique.mockResolvedValue({
+      visibility: "NEEDS_REVIEW",
+      slug: "aspen-rivera",
+      fieldValues: { __hold: { message: "on hold" } },
+    });
+    pUpdate.mockResolvedValue({});
+
+    const r = await setDirectoryApproval("p1", true);
+
+    expect(r).toMatchObject({ ok: true, published: false });
+    expect(pUpdate.mock.calls[0][0].data.visibility).toBeUndefined();
+  });
+
+  it("refuses a non-admin, and never writes", async () => {
+    auth.mockResolvedValue({ userId: "clerk_1" });
+    findUnique.mockResolvedValue({ id: "u1", clerkUserId: "clerk_1", role: "PRACTITIONER" });
+
+    const r = await setDirectoryApproval("p1", true);
+
+    expect(r.ok).toBe(false);
+    expect(pUpdate).not.toHaveBeenCalled();
+  });
+
+  it("un-approving clears the marker and leaves visibility alone (Hold is the takedown tool)", async () => {
+    asAdmin();
+    pFindUnique.mockResolvedValue({
+      visibility: "PUBLISHED",
+      slug: "aspen-rivera",
+      fieldValues: { [DIRECTORY_APPROVAL_KEY]: { by: "nora@healingtides.co", at: "2026-06-01T00:00:00.000Z" }, credentials: ["LICSW"] },
+    });
+    pUpdate.mockResolvedValue({});
+
+    const r = await setDirectoryApproval("p1", false);
+
+    expect(r).toMatchObject({ ok: true, approved: false, published: false });
+    const data = pUpdate.mock.calls[0][0].data;
+    expect(data.fieldValues[DIRECTORY_APPROVAL_KEY]).toBeUndefined();
+    expect(data.fieldValues.credentials).toEqual(["LICSW"]); // other keys survive
+    expect(data.visibility).toBeUndefined();
   });
 });

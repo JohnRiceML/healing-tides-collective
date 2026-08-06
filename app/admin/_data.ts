@@ -12,6 +12,7 @@ import {
   type VerificationAttempt,
 } from "@/app/_lib/credentials";
 import { readHold } from "@/app/_lib/moderation";
+import { readDirectoryApproval } from "@/app/_lib/directory-approval";
 import { readTriage } from "@/app/_lib/triage";
 import { readPrefill } from "@/lib/invites";
 import { readLastReminder, type ReminderCandidate } from "@/lib/completeness-reminders";
@@ -38,6 +39,7 @@ export type AdminPractitionerRow = {
   importedLicense: ImportedLicense | null; // license #/state/expiry from a directory import (UNVERIFIED)
   held: boolean; // currently on an admin hold
   holdMessage: string | null; // practitioner-facing reason (if held)
+  directoryApproved: boolean; // admin-approved for the public directory (invites also let someone publish)
   triageCategory: string | null; // last AI-triage bucket (null = never triaged)
 };
 
@@ -99,6 +101,7 @@ export async function getAdminPractitioners(): Promise<AdminPractitionerRow[]> {
       importedLicense: readImportedLicense(fieldValues),
       held: Boolean(hold),
       holdMessage: hold?.message || null,
+      directoryApproved: Boolean(readDirectoryApproval(fieldValues)),
       triageCategory: readTriage(fieldValues)?.category ?? null,
       views7: count7.get(r.id) ?? 0,
       views30: count30.get(r.id) ?? 0,

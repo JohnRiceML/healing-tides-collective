@@ -3,6 +3,8 @@
 // countdowns, no marketing pressure. Every email is plain, human, and easy to ignore —
 // "nothing happens until you choose to." User-supplied text is HTML-escaped in the markup.
 
+import { URGENCY } from "@/lib/seeker-intake";
+
 export type EmailContent = { subject: string; html: string; text: string };
 
 /** Escape the five HTML-significant characters so a name can't inject markup. */
@@ -142,6 +144,76 @@ export function seekerWelcomeEmail(input: {
     `<p style="margin:0 0 24px"><a href="${urlHtml}" style="display:inline-block;background:#5f8f8b;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:15px">Open your saved list</a></p>`,
     `<p style="margin:0 0 16px;font-size:13px;color:#6b6b6b">If you're ever in crisis, please call or text <strong>988</strong> (the Suicide &amp; Crisis Lifeline — free, confidential, 24/7), or call <strong>911</strong> if you're in immediate danger.</p>`,
     `<p style="margin:24px 0 0;font-size:16px">Warmly,<br>Healing Tides Collective</p>`,
+    `</div></div>`,
+  ].join("");
+
+  return { subject, html, text };
+}
+
+/** How much of a seeker's story travels in the notification. Enough to gauge urgency, no more. */
+const STORY_PREVIEW_MAX = 180;
+
+/** The first non-empty line of the story, capped. Deliberately NOT the whole disclosure — a
+ *  seeker's intake can hold the hardest thing they've told anyone, and an inbox is a far weaker
+ *  container than the admin surface (signed-in, on request). The rest stays behind that gate. */
+function storyOpening(story: string): string {
+  const first = story.split(/\r?\n/).map((l) => l.trim()).find(Boolean) ?? "";
+  return first.length > STORY_PREVIEW_MAX ? first.slice(0, STORY_PREVIEW_MAX).trimEnd() + "…" : first;
+}
+
+/**
+ * The heads-up Nora gets the moment a seeker intake lands. Internal, not seeker-facing: it exists
+ * so "a real person will read your summary" doesn't depend on remembering to open /admin/seekers.
+ * Carries only triage signal — name, timing, region, the opening line — plus a direct link.
+ */
+export function seekerIntakeAdminEmail(input: {
+  name: string;
+  email: string;
+  story: string;
+  urgency?: string | null;
+  region?: string | null;
+  adminUrl: string;
+}): EmailContent {
+  const name = input.name.trim() || "Someone";
+  const timing = URGENCY.find((u) => u.value === input.urgency)?.label ?? null;
+  const region = (input.region ?? "").trim() || null;
+  const opening = storyOpening(input.story);
+  const url = input.adminUrl;
+
+  const subject = `New seeker intake — ${name}${timing ? ` (${timing.toLowerCase()})` : ""}`;
+
+  const facts: [string, string][] = [
+    ["Name", name],
+    ["Email", input.email],
+    ...(timing ? ([["Timing", timing]] as [string, string][]) : []),
+    ...(region ? ([["Region", region]] as [string, string][]) : []),
+  ];
+
+  const text = [
+    `Someone just finished an intake on Healing Tides.`,
+    ``,
+    ...facts.map(([k, v]) => `${k}: ${v}`),
+    ``,
+    `How they opened:`,
+    opening,
+    ``,
+    `Read the whole intake and start a shortlist:`,
+    url,
+    ``,
+    `Only their opening line is here — the rest of what they shared stays on the site.`,
+  ].join("\n");
+
+  const html = [
+    `<div style="background:#f7f5f2;padding:32px 16px;font-family:Georgia,'Times New Roman',serif">`,
+    `<div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px 28px;color:#2f2f2f;line-height:1.6">`,
+    `<p style="margin:0 0 16px;font-size:16px">Someone just finished an intake on Healing Tides.</p>`,
+    `<p style="margin:0 0 16px;font-size:15px">`,
+    facts.map(([k, v]) => `${k}: <strong>${escapeHtml(v)}</strong>`).join("<br>"),
+    `</p>`,
+    `<p style="margin:0 0 8px;font-size:14px;color:#6b6b6b">How they opened:</p>`,
+    `<p style="margin:0 0 24px;font-size:16px;border-left:3px solid #d9d3ca;padding-left:14px">${escapeHtml(opening)}</p>`,
+    `<p style="margin:0 0 24px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#5f8f8b;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:15px">Open this intake</a></p>`,
+    `<p style="margin:0 0 16px;font-size:13px;color:#6b6b6b">Only their opening line is here — the rest of what they shared stays on the site.</p>`,
     `</div></div>`,
   ].join("");
 

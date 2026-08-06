@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, type Dispatch, type SetStateAction } from "react";
+import Link from "next/link";
 
 import {
   Button,
@@ -233,6 +234,27 @@ function Welcome({ onBegin }: { onBegin: () => void }) {
   );
 }
 
+/**
+ * The same quiet safety line the voice and chat surfaces carry. The typed form had none — and the
+ * story step is exactly where someone discloses, while the confirmation screen answers a disclosure
+ * with "it usually takes a few days." No detection logic: it's always there, the way a footer is.
+ */
+function CrisisNote({ className = "" }: { className?: string }) {
+  return (
+    <p className={`text-[13px] leading-[1.65] text-ink-muted ${className}`}>
+      Not emergency care. If you&rsquo;re in crisis, call or text{" "}
+      <a href="tel:988" className="font-medium text-charcoal underline-offset-2 hover:underline">
+        988
+      </a>{" "}
+      or see{" "}
+      <Link href="/crisis" className="font-medium text-charcoal underline-offset-2 hover:underline">
+        support resources
+      </Link>
+      . A person reviews everything you share.
+    </p>
+  );
+}
+
 function ChipGrid({ children }: { children: React.ReactNode }) {
   return <div className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-2">{children}</div>;
 }
@@ -272,6 +294,7 @@ function StepStory({ value, onChange }: { value: string; onChange: (v: string) =
           />
         </Field>
       </Card>
+      <CrisisNote className="mt-6" />
     </div>
   );
 }
@@ -592,6 +615,7 @@ function Confirmation() {
             <span className="font-medium text-charcoal">You reach out directly.</span> From the first message, the relationship is yours.
           </li>
         </ul>
+        <CrisisNote className="mt-8 border-t border-rule pt-6" />
       </Card>
       <div className="mt-12 flex flex-wrap items-center gap-4">
         <LinkButton href="/practitioners" tone="primary">

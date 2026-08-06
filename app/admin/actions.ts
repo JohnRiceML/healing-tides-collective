@@ -8,6 +8,7 @@ import { RESERVED_BADGES_KEY, sanitizeGrant, grantedBadgesFrom } from "@/app/_li
 import { VERIFICATION_KEY, type VerificationStatus } from "@/app/_lib/credentials";
 import { isValidStatus, type FeedbackStatus } from "@/lib/feedback";
 import { applyHold, applyRelease, coercePrev, readHold } from "@/app/_lib/moderation";
+import { applyDirectoryApproval, removeDirectoryApproval } from "@/app/_lib/directory-approval";
 import { newInviteToken, readPrefill, MAX_BULK_INVITES, type InvitePrefill } from "@/lib/invites";
 import { SITE_URL } from "@/lib/site";
 import { sendEmail, emailConfigured } from "@/lib/email";
@@ -457,6 +458,64 @@ export async function setProfileHold(
   revalidatePath("/practitioners", "layout"); // directory + every profile under it
   revalidatePath("/practitioner"); // the held practitioner's own editor banner
   return { ok: true, held: input.held };
+}
+
+/**
+ * Approve (or un-approve) a practitioner for the public directory. ADMIN-ONLY.
+ *
+ * Publishing is gated (see app/_lib/directory-approval.ts): only an invited or admin-approved
+ * practitioner goes live — everyone else's publish lands in NEEDS_REVIEW. This is Nora's
+ * "yes, they belong here" switch. Approving someone who's already waiting in NEEDS_REVIEW also
+ * publishes them straight away (they asked; a slug was minted then), so it's one click, not two.
+ *
+ * Un-approving only clears the marker — it never hides anyone. Taking a live profile down is
+ * what Hold is for, and it carries the message + audit trail that a takedown needs.
+ */
+export async function setDirectoryApproval(
+  practitionerId: string,
+  approved: boolean,
+): Promise<{ ok: true; approved: boolean; published: boolean } | { ok: false; error: string }> {
+  const admin = await requireAdmin();
+  if (!admin) return { ok: false, error: "Not authorized." };
+
+  const current = await db.practitioner.findUnique({
+    where: { id: practitionerId },
+    select: { visibility: true, slug: true, fieldValues: true },
+  });
+  if (!current) return { ok: false, error: "Practitioner not found." };
+
+  const fieldValues = approved
+    ? applyDirectoryApproval(current.fieldValues, {
+        by: admin.email?.trim() || "admin",
+        at: new Date().toISOString(),
+      })
+    : removeDirectoryApproval(current.fieldValues);
+
+  // Only a profile that's waiting for review (and not on hold, and with a slug to live at)
+  // gets published by the approval itself.
+  const publish =
+    approved &&
+    current.visibility === "NEEDS_REVIEW" &&
+    Boolean(current.slug) &&
+    !readHold(current.fieldValues);
+
+  try {
+    await db.practitioner.update({
+      where: { id: practitionerId },
+      data: {
+        fieldValues: fieldValues as Prisma.InputJsonValue,
+        ...(publish ? { visibility: "PUBLISHED" as const } : {}),
+      },
+    });
+  } catch {
+    return { ok: false, error: "Couldn't update — please try again." };
+  }
+
+  revalidatePath("/admin"); // command-center counts
+  revalidatePath("/admin/practitioners"); // the practitioners table lives here
+  revalidatePath("/practitioners", "layout"); // directory + every profile under it
+  revalidatePath("/practitioner"); // their own editor status
+  return { ok: true, approved, published: publish };
 }
 
 /**

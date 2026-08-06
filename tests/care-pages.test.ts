@@ -131,9 +131,11 @@ describe("buildPractitionerWhere — the citySlug filter", () => {
       specialty: "trauma_recovery",
     });
     const and = where.AND as Array<Record<string, unknown>>;
-    expect(and).toHaveLength(3); // availability + age groups + the city OR — all survive
+    // Age groups + the city OR both survive. (Availability is NOT a SQL filter — it runs after
+    // the query so an unset field can count as "unknown"; see passesAcceptingNewFilter.)
+    expect(and).toHaveLength(2);
     expect(and.some((c) => "OR" in c)).toBe(true);
-    expect(and.filter((c) => "fieldValues" in c)).toHaveLength(2);
+    expect(and.filter((c) => "fieldValues" in c)).toHaveLength(1);
     expect(where.specialties).toEqual({ has: "trauma_recovery" });
   });
 

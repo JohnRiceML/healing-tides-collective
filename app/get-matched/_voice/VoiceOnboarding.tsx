@@ -179,10 +179,19 @@ export function VoiceOnboarding({ onSwitchToText }: { onSwitchToText: () => void
         ) : null}
 
         {status === "idle" && turns.length === 0 ? (
-          <p className="max-w-md text-center text-[13px] leading-[1.6] text-ink-muted">
-            Tap the circle and just talk — there&rsquo;s no script. The guide will listen, ask a little, and put
-            practitioner suggestions on your screen as you go. You can mute or end anytime.
-          </p>
+          <>
+            <p className="max-w-md text-center text-[13px] leading-[1.6] text-ink-muted">
+              Tap the circle and just talk — there&rsquo;s no script. The guide will listen, ask a little, and put
+              practitioner suggestions on your screen as you go. You can mute or end anytime.
+            </p>
+            {/* Said before the mic ever opens: this is an AI, and the words leave us to run the
+                conversation. Quiet and non-blocking on purpose — a consent modal here would be the
+                opposite of trauma-informed. */}
+            <p className="max-w-md text-center text-[12px] leading-[1.6] text-ink-muted">
+              You&rsquo;re talking with an AI guide — what you say is processed by a third-party service to run the
+              conversation, and Nora reads what gets sent to her.
+            </p>
+          </>
         ) : null}
       </div>
 

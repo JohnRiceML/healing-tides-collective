@@ -4,12 +4,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { getOrCreatePractitioner } = vi.hoisted(() => ({
   getOrCreatePractitioner: vi.fn(),
 }));
-const { update, findFirst } = vi.hoisted(() => ({
+const { update, findFirst, inviteFindFirst } = vi.hoisted(() => ({
   update: vi.fn(),
   findFirst: vi.fn(),
+  inviteFindFirst: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({ getOrCreatePractitioner }));
-vi.mock("@/lib/db", () => ({ db: { practitioner: { update, findFirst } } }));
+vi.mock("@/lib/db", () => ({
+  db: { practitioner: { update, findFirst }, invite: { findFirst: inviteFindFirst } },
+}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { publishProfile, unpublishProfile } from "@/app/practitioner/publish-actions";
@@ -25,6 +28,10 @@ beforeEach(() => {
   getOrCreatePractitioner.mockReset();
   update.mockReset();
   findFirst.mockReset();
+  inviteFindFirst.mockReset();
+  // Default: this user claimed an invite, so they're cleared for the directory. The
+  // gate itself is covered by the "directory gate" block below.
+  inviteFindFirst.mockResolvedValue({ id: "inv1" });
 });
 
 describe("publishProfile", () => {
@@ -98,6 +105,57 @@ describe("publishProfile", () => {
     const r = await publishProfile();
     expect(r).toMatchObject({ ok: false, held: true });
     expect(update).not.toHaveBeenCalled();
+  });
+});
+
+// The directory gate: nobody reaches PUBLISHED without an invite they claimed, or an
+// admin's approval. A stranger who signs up lands in NEEDS_REVIEW instead.
+describe("publishProfile — directory gate", () => {
+  it("sends a non-invited, non-approved practitioner to NEEDS_REVIEW, never PUBLISHED", async () => {
+    getOrCreatePractitioner.mockResolvedValue(session());
+    inviteFindFirst.mockResolvedValue(null); // no invite claimed by this user
+    findFirst.mockResolvedValue(null);
+    update.mockResolvedValue({});
+
+    const r = await publishProfile();
+
+    expect(r).toMatchObject({ ok: true, pendingReview: true });
+    expect(update.mock.calls[0][0].data.visibility).toBe("NEEDS_REVIEW");
+    expect(update.mock.calls[0][0].data.visibility).not.toBe("PUBLISHED");
+  });
+
+  it("looks the invite up by the SESSION user's id (never a client-supplied one)", async () => {
+    getOrCreatePractitioner.mockResolvedValue(session());
+    findFirst.mockResolvedValue(null);
+    update.mockResolvedValue({});
+    await publishProfile();
+    expect(inviteFindFirst.mock.calls[0][0].where).toEqual({ claimedByUserId: "u1" });
+  });
+
+  it("publishes when an admin has approved them (no invite needed)", async () => {
+    getOrCreatePractitioner.mockResolvedValue(
+      session({ fieldValues: { __directoryApproval: { by: "nora@healingtides.co", at: "2026-06-01T00:00:00.000Z" } } }),
+    );
+    inviteFindFirst.mockResolvedValue(null);
+    findFirst.mockResolvedValue(null);
+    update.mockResolvedValue({});
+
+    const r = await publishProfile();
+
+    expect(r).toMatchObject({ ok: true, pendingReview: false });
+    expect(update.mock.calls[0][0].data.visibility).toBe("PUBLISHED");
+  });
+
+  it("fails closed to NEEDS_REVIEW when the invite read errors", async () => {
+    getOrCreatePractitioner.mockResolvedValue(session());
+    inviteFindFirst.mockRejectedValue(new Error("db down"));
+    findFirst.mockResolvedValue(null);
+    update.mockResolvedValue({});
+
+    const r = await publishProfile();
+
+    expect(r).toMatchObject({ ok: true, pendingReview: true });
+    expect(update.mock.calls[0][0].data.visibility).toBe("NEEDS_REVIEW");
   });
 });
 

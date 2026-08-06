@@ -29,6 +29,7 @@ function row(o: Partial<AdminPractitionerRow> = {}): AdminPractitionerRow {
     importedLicense: null,
     held: false,
     holdMessage: null,
+    directoryApproved: false,
     triageCategory: null,
     ...o,
   };

@@ -115,8 +115,10 @@ export async function getPractitioner(): Promise<
 
 /** Comma-separated email allowlist (env `ADMIN_EMAILS`). Grants admin WITHOUT a DB
  *  write — the simplest way to bootstrap admins and to manage them when the DB isn't
- *  conveniently writable. Emails come from Clerk (verified), so they're trustworthy. */
-function adminEmailAllowlist(): string[] {
+ *  conveniently writable. Emails come from Clerk (verified), so they're trustworthy.
+ *  Exported so admin *notifications* (lib/seeker-notify.ts) reach exactly the people
+ *  this gate lets in — one list, not two that can drift apart. */
+export function adminEmailAllowlist(): string[] {
   return (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())

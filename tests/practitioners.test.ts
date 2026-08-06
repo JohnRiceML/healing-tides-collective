@@ -125,6 +125,41 @@ describe("getPublishedPractitioners", () => {
     expect(card.title).toBeNull();
   });
 
+  it("does not claim 'accepting' when the field is unset — no badge on an unknown", async () => {
+    findMany.mockResolvedValue([cardRow({ fieldValues: { title: "Therapist" } })]);
+    const [card] = await getPublishedPractitioners();
+    expect(card.acceptingNew).toBe(false);
+  });
+
+  // The trap this guards: an unset availability field used to read as "not accepting", so
+  // ?accepting=on emptied the whole directory. Unset means unknown — they stay listed.
+  it("keeps practitioners with an UNSET availability field in the accepting-new filter", async () => {
+    findMany.mockResolvedValue([
+      cardRow({ slug: "unset", displayName: "Unset", fieldValues: { title: "Therapist" } }),
+      cardRow({ slug: "no-blob", displayName: "No blob", fieldValues: null }),
+    ]);
+    const cards = await getPublishedPractitioners({ acceptingNew: true });
+    expect(cards.map((c) => c.slug)).toEqual(["unset", "no-blob"]);
+  });
+
+  it("hides only the explicitly not-accepting from the accepting-new filter", async () => {
+    findMany.mockResolvedValue([
+      cardRow({ slug: "accepting", fieldValues: { availability_state: "accepting" } }),
+      cardRow({ slug: "limited", fieldValues: { availability_state: "limited" } }),
+      // chips fields can persist as a single-element array — same meaning, must behave the same
+      cardRow({ slug: "chips", fieldValues: { availability_state: ["accepting"] } }),
+      cardRow({ slug: "waitlist", fieldValues: { availability_state: "waitlist" } }),
+    ]);
+    const cards = await getPublishedPractitioners({ acceptingNew: true });
+    expect(cards.map((c) => c.slug)).toEqual(["accepting", "limited", "chips"]);
+  });
+
+  it("leaves the list alone when the accepting-new filter is off", async () => {
+    findMany.mockResolvedValue([cardRow({ slug: "waitlist", fieldValues: { availability_state: "waitlist" } })]);
+    const cards = await getPublishedPractitioners();
+    expect(cards.map((c) => c.slug)).toEqual(["waitlist"]);
+  });
+
   it("orders by the requested sort key", async () => {
     findMany.mockResolvedValue([]);
     await getPublishedPractitioners({}, "newest");
@@ -166,13 +201,8 @@ describe("buildPractitionerWhere", () => {
     expect(buildPractitionerWhere({})).not.toHaveProperty("region");
   });
 
-  it("filters accepting-new clients via the fieldValues JSON path", () => {
-    const where = buildPractitionerWhere({ acceptingNew: true });
-    // Every additive condition lives in the single AND array (uniform, collision-proof).
-    expect(where.AND).toEqual([{ fieldValues: { path: ["availability_state"], equals: "accepting" } }]);
-  });
-
-  it("does not add the availability filter when acceptingNew is false", () => {
+  it("keeps the availability filter OUT of SQL (a JSON path can't express 'unset')", () => {
+    expect(buildPractitionerWhere({ acceptingNew: true })).not.toHaveProperty("AND");
     expect(buildPractitionerWhere({ acceptingNew: false })).not.toHaveProperty("fieldValues");
   });
 
@@ -181,14 +211,14 @@ describe("buildPractitionerWhere", () => {
     expect(where.AND).toEqual([{ fieldValues: { path: ["age_groups"], array_contains: "adults" } }]);
   });
 
-  it("ANDs the two JSON filters when both are active (no fieldValues collision)", () => {
-    const where = buildPractitionerWhere({ acceptingNew: true, ageGroups: "adolescents" });
+  it("keeps every additive condition in ONE AND array (no fieldValues collision)", () => {
+    const where = buildPractitionerWhere({ citySlug: "duluth", ageGroups: "adolescents" });
     // They must NOT collapse onto one fieldValues key — that would drop one filter.
     expect(where).not.toHaveProperty("fieldValues");
-    expect(where.AND).toEqual([
-      { fieldValues: { path: ["availability_state"], equals: "accepting" } },
-      { fieldValues: { path: ["age_groups"], array_contains: "adolescents" } },
-    ]);
+    const and = where.AND as Array<Record<string, unknown>>;
+    expect(and).toHaveLength(2);
+    expect(and[0]).toEqual({ fieldValues: { path: ["age_groups"], array_contains: "adolescents" } });
+    expect(and[1]).toHaveProperty("OR");
   });
 
   it("composes all filters together", () => {
@@ -202,7 +232,6 @@ describe("buildPractitionerWhere", () => {
     expect(where.specialties).toEqual({ has: "grief_loss" });
     expect(where.modality).toBe("VIRTUAL");
     expect(where.gender).toEqual({ contains: "female", mode: "insensitive" });
-    expect(where.AND).toEqual([{ fieldValues: { path: ["availability_state"], equals: "accepting" } }]);
     expect(Array.isArray(where.OR)).toBe(true);
   });
 
@@ -211,7 +240,6 @@ describe("buildPractitionerWhere", () => {
     await getPublishedPractitioners({ gender: "male", acceptingNew: true });
     const where = findMany.mock.calls[0][0].where;
     expect(where.gender).toEqual({ contains: "male", mode: "insensitive" });
-    expect(where.AND).toEqual([{ fieldValues: { path: ["availability_state"], equals: "accepting" } }]);
   });
 });
 
