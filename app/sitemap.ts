@@ -35,6 +35,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // High-intent and useful on its own — someone searching for crisis support in Minnesota
     // should be able to land here directly.
     { url: `${SITE_URL}/crisis`, changeFrequency: "yearly", priority: 0.5 },
+    {
+      url: `${SITE_URL}/resources/therapy-cost-minnesota`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified: new Date("2026-08-08"),
+    },
   ];
 
   const profileRoutes: MetadataRoute.Sitemap = slugs.map(

@@ -13,10 +13,9 @@ import {
   carePageSupply,
   carePageTitle,
   carePageTopics,
+  indexableCarePageMesh,
   isIndexable,
-  nearbyCities,
   resolveCarePage,
-  siblingSpecialties,
 } from "@/lib/care-pages";
 
 // ISR: these pages are stable content that changes only when the network does. An hour keeps a
@@ -58,9 +57,10 @@ export async function generateMetadata({
   const url = `${SITE_URL}${carePagePath(data.page)}`;
   // The doorway-page guard: a page with no real local supply behind it stays out of the index
   // (and out of the sitemap) until the network fills in. It still renders for anyone who lands.
-  const indexable = isIndexable(
-    data.supply.get(`${data.page.specialty.id}/${data.page.city.slug}`) ?? 0,
-  );
+  const supplyCount = data.supply.get(`${data.page.specialty.id}/${data.page.city.slug}`) ?? 0;
+  // Fail closed if either read fails or disagrees: an indexable page must render the supply it
+  // promises, not merely know that those practitioners existed in a separate query.
+  const indexable = isIndexable(Math.min(data.matches.length, supplyCount));
   return {
     title,
     description,
@@ -84,12 +84,7 @@ export default async function CarePage({
   const topics = carePageTopics(specialty);
   // Do not advertise noindex pages from this navigation. The same shared supply count powers
   // the sitemap and metadata, so every crawled care-page link points to a page that may index.
-  const nearby = nearbyCities(city).filter((candidate) =>
-    isIndexable(data.supply.get(`${specialty.id}/${candidate.slug}`) ?? 0),
-  );
-  const siblings = siblingSpecialties(specialty).filter((candidate) =>
-    isIndexable(data.supply.get(`${candidate.id}/${city.slug}`) ?? 0),
-  );
+  const { nearby, siblings } = indexableCarePageMesh(page, data.supply);
 
   // Same topic set as before (carePageTopics stays the source of truth) — just laid out
   // under the subcategory each phrase belongs to, so it reads as an editorial map of the

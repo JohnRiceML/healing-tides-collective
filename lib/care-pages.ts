@@ -4,7 +4,7 @@
 //
 // Why the indexability rule is load-bearing: a city×specialty template that differs only by
 // place name is a doorway page, and Google demotes those. A page here earns indexing ONLY when
-// it carries real local supply (at least one published practitioner who actually matches).
+// it carries real local supply (at least three distinct published practitioners who match).
 // Everything else still RENDERS — a seeker who lands there gets the guided agent and nearby
 // options, which is honest and useful — but it's noindex'd and kept out of the sitemap until
 // the network fills in. That's the cold-start truth: we never fake counts to look bigger.
@@ -43,7 +43,7 @@ export function carePageSupply(profiles: Iterable<CareSupplyProfile>): Map<strin
   const supply = new Map<string, number>();
   for (const profile of profiles) {
     for (const city of mnCitiesFromText(profile.region)) {
-      for (const specialty of profile.specialties) {
+      for (const specialty of new Set(profile.specialties)) {
         const key = `${specialty}/${city.slug}`;
         supply.set(key, (supply.get(key) ?? 0) + 1);
       }
@@ -121,6 +121,30 @@ export function nearbyCities(city: MnCity, limit = 6): MnCity[] {
 /** Other specialties in the same city — the second axis of the mesh. */
 export function siblingSpecialties(specialty: Category, limit = 6): Category[] {
   return CATEGORIES.filter((c) => c.id !== specialty.id).slice(0, limit);
+}
+
+/**
+ * Related care pages that are eligible for indexing, filtered before the display limit.
+ * This prevents the mesh from publishing crawl paths to guarded pages and avoids hiding an
+ * eligible candidate merely because six ineligible registry entries came first.
+ */
+export function indexableCarePageMesh(
+  page: CarePage,
+  supply: ReadonlyMap<string, number>,
+  limit = 6,
+): { nearby: MnCity[]; siblings: Category[] } {
+  const nearby = MN_CITIES.filter(
+    (city) =>
+      city.area === page.city.area &&
+      city.slug !== page.city.slug &&
+      isIndexable(supply.get(`${page.specialty.id}/${city.slug}`) ?? 0),
+  ).slice(0, limit);
+  const siblings = CATEGORIES.filter(
+    (specialty) =>
+      specialty.id !== page.specialty.id &&
+      isIndexable(supply.get(`${specialty.id}/${page.city.slug}`) ?? 0),
+  ).slice(0, limit);
+  return { nearby, siblings };
 }
 
 export function carePagePath({ specialty, city }: CarePage): string {

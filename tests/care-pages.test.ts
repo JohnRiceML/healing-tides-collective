@@ -10,6 +10,7 @@ import {
   carePagePath,
   carePageTitle,
   carePageTopics,
+  indexableCarePageMesh,
   isIndexable,
   MIN_INDEXABLE_MATCHES,
   nearbyCities,
@@ -68,6 +69,13 @@ describe("carePageSupply", () => {
     expect(supply.get("mind_body/minneapolis")).toBe(1);
     expect(supply.get("mind_body/saint-paul")).toBe(1);
   });
+
+  it("counts each practitioner only once per specialty", () => {
+    const supply = carePageSupply([
+      { region: "Minneapolis", specialties: ["mind_body", "mind_body", "mind_body"] },
+    ]);
+    expect(supply.get("mind_body/minneapolis")).toBe(1);
+  });
 });
 
 describe("page copy", () => {
@@ -118,6 +126,27 @@ describe("the internal-link mesh", () => {
   it("suggests other specialties, excluding the current one", () => {
     const sibs = siblingSpecialties(page.specialty);
     expect(sibs.map((s) => s.id)).not.toContain("mind_body");
+  });
+
+  it("keeps only indexable destinations and filters before applying the limit", () => {
+    const minneapolis = resolveCarePage("mind_body", "minneapolis")!;
+    const sameArea = MN_CITIES.filter(
+      (city) => city.area === minneapolis.city.area && city.slug !== minneapolis.city.slug,
+    );
+    expect(sameArea.length).toBeGreaterThan(6);
+
+    const eligibleAfterSix = sameArea[6];
+    const eligibleSpecialty = CATEGORIES.find((category) => category.id !== "mind_body")!;
+    const supply = new Map<string, number>([
+      [`mind_body/${eligibleAfterSix.slug}`, MIN_INDEXABLE_MATCHES],
+      [`${eligibleSpecialty.id}/minneapolis`, MIN_INDEXABLE_MATCHES],
+      // Below the threshold: neither destination may be advertised.
+      [`mind_body/${sameArea[0].slug}`, MIN_INDEXABLE_MATCHES - 1],
+    ]);
+
+    const mesh = indexableCarePageMesh(minneapolis, supply, 6);
+    expect(mesh.nearby.map((city) => city.slug)).toEqual([eligibleAfterSix.slug]);
+    expect(mesh.siblings.map((specialty) => specialty.id)).toEqual([eligibleSpecialty.id]);
   });
 });
 

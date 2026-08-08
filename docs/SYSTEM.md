@@ -1,6 +1,6 @@
 # Healing Tides Collective — System Map
 
-**Last updated:** 2026-06-28
+**Last updated:** 2026-08-08
 
 > **This is a living document** — the canonical "where things live + current status" map. When the code moves, **update this in the same change.** When a doc and the code disagree, **the code wins — and this file gets fixed.** It lists load-bearing *entry points* and subsystems, **not every file** (exact paths drift and mislead — search the code for them). The rules that keep this alive are in [AGENTS.md](../AGENTS.md#the-living-doc-protocol--keep-docs-alive).
 
@@ -25,6 +25,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/` | Immersive, chapter-based scroll landing | Live |
 | `/about` | "Meet Nora" — founder bio | Live |
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal | Live |
+| `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟡 Implemented; deployment pending |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |

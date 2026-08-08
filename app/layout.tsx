@@ -27,14 +27,14 @@ const inter = Inter({
 });
 
 const DESCRIPTION =
-  "A modern front door to wellness — guided care matching across therapy, acupuncture, reiki, movement, and trauma-informed care.";
+  "Human-guided care matching across Minnesota — therapy, acupuncture, reiki, movement, and trauma-informed support, with a real person helping narrow the fit.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Healing Tides Collective",
+  title: "Healing Tides Collective — Minnesota care, matched by a person",
   description: DESCRIPTION,
   openGraph: {
-    title: "Healing Tides Collective",
+    title: "Healing Tides Collective — Minnesota care, matched by a person",
     description: DESCRIPTION,
     url: SITE_URL,
     siteName: "Healing Tides Collective",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Healing Tides Collective",
+    title: "Healing Tides Collective — Minnesota care, matched by a person",
     description: DESCRIPTION,
     images: [`${SITE_URL}/og.jpg`],
   },
