@@ -10,6 +10,7 @@ import { SITE_URL } from "@/lib/site";
 import {
   carePageDescription,
   carePagePath,
+  carePageSupply,
   carePageTitle,
   carePageTopics,
   isIndexable,
@@ -34,11 +35,14 @@ async function load(specialtySlug: string, citySlug: string) {
   const page = resolveCarePage(specialtySlug, citySlug);
   if (!page) return null;
   // Practitioners who name this specialty AND whose free-text region matches the city.
-  const matches = await getPublishedPractitioners({
-    specialty: page.specialty.id,
-    citySlug: page.city.slug,
-  }).catch(() => []);
-  return { page, matches };
+  const [matches, published] = await Promise.all([
+    getPublishedPractitioners({
+      specialty: page.specialty.id,
+      citySlug: page.city.slug,
+    }).catch(() => []),
+    getPublishedPractitioners().catch(() => []),
+  ]);
+  return { page, matches, supply: carePageSupply(published) };
 }
 
 export async function generateMetadata({
@@ -54,7 +58,9 @@ export async function generateMetadata({
   const url = `${SITE_URL}${carePagePath(data.page)}`;
   // The doorway-page guard: a page with no real local supply behind it stays out of the index
   // (and out of the sitemap) until the network fills in. It still renders for anyone who lands.
-  const indexable = isIndexable(data.matches.length);
+  const indexable = isIndexable(
+    data.supply.get(`${data.page.specialty.id}/${data.page.city.slug}`) ?? 0,
+  );
   return {
     title,
     description,
@@ -76,8 +82,14 @@ export default async function CarePage({
   const { page, matches } = data;
   const { specialty, city } = page;
   const topics = carePageTopics(specialty);
-  const nearby = nearbyCities(city);
-  const siblings = siblingSpecialties(specialty);
+  // Do not advertise noindex pages from this navigation. The same shared supply count powers
+  // the sitemap and metadata, so every crawled care-page link points to a page that may index.
+  const nearby = nearbyCities(city).filter((candidate) =>
+    isIndexable(data.supply.get(`${specialty.id}/${candidate.slug}`) ?? 0),
+  );
+  const siblings = siblingSpecialties(specialty).filter((candidate) =>
+    isIndexable(data.supply.get(`${candidate.id}/${city.slug}`) ?? 0),
+  );
 
   // Same topic set as before (carePageTopics stays the source of truth) — just laid out
   // under the subcategory each phrase belongs to, so it reads as an editorial map of the
@@ -231,29 +243,35 @@ export default async function CarePage({
         )}
 
         {/* ───────── The internal mesh: same care elsewhere, other care here ───────── */}
-        <section className="mt-16 border-t border-rule/70 pt-12 md:mt-24 md:pt-16">
-          <p className="font-display text-center text-[19px] leading-[1.3] text-ink-soft md:text-[21px]">
-            Looking a little wider?
-          </p>
-          <div className="mx-auto mt-10 grid max-w-4xl gap-x-16 gap-y-12 sm:grid-cols-2">
-            <MeshColumn
-              heading={`${specialty.label} elsewhere in Minnesota`}
-              items={nearby.map((c) => ({
-                href: `/care/${specialty.id}/${c.slug}`,
-                before: `${specialty.label} in`,
-                emphasis: c.name,
-              }))}
-            />
-            <MeshColumn
-              heading={`Other kinds of care in ${city.name}`}
-              items={siblings.map((s) => ({
-                href: `/care/${s.id}/${city.slug}`,
-                emphasis: s.label,
-                after: `in ${city.name}`,
-              }))}
-            />
-          </div>
-        </section>
+        {(nearby.length > 0 || siblings.length > 0) && (
+          <section className="mt-16 border-t border-rule/70 pt-12 md:mt-24 md:pt-16">
+            <p className="font-display text-center text-[19px] leading-[1.3] text-ink-soft md:text-[21px]">
+              Looking a little wider?
+            </p>
+            <div className="mx-auto mt-10 grid max-w-4xl gap-x-16 gap-y-12 sm:grid-cols-2">
+              {nearby.length > 0 && (
+                <MeshColumn
+                  heading={`${specialty.label} elsewhere in Minnesota`}
+                  items={nearby.map((c) => ({
+                    href: `/care/${specialty.id}/${c.slug}`,
+                    before: `${specialty.label} in`,
+                    emphasis: c.name,
+                  }))}
+                />
+              )}
+              {siblings.length > 0 && (
+                <MeshColumn
+                  heading={`Other kinds of care in ${city.name}`}
+                  items={siblings.map((s) => ({
+                    href: `/care/${s.id}/${city.slug}`,
+                    emphasis: s.label,
+                    after: `in ${city.name}`,
+                  }))}
+                />
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ───────── Safety line — quiet, never alarming ───────── */}
         <p className="mx-auto mt-16 max-w-lg text-center text-[13px] leading-[1.65] text-ink-muted md:mt-20">

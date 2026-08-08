@@ -5,6 +5,7 @@ vi.mock("@/lib/db", () => ({ db: {} }));
 
 import {
   allCarePages,
+  carePageSupply,
   carePageDescription,
   carePagePath,
   carePageTitle,
@@ -52,6 +53,20 @@ describe("isIndexable — the doorway-page guard", () => {
     expect(isIndexable(MIN_INDEXABLE_MATCHES - 1)).toBe(false);
     expect(isIndexable(MIN_INDEXABLE_MATCHES)).toBe(true);
     expect(isIndexable(12)).toBe(true);
+  });
+});
+
+describe("carePageSupply", () => {
+  it("counts every specialty × city match with the shared city semantics", () => {
+    const supply = carePageSupply([
+      { region: "Minneapolis and St. Paul", specialties: ["trauma_recovery", "mind_body"] },
+      { region: "St. Paul, MN", specialties: ["trauma_recovery"] },
+    ]);
+
+    expect(supply.get("trauma_recovery/minneapolis")).toBe(1);
+    expect(supply.get("trauma_recovery/saint-paul")).toBe(2);
+    expect(supply.get("mind_body/minneapolis")).toBe(1);
+    expect(supply.get("mind_body/saint-paul")).toBe(1);
   });
 });
 

@@ -10,7 +10,7 @@
 // the network fills in. That's the cold-start truth: we never fake counts to look bigger.
 
 import { CATEGORIES, type Category } from "@/app/_lib/taxonomy";
-import { MN_CITIES, mnCityBySlug, type MnCity } from "@/lib/mn-cities";
+import { MN_CITIES, mnCitiesFromText, mnCityBySlug, type MnCity } from "@/lib/mn-cities";
 
 export type CarePage = { specialty: Category; city: MnCity };
 
@@ -24,6 +24,32 @@ export function resolveCarePage(specialtySlug: string, citySlug: string): CarePa
 /** Every specialty × city combination — the full route inventory. */
 export function allCarePages(): CarePage[] {
   return CATEGORIES.flatMap((specialty) => MN_CITIES.map((city) => ({ specialty, city })));
+}
+
+/** The public fields needed to count real local supply for a care page. */
+export type CareSupplyProfile = {
+  region: string | null;
+  specialties: string[];
+};
+
+/**
+ * Count published local practitioners for every specialty × city route.
+ *
+ * The sitemap, each page's robots directive, and the internal-link mesh must use this exact
+ * matcher. If they drift, Google can discover a noindex route from an indexable page or see a
+ * sitemap URL whose own metadata disagrees.
+ */
+export function carePageSupply(profiles: Iterable<CareSupplyProfile>): Map<string, number> {
+  const supply = new Map<string, number>();
+  for (const profile of profiles) {
+    for (const city of mnCitiesFromText(profile.region)) {
+      for (const specialty of profile.specialties) {
+        const key = `${specialty}/${city.slug}`;
+        supply.set(key, (supply.get(key) ?? 0) + 1);
+      }
+    }
+  }
+  return supply;
 }
 
 /**
