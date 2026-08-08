@@ -202,7 +202,7 @@ The resource is linked in the app-wide footer and sitemap. It links into both co
 to the official entities that own changing plan information. It does not compete with practitioner
 profiles or care pages.
 
-## Technical SEO implemented (deployment pending)
+## Technical SEO live
 
 - Unique title, description, canonical, Open Graph and Twitter metadata.
 - One H1 with a descriptive heading hierarchy.

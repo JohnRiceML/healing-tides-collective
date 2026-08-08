@@ -25,7 +25,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/` | Immersive, chapter-based scroll landing | Live |
 | `/about` | "Meet Nora" — founder bio | Live |
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal | Live |
-| `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟡 Implemented; deployment pending |
+| `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟢 Live (prod)¹ |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |
