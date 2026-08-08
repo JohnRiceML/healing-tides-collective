@@ -23,8 +23,8 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | Path | Purpose | Status |
 |---|---|---|
 | `/` | Immersive, chapter-based scroll landing | Live |
-| `/about` | **Canonical Nora L. Hollenkamp entity/author page** — verified credentials, practice details, Person JSON-LD, and the genuine Nora-authored article index. The old `/practitioners/nora-l-hollenkamp` URL permanently redirects here. | Live; authority enhancement pending deploy |
-| `/journal`, `/journal/[slug]` | Sanity-backed editorial journal — one-H1 article structure, descriptive presentation titles for the Somatic Series, Nora bylines linked to `/about`, Article JSON-LD, editorial context and reader-journey navigation. Retired fabricated posts remain 404 and are excluded from listing/sitemap. | Live; authority enhancement pending deploy |
+| `/about` | **Canonical Nora L. Hollenkamp entity/author page** — verified credentials, practice details, Person JSON-LD, and the genuine Nora-authored article index. The old `/practitioners/nora-l-hollenkamp` URL permanently redirects here. | 🟢 Live (prod)¹ |
+| `/journal`, `/journal/[slug]` | Sanity-backed editorial journal — one-H1 article structure, descriptive presentation titles for the Somatic Series, Nora bylines linked to `/about`, Article JSON-LD, editorial context and reader-journey navigation. Retired fabricated posts remain 404 and are excluded from listing/sitemap. | 🟢 Live (prod)¹ |
 | `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟢 Live (prod)¹ |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
@@ -34,7 +34,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🟢 Live (prod)¹ |
 | `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🟢 Live (prod)¹ |
 | `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🟢 Live (prod)¹ |
-| `/opengraph-image` | Generated 1200×630 branded social-sharing image used by fallback Open Graph/Twitter metadata; Organization schema uses the real logo asset. | Built; pending deploy |
+| `/opengraph-image` | Generated 1200×630 branded social-sharing image used by fallback Open Graph/Twitter metadata; Organization schema uses the real logo asset. | 🟢 Live (prod)¹ |
 | `/get-matched` | **Seeker onboarding agent** — a real-time conversational guide (voice by default via OpenAI Realtime, or text), two-pane: chat on the left, practitioners surfacing as cards in a right-hand rail + a saved "basket". Anonymous (no account). | 🟢 Live (prod)¹ |
 | `/get-matched/form` | The same intake as a plain form (the non-conversational path); intentionally `noindex,follow` with canonical to `/get-matched` to consolidate one matching-intent search result. | 🟢 Live (prod)¹ |
 | `/save-account` | **Seeker sign-up** (Clerk) → `/dashboard` — the opt-in "save your list" account. New users are `SEEKER`. | 🟢 Live (prod)¹ |

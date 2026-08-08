@@ -1,6 +1,6 @@
 # SEO, indexing, and Nora authority buildout
 
-**Status:** implemented and verified locally; production deployment pending
+**Status:** deployed and verified in production
 **Evidence date:** August 8, 2026
 **Owner:** Healing Tides Collective
 
@@ -199,6 +199,12 @@ No independent reviewer reported a critical finding.
 - Mobile browser checks at 390 px: `/about`, Somatic Part 2 and the Twin Cities article each had `scrollWidth === innerWidth === 390`, one H1, no duplicate/stale opening headings, the updated bottom-left feedback control and the expected canonical. The feedback dialog received focus, exposed modal semantics and closed by keyboard.
 - Desktop full-page browser inspection: calm editorial hierarchy, readable cards/links and no horizontal overflow.
 - Final independent release judge: **APPROVE**, with no release blockers after a separate typecheck, 564-test run, production build and rendered-route audit.
+
+## Production verification
+
+- Production deployment from `main` commit `8fdcb18` completed August 8, 2026.
+- A post-deploy crawl verified 200 responses, self-canonicals and one H1 on the primary indexable routes; `noindex,follow` on account doors, the alternate matching form and the filtered directory URL; `308 → /about` on the old Nora profile; and 404/noindex on the retired fabricated article.
+- All 15 submitted sitemap URLs remained unique and indexable. The generated social image returned `200 image/png`, and no rendered page referenced the missing legacy `/og.jpg` path.
 
 ## Search Console actions
 
