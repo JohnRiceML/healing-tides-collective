@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Start your practitioner profile — Healing Tides Collective",
   description:
     "Create a free account to begin building your Healing Tides practitioner profile. Save your progress, preview your page, and publish when you're ready.",
+  robots: { index: false, follow: true },
 };
 
 const STEPS: { title: string; body: string }[] = [

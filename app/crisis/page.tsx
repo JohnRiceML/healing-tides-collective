@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 
 import { Container, LinkButton } from "@/app/_components/ui";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "If you need support now — Healing Tides Collective",
   description:
     "Immediate support lines and grounding practices. If you're in crisis, call or text 988. Healing Tides helps you find ongoing care — it is not emergency care.",
+  alternates: { canonical: `${SITE_URL}/crisis` },
+  openGraph: { url: `${SITE_URL}/crisis` },
 };
 
 // Verified, national 24/7 lines. 988 and 211 route the caller to their nearest

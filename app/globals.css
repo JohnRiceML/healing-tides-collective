@@ -6,9 +6,12 @@
   --color-white: #ffffff;
   --color-charcoal: #2f2f2f;
   --color-ink-soft: #4a4a4a;
-  --color-ink-muted: #8a8580;
+  --color-ink-muted: #625e59;
   --color-ocean: #1f3a5f;
-  --color-teal: #5f8f8b;
+  --color-teal: #3f706c;
+  /* Explicit readable aliases for labels that need semantic clarity at the call site. */
+  --color-teal-ink: #3f706c;
+  --color-muted-ink: #625e59;
   --color-sage: #a8bfa3;
   --color-seafoam: #d6ede8;
   --color-rule: #d9d4ca;

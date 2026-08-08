@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LinkButton } from "@/app/_components/ui";
+import { SITE_URL } from "@/lib/site";
 
 const TITLE = "For practitioners — Healing Tides Collective";
 const DESCRIPTION =
@@ -9,7 +10,8 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  openGraph: { title: TITLE, description: DESCRIPTION, type: "website" },
+  alternates: { canonical: `${SITE_URL}/for-practitioners` },
+  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: `${SITE_URL}/for-practitioners` },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 

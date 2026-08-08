@@ -9,7 +9,7 @@ const URL = `${SITE_URL}${PATH}`;
 const TITLE = "Therapy costs in Minnesota: what to ask — Healing Tides";
 const DESCRIPTION =
   "How to check therapy costs and insurance coverage in Minnesota: a practical guide to plan networks, Medical Assistance directories, self-pay fees, and questions to ask.";
-const SOCIAL_IMAGE = `${SITE_URL}/og.jpg`;
+const SOCIAL_IMAGE = `${SITE_URL}/opengraph-image`;
 
 export const metadata: Metadata = {
   title: TITLE,

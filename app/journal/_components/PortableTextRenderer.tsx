@@ -162,9 +162,9 @@ const components: PortableTextComponents = {
   },
   block: {
     h1: ({children}) => (
-      <h1 className="font-display mt-20 text-[clamp(32px,3.6vw,48px)] leading-[1.05] tracking-[-0.025em] text-charcoal">
+      <h2 className="font-display mt-20 text-[clamp(32px,3.6vw,48px)] leading-[1.05] tracking-[-0.025em] text-charcoal">
         {children}
-      </h1>
+      </h2>
     ),
     h2: ({children}) => (
       <h2 className="font-display mt-16 text-[clamp(28px,3vw,40px)] leading-[1.1] tracking-[-0.02em] text-charcoal">

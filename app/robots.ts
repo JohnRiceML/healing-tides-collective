@@ -21,9 +21,8 @@ export default function robots(): MetadataRoute.Robots {
           "/practitioner$",
           "/practitioner/",
           "/welcome",
-          "/save-account",
-          "/sign-in",
-          "/join",
+          // Public account doors are crawlable but carry page-level noindex. Google must be
+          // allowed to fetch them in order to see that directive.
           "/claim/",
           "/studio",
           // NEVER add /journal paths here. Six retired posts now return 404 so Google will drop

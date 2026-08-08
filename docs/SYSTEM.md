@@ -23,8 +23,8 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | Path | Purpose | Status |
 |---|---|---|
 | `/` | Immersive, chapter-based scroll landing | Live |
-| `/about` | "Meet Nora" — founder bio | Live |
-| `/journal`, `/journal/[slug]` | Sanity-backed editorial journal | Live |
+| `/about` | **Canonical Nora L. Hollenkamp entity/author page** — verified credentials, practice details, Person JSON-LD, and the genuine Nora-authored article index. The old `/practitioners/nora-l-hollenkamp` URL permanently redirects here. | Live; authority enhancement pending deploy |
+| `/journal`, `/journal/[slug]` | Sanity-backed editorial journal — one-H1 article structure, descriptive presentation titles for the Somatic Series, Nora bylines linked to `/about`, Article JSON-LD, editorial context and reader-journey navigation. Retired fabricated posts remain 404 and are excluded from listing/sitemap. | Live; authority enhancement pending deploy |
 | `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟢 Live (prod)¹ |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
@@ -34,8 +34,9 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/practitioners` | Public **directory** — published profiles, specialty/format filters + free-text search | 🟢 Live (prod)¹ |
 | `/practitioners/[slug]` | Public **SEO profile page** — `generateMetadata` + JSON-LD; the "found on Google" page | 🟢 Live (prod)¹ |
 | `/sitemap.xml` | Sitemap — static routes + every published practitioner URL (`app/sitemap.ts`) | 🟢 Live (prod)¹ |
+| `/opengraph-image` | Generated 1200×630 branded social-sharing image used by fallback Open Graph/Twitter metadata; Organization schema uses the real logo asset. | Built; pending deploy |
 | `/get-matched` | **Seeker onboarding agent** — a real-time conversational guide (voice by default via OpenAI Realtime, or text), two-pane: chat on the left, practitioners surfacing as cards in a right-hand rail + a saved "basket". Anonymous (no account). | 🟢 Live (prod)¹ |
-| `/get-matched/form` | The same intake as a plain form (the non-conversational path) | 🟢 Live (prod)¹ |
+| `/get-matched/form` | The same intake as a plain form (the non-conversational path); intentionally `noindex,follow` with canonical to `/get-matched` to consolidate one matching-intent search result. | 🟢 Live (prod)¹ |
 | `/save-account` | **Seeker sign-up** (Clerk) → `/dashboard` — the opt-in "save your list" account. New users are `SEEKER`. | 🟢 Live (prod)¹ |
 | `/dashboard` | **Seeker dashboard** — Clerk-gated; saved practitioners as cards (link through to reach out) + a resources rail. Merges the anonymous basket on first visit; sends the welcome email once. | 🟢 Live (prod)¹ |
 | `/welcome` | Role-aware **post-sign-in router** — practitioner → `/practitioner`, seeker → `/dashboard` | 🟢 Live (prod)¹ |
@@ -50,9 +51,9 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 > **Two-door model** ([architecture/EXPERIENCE-MAP.md](architecture/EXPERIENCE-MAP.md)): the landing forks into **seeker** ("find care" → public directory + the guided `/get-matched` agent) and **practitioner** ("for practitioners" → pitch → `/join` → `/practitioner`). The public read layer is `lib/practitioners.ts` (published-only — the single source of public reads), publish/unpublish live in `app/practitioner/publish-actions.ts`, and the canonical origin is `lib/site.ts` (`www`). **Seekers are anonymous by default** — they browse, get matched, and build a basket with nothing stored server-side. An **optional account** is the opt-in upgrade (`/save-account` → `/dashboard`) that persists their saved list; the welcome email + dashboard sit behind it. Accounts are typed by `User.role` (`SEEKER` default); `/join` is the practitioner door, `/save-account` the seeker one. **Why anonymous-by-default:** ADR [0002](decisions/0002-seeker-onboarding-and-optional-accounts.md).
 
 ## Subsystems & ownership
-**Frontend** — Next.js 16 App Router, React 19, Tailwind v4, Framer Motion. Entry: `app/` (landing `app/page.tsx`; shared helpers `app/_lib/`). **Owned by the style team** — tokens in `app/globals.css` (`@theme`), the canonical **[design system + style guide](design/STYLE-GUIDE.md)** + the practical [build checklist](design/UI-SYSTEM.md), the shared component library in `app/_components/ui.tsx` (Button / Card / Field / Container / ChoiceChip…). Agents: `design-system-steward` (lead) + `component-architect` / `page-builder` / `a11y-steward` / `motion-designer`.
+**Frontend** — Next.js 16 App Router, React 19, Tailwind v4, Framer Motion. Entry: `app/` (landing metadata/server wrapper `app/page.tsx`; immersive client experience `app/HomePageClient.tsx`; shared helpers `app/_lib/`). **Owned by the style team** — tokens in `app/globals.css` (`@theme`), the canonical **[design system + style guide](design/STYLE-GUIDE.md)** + the practical [build checklist](design/UI-SYSTEM.md), the shared component library in `app/_components/ui.tsx` (Button / Card / Field / Container / ChoiceChip…). Agents: `design-system-steward` (lead) + `component-architect` / `page-builder` / `a11y-steward` / `motion-designer`.
 
-**CMS — Sanity (editorial only).** Entry: `sanity/` (client, queries, schema types: `post` / `author` / `category`) + the `/studio` route. Journal + page copy. **Not** for app/matching data.
+**CMS — Sanity (editorial only).** Entry: `sanity/` (client, queries, schema types: `post` / `author` / `category`) + the `/studio` route. Journal + page copy. **Not** for app/matching data. Public journal queries all enforce `publishedAt < now()`; the app also applies the retired-post denylist. Presentation helpers trim legacy author whitespace and give the Somatic Series descriptive display titles without changing its URLs. FAQ blocks remain visible reader content but do not automatically emit FAQ rich-result markup.
 
 **Phase 2 backend — owned by [`.claude/agents/`](../.claude/agents)** (Data + Auth **wired**; Billing + Email decided, not yet wired):
 

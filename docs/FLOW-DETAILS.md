@@ -72,7 +72,7 @@ Every flow traced from the **actual code** — its trigger, ordered steps, the d
 6. Seeker: Receives intro; reaches out directly to chosen practitioners
 
 **Touches:** Email (hello@healingtides.co inbox)
-**Files:** `app/practitioners/_components/GetMatchedBar.tsx` · `app/page.tsx`
+**Files:** `app/practitioners/_components/GetMatchedBar.tsx` · `app/HomePageClient.tsx`
 
 **Edge cases / guards:**
 - Design doc exists (product/MATCHING-BRIEF-DRAFT.md) but gated on Nora's brief + PHI/crisis decision

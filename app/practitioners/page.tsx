@@ -24,7 +24,7 @@ export async function generateMetadata({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const params = await searchParams;
-  const filtered = ["specialty", "modality", "region", "ageGroups", "q", "acceptingNew", "sort"].some(
+  const filtered = ["specialty", "modality", "region", "ageGroups", "q", "accepting", "sort"].some(
     (k) => Boolean(params[k]),
   );
   return {
@@ -32,6 +32,7 @@ export async function generateMetadata({
     description:
       "Browse the collective — a considered group of therapists and holistic practitioners. Filter by specialty, location, and format to find someone whose way of working fits you.",
     alternates: { canonical: `${SITE_URL}/practitioners` },
+    openGraph: { url: `${SITE_URL}/practitioners` },
     ...(filtered ? { robots: { index: false, follow: true } } : {}),
   };
 }

@@ -6,7 +6,7 @@ A modern, guided platform for finding the right care across clinical and holisti
 
 **One-liner:** "Start here — we'll help you figure it out."
 
-Founded by **Nora L. Hollenkamp, MSW, LICSW** — therapist with 20+ years across hospitals, schools, hospice, and community settings (Saint Paul, MN + telehealth across Minnesota).
+Founded by **Nora L. Hollenkamp, MSW, LICSW** — a therapist with experience across hospitals, schools, hospice, and community settings (Saint Paul, MN + telehealth across Minnesota).
 
 - **Domain:** `healingtides.co` — canonical host is **`www.healingtides.co`** (the apex redirects to it)
 - **Repo:** https://github.com/JohnRiceML/healing-tides-collective (default branch `main`)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname } from "next/navigation";
 
 import { FEEDBACK_KINDS, MAX_FEEDBACK_MESSAGE } from "@/lib/feedback";
@@ -21,6 +21,48 @@ export function FeedbackWidget() {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const dialog = dialogRef.current;
+    closeRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.offsetParent !== null);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      requestAnimationFrame(() => triggerRef.current?.focus());
+    };
+  }, [open]);
 
   // The admin has its own Feedback queue; the Sanity studio is a separate surface.
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/studio")) return null;
@@ -70,20 +112,23 @@ export function FeedbackWidget() {
   if (!open) {
     return (
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Share feedback"
-        className="group fixed left-0 top-1/2 z-[190] flex -translate-y-1/2 flex-col items-center gap-2 rounded-r-2xl bg-teal px-2.5 py-4 text-sand shadow-[0_12px_30px_-12px_rgba(31,58,95,0.5)] transition-all duration-200 hover:bg-teal hover:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/50"
+        className="group fixed bottom-4 left-4 z-[190] flex flex-row items-center gap-2 rounded-full bg-ocean px-4 py-2.5 text-sand shadow-[0_12px_30px_-12px_rgba(31,58,95,0.5)] transition-colors duration-200 hover:bg-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/50 sm:bottom-auto sm:left-0 sm:top-1/2 sm:-translate-y-1/2 sm:flex-col sm:rounded-l-none sm:rounded-r-2xl sm:px-2.5 sm:py-4 sm:hover:px-3"
       >
         <span aria-hidden className="text-[14px] leading-none">♥</span>
-        <span className="text-[13px] font-medium tracking-[0.04em] [writing-mode:vertical-rl]">Feedback</span>
+        <span className="text-[13px] font-medium tracking-[0.04em] [writing-mode:horizontal-tb] sm:[writing-mode:vertical-rl]">Feedback</span>
       </button>
     );
   }
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
+      aria-modal="true"
       aria-label="Share feedback"
       className="fixed bottom-4 left-4 z-[200] max-h-[85vh] w-[min(92vw,340px)] overflow-y-auto rounded-2xl border border-rule bg-white p-5 shadow-[0_20px_55px_-22px_rgba(31,58,95,0.4)] sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2"
     >
@@ -92,13 +137,14 @@ export function FeedbackWidget() {
           {phase === "done" ? "Thank you ♥" : "We'd love your thoughts"}
         </p>
         <button
+          ref={closeRef}
           type="button"
           onClick={() => {
             setOpen(false);
             if (phase === "done") reset();
           }}
           aria-label="Close feedback"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-sand/70 hover:text-charcoal"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-ink hover:bg-sand/70 hover:text-charcoal"
         >
           ×
         </button>
@@ -144,7 +190,7 @@ export function FeedbackWidget() {
             maxLength={MAX_FEEDBACK_MESSAGE}
             placeholder="What's on your mind?"
             aria-label="Your feedback"
-            className="mt-3 min-h-[92px] w-full rounded-xl border border-rule bg-white px-3 py-2 text-[14px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
+            className="mt-3 min-h-[92px] w-full rounded-xl border border-rule bg-white px-3 py-2 text-[14px] text-charcoal placeholder:text-muted-ink focus:border-teal focus:outline-none"
           />
 
           <input
@@ -153,7 +199,7 @@ export function FeedbackWidget() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email (optional, for a reply)"
             aria-label="Your email (optional)"
-            className="mt-2 h-10 w-full rounded-xl border border-rule bg-white px-3 text-[14px] text-charcoal placeholder:text-ink-muted focus:border-teal focus:outline-none"
+            className="mt-2 h-10 w-full rounded-xl border border-rule bg-white px-3 text-[14px] text-charcoal placeholder:text-muted-ink focus:border-teal focus:outline-none"
           />
 
           {/* Screenshot attach */}
@@ -163,7 +209,7 @@ export function FeedbackWidget() {
               <span className="inline-flex items-center gap-2 rounded-full border border-teal/30 bg-seafoam/30 px-2.5 py-1 text-[12.5px] text-teal">
                 <img src={shotUrl} alt="" className="h-5 w-5 rounded object-cover" />
                 Screenshot attached
-                <button type="button" aria-label="Remove screenshot" onClick={() => setShotUrl(null)} className="text-ink-muted hover:text-charcoal">
+                <button type="button" aria-label="Remove screenshot" onClick={() => setShotUrl(null)} className="text-muted-ink hover:text-charcoal">
                   ×
                 </button>
               </span>
@@ -190,7 +236,7 @@ export function FeedbackWidget() {
           >
             {pending ? "Sending…" : "Send"}
           </button>
-          <p className="mt-2 text-[11.5px] leading-[1.5] text-ink-muted">
+          <p className="mt-2 text-[11.5px] leading-[1.5] text-muted-ink">
             Goes straight to the team. No account needed — we&rsquo;ll note your page automatically.
           </p>
         </>

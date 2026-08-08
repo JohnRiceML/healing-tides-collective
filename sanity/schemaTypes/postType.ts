@@ -274,7 +274,7 @@ export const postType = defineType({
           type: 'object',
           name: 'faqSection',
           title: 'FAQ Section',
-          description: 'Multiple FAQs with automatic schema markup generation for SEO',
+          description: 'Visible questions and answers for readers (no automatic rich-result markup)',
           fields: [
             defineField({
               name: 'title',

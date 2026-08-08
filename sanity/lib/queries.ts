@@ -41,7 +41,7 @@ export const POST_BY_SLUG_QUERY = defineQuery(`
       website,
       social
     },
-    "reviewedBy": reviewedBy->{name, role},
+    "reviewedBy": reviewedBy->{name, role, "slug": slug.current},
     reviewedAt,
     citations[]{label, url},
     "categories": categories[]->{title, "slug": slug.current, color}
@@ -60,5 +60,19 @@ export const POST_SITEMAP_QUERY = defineQuery(`
     | order(publishedAt desc) {
       "slug": slug.current,
       "lastModified": coalesce(_updatedAt, publishedAt)
+    }
+`)
+
+// Nora's canonical author page uses the same publication rule as the journal and sitemap.
+// The app still applies the retired-post denylist because those records cannot yet be deleted
+// by the current read-only Sanity identity.
+export const NORA_POSTS_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current) && publishedAt < now() && author->slug.current == "nora-hollenkamp"]
+    | order(publishedAt desc) {
+      _id,
+      title,
+      "slug": slug.current,
+      excerpt,
+      publishedAt
     }
 `)

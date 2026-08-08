@@ -5,6 +5,8 @@ import {sanityFetch} from '@/sanity/lib/live'
 import {urlFor} from '@/sanity/lib/image'
 import {POSTS_LIST_QUERY} from '@/sanity/lib/queries'
 import {isRetiredPost} from '@/lib/retired-posts'
+import {cleanPerson, journalPresentation} from '@/lib/journal-presentation'
+import {SITE_URL} from '@/lib/site'
 
 const TITLE = 'Journal — Healing Tides Collective'
 const DESCRIPTION = 'Notes on care, practice, and the spaces in between.'
@@ -12,7 +14,8 @@ const DESCRIPTION = 'Notes on care, practice, and the spaces in between.'
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  openGraph: {title: TITLE, description: DESCRIPTION, type: 'website'},
+  alternates: {canonical: `${SITE_URL}/journal`},
+  openGraph: {title: TITLE, description: DESCRIPTION, type: 'website', url: `${SITE_URL}/journal`},
   twitter: {card: 'summary_large_image', title: TITLE, description: DESCRIPTION},
 }
 
@@ -34,23 +37,29 @@ export default async function BlogIndexPage() {
       <header className="mx-auto max-w-[1400px] px-6 pt-24 pb-16 md:px-16 md:pt-36 md:pb-24">
         <Link
           href="/"
-          className="meta text-ink-muted hover:text-charcoal transition-colors"
+          className="meta text-muted-ink hover:text-charcoal transition-colors"
         >
           ← Healing Tides Collective
         </Link>
 
         <div className="mt-12 grid gap-10 md:grid-cols-12 md:gap-16">
           <div className="md:col-span-7">
-            <span className="meta text-teal">Journal</span>
+            <span className="meta text-teal-ink">Journal</span>
             <h1 className="font-display mt-6 text-[clamp(44px,7vw,96px)] leading-[0.92] tracking-[-0.035em] text-charcoal">
               Notes from the Collective.
             </h1>
           </div>
           <div className="md:col-span-5 md:pt-6">
             <p className="text-[17px] leading-[1.7] text-ink-soft md:text-lg">
-              Writing on care, practice, and the spaces in between — from clinicians,
-              practitioners, and the people we serve.
+              Featuring first-person writing from Nora L. Hollenkamp, MSW,
+              LICSW, on care, practice, and the spaces in between.
             </p>
+            <Link
+              href="/about"
+              className="meta mt-6 inline-flex text-charcoal underline decoration-charcoal/25 underline-offset-4 hover:decoration-charcoal"
+            >
+              Meet Nora and review her credentials →
+            </Link>
           </div>
         </div>
 
@@ -59,7 +68,7 @@ export default async function BlogIndexPage() {
 
       <section className="mx-auto max-w-[1400px] px-6 pb-32 md:px-16 md:pb-48">
         {posts.length === 0 ? (
-          <p className="meta text-ink-muted">No posts yet.</p>
+          <p className="meta text-muted-ink">No posts yet.</p>
         ) : (
           <ul className="flex flex-col">
             {posts.map((post) => (
@@ -69,28 +78,28 @@ export default async function BlogIndexPage() {
                   className="group grid gap-6 py-12 md:grid-cols-12 md:gap-12 md:py-20"
                 >
                   <div className="md:col-span-2">
-                    <p className="meta text-ink-muted">
+                    <p className="meta text-muted-ink">
                       {formatDate(post.publishedAt)}
                     </p>
                   </div>
 
                   <div className="md:col-span-7">
                     <h2 className="font-display text-[clamp(28px,3.5vw,44px)] leading-[1.05] tracking-[-0.02em] text-charcoal transition-colors group-hover:text-ocean">
-                      {post.title}
+                      {journalPresentation(post.slug ?? '', post.title).title}
                     </h2>
-                    {post.excerpt && (
+                    {(journalPresentation(post.slug ?? '', post.title).description ?? post.excerpt) && (
                       <p className="mt-5 max-w-xl text-[16px] leading-[1.7] text-ink-soft md:text-[17px]">
-                        {post.excerpt}
+                        {journalPresentation(post.slug ?? '', post.title).description ?? post.excerpt}
                       </p>
                     )}
                     <div className="mt-6 flex items-center gap-4">
                       {post.author?.name && (
-                        <span className="meta text-ink-muted">
-                          {post.author.name}
+                        <span className="meta text-muted-ink">
+                          {cleanPerson(post.author.name)}
                         </span>
                       )}
                       {post.categories && post.categories.length > 0 && (
-                        <span className="meta text-ink-muted">
+                        <span className="meta text-muted-ink">
                           ·{' '}
                           {post.categories
                             .map((c) => c?.title)
@@ -129,10 +138,10 @@ export default async function BlogIndexPage() {
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-6 px-6 py-10 md:px-16">
           <p className="font-display text-base text-charcoal">Healing Tides Collective</p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <Link href="/practitioners" className="meta text-teal underline-offset-2 hover:underline">
+            <Link href="/practitioners" className="meta text-teal-ink underline-offset-2 hover:underline">
               Find a practitioner →
             </Link>
-            <p className="meta text-ink-muted">© 2026 / Care, matched. By a person.</p>
+            <p className="meta text-muted-ink">© 2026 / Care, matched. By a person.</p>
           </div>
         </div>
       </footer>

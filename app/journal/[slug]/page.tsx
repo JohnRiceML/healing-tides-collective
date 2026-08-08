@@ -10,6 +10,14 @@ import {PortableTextRenderer} from '../_components/PortableTextRenderer'
 import {buildStructuredData} from '@/lib/journal-seo'
 import {isRetiredPost} from '@/lib/retired-posts'
 import {SITE_URL} from '@/lib/site'
+import {
+  SOMATIC_SERIES,
+  cleanPerson,
+  isNoraAuthor,
+  isTherapyCostRelevant,
+  journalBodyForDisplay,
+  journalPresentation,
+} from '@/lib/journal-presentation'
 
 export const dynamicParams = true
 
@@ -39,8 +47,10 @@ export async function generateMetadata({
   if (isRetiredPost(slug)) return {title: 'Not found', robots: {index: false, follow: false}}
   const post = await client.fetch(POST_BY_SLUG_QUERY, {slug})
   if (!post) return {title: 'Not found'}
-  const title = post.seo?.metaTitle ?? post.title ?? 'Healing Tides Collective'
-  const description = post.seo?.metaDescription ?? post.excerpt ?? undefined
+  const presentation = journalPresentation(slug, post.title)
+  const title = post.seo?.metaTitle?.trim() || presentation.title
+  const description =
+    post.seo?.metaDescription?.trim() || presentation.description || post.excerpt || undefined
   const ogImageSource = post.seo?.ogImage?.asset ? post.seo.ogImage : post.heroImage
   const ogImageUrl = ogImageSource?.asset
     ? urlFor(ogImageSource).width(1200).height(630).fit('crop').auto('format').url()
@@ -55,6 +65,7 @@ export async function generateMetadata({
       title,
       description,
       type: 'article',
+      url: post.canonicalUrl ?? `${SITE_URL}/journal/${slug}`,
       images: ogImageUrl ? [{url: ogImageUrl, width: 1200, height: 630}] : undefined,
     },
     twitter: {
@@ -75,11 +86,29 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
 
   if (!post) notFound()
 
+  const presentation = journalPresentation(slug, post.title)
+  const author = post.author
+  const authorName = cleanPerson(author?.name)
+  const authorRole = cleanPerson(author?.role)
+  const noraAuthor = isNoraAuthor(author)
+  const noraReviewer = isNoraAuthor(post.reviewedBy)
+  const authorDisplayName = noraAuthor ? 'Nora L. Hollenkamp, MSW, LICSW' : authorName
+  const authorDisplayRole = noraAuthor
+    ? 'Founder · Licensed Independent Clinical Social Worker'
+    : authorRole
+  const bodyForDisplay = journalBodyForDisplay(slug, post.body)
+
   const heroImageUrl = post.heroImage?.asset
     ? urlFor(post.heroImage).width(1200).height(630).fit('crop').auto('format').url()
     : null
   const jsonLd = buildStructuredData({
     ...post,
+    title: presentation.title,
+    excerpt: presentation.description ?? post.excerpt,
+    dateModified: presentation.editorialUpdatedAt ?? post.publishedAt,
+    author: post.author
+      ? {name: authorDisplayName, role: authorDisplayRole, url: noraAuthor ? `${SITE_URL}/about` : undefined}
+      : null,
     heroImageUrl,
     canonicalUrl: post.canonicalUrl ?? `${SITE_URL}/journal/${slug}`,
   })
@@ -95,14 +124,14 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
       <div className="mx-auto max-w-[1400px] px-6 pt-12 md:px-16 md:pt-16">
         <Link
           href="/journal"
-          className="meta text-ink-muted hover:text-charcoal transition-colors"
+          className="meta text-muted-ink hover:text-charcoal transition-colors"
         >
           ← Journal
         </Link>
       </div>
 
       <header className="mx-auto max-w-3xl px-6 pt-12 md:px-10 md:pt-20">
-        <span className="meta text-teal">
+        <span className="meta text-teal-ink">
           {formatDate(post.publishedAt)}
           {post.categories && post.categories.length > 0 && (
             <>
@@ -116,29 +145,29 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
         </span>
 
         <h1 className="font-display mt-8 text-[clamp(40px,6vw,80px)] leading-[0.95] tracking-[-0.035em] text-charcoal">
-          {post.title}
+          {presentation.title}
         </h1>
 
-        {post.excerpt && (
+        {(presentation.description ?? post.excerpt) && (
           <p className="mt-8 text-[19px] leading-[1.55] text-ink-soft md:text-[22px]">
-            {post.excerpt}
+            {presentation.description ?? post.excerpt}
           </p>
         )}
 
         <div className="rule mt-12" />
 
-        {post.author?.name && (
+        {authorName && (
           <div className="mt-6 flex items-center gap-4">
-            {post.author.image?.asset && (
+            {author?.image?.asset && (
               <div className="relative h-12 w-12 overflow-hidden rounded-full bg-sand-deep">
                 <Image
-                  src={urlFor(post.author.image)
+                  src={urlFor(author.image)
                     .width(120)
                     .height(120)
                     .fit('crop')
                     .auto('format')
                     .url()}
-                  alt={post.author.image.alt ?? post.author.name ?? ''}
+                  alt={author.image.alt ?? authorName}
                   fill
                   sizes="48px"
                   className="object-cover"
@@ -146,9 +175,15 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
               </div>
             )}
             <div>
-              <p className="font-display text-base text-charcoal">{post.author.name}</p>
-              {post.author.role && (
-                <p className="meta text-ink-muted">{post.author.role}</p>
+              {noraAuthor ? (
+                <Link href="/about" className="font-display text-base text-charcoal underline decoration-charcoal/20 underline-offset-4 hover:decoration-charcoal">
+                  {authorDisplayName}
+                </Link>
+              ) : (
+                <p className="font-display text-base text-charcoal">{authorDisplayName}</p>
+              )}
+              {authorDisplayRole && (
+                <p className="meta text-muted-ink">{authorDisplayRole}</p>
               )}
             </div>
           </div>
@@ -156,10 +191,14 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
         {post.reviewedBy?.name && (
           <p className="mt-5 text-[13px] leading-relaxed text-ink-soft">
             Clinically reviewed by{' '}
-            <Link href="/about" className="link-underline font-medium text-charcoal">
-              {post.reviewedBy.name}
-            </Link>
-            {post.reviewedBy.role ? `, ${post.reviewedBy.role}` : ''}
+            {noraReviewer ? (
+              <Link href="/about" className="link-underline font-medium text-charcoal">
+                {cleanPerson(post.reviewedBy.name)}
+              </Link>
+            ) : (
+              <span className="font-medium text-charcoal">{cleanPerson(post.reviewedBy.name)}</span>
+            )}
+            {cleanPerson(post.reviewedBy.role) ? `, ${cleanPerson(post.reviewedBy.role)}` : ''}
             {post.reviewedAt
               ? ` · ${new Date(post.reviewedAt).toLocaleDateString('en-US', {month: 'long', year: 'numeric'})}`
               : ''}
@@ -176,7 +215,7 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
                 .fit('crop')
                 .auto('format')
                 .url()}
-              alt={post.heroImage.alt ?? post.title ?? ''}
+              alt={post.heroImage.alt ?? presentation.title}
               fill
               sizes="(min-width: 1100px) 1100px, 100vw"
               className="object-cover"
@@ -186,13 +225,104 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
         </figure>
       )}
 
+      {presentation.editorialContext && (
+        <aside className="mx-auto mt-14 max-w-2xl px-6 md:px-10" aria-label="Editorial context">
+          <div className="rounded-lg border border-rule bg-sand-deep/40 p-6 md:p-8">
+            <p className="meta text-teal-ink">
+              {presentation.seriesPosition ? 'A note on this series' : 'An update to this article'}
+            </p>
+            <p className="mt-3 text-[15px] leading-[1.7] text-ink-soft">
+              {presentation.editorialContext}
+            </p>
+            {presentation.showCrisisLink && (
+              <p className="mt-3 text-[14px] leading-[1.7] text-ink-soft">
+                If thoughts of suicide or immediate safety concerns feel current,{' '}
+                <Link href="/crisis" className="link-underline font-medium text-charcoal">
+                  use the immediate-support routes
+                </Link>.
+              </p>
+            )}
+            {presentation.seriesPosition && presentation.seriesPosition > 1 && (
+              <p className="mt-3 text-[13px] leading-[1.7] text-muted-ink">
+                For scientific context, compare the theory&rsquo;s{' '}
+                <a
+                  href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12302812/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-underline text-[15px]"
+                >
+                  Porges (2025), the theory author&rsquo;s current account
+                </a>{' '}
+                with a{' '}
+                <a
+                  href="https://pubmed.ncbi.nlm.nih.gov/41768017/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-underline text-[15px]"
+                >
+                  Grossman et al. (2026), an expert critique
+                </a>.
+              </p>
+            )}
+          </div>
+        </aside>
+      )}
+
       <article className="mx-auto max-w-2xl px-6 py-16 md:px-10 md:py-24">
-        {post.body && <PortableTextRenderer value={post.body} />}
+        {bodyForDisplay.length > 0 && <PortableTextRenderer value={bodyForDisplay} />}
       </article>
+
+      {presentation.seriesPosition && (
+        <nav className="mx-auto max-w-2xl px-6 pb-16 md:px-10" aria-label="Somatic Series">
+          <p className="meta text-teal-ink">Nora&rsquo;s Somatic Series</p>
+          <ol className="mt-5 divide-y divide-rule border-y border-rule">
+            {SOMATIC_SERIES.map((entry, index) => {
+              const current = entry.slug === slug
+              return (
+                <li key={entry.slug}>
+                  <Link
+                    href={`/journal/${entry.slug}`}
+                    aria-current={current ? 'page' : undefined}
+                    className="group grid grid-cols-[auto_1fr_auto] items-baseline gap-4 py-5"
+                  >
+                    <span className="meta text-muted-ink">0{index + 1}</span>
+                    <span className={`font-display text-[19px] leading-snug ${current ? 'text-teal' : 'text-charcoal group-hover:text-ocean'}`}>
+                      {entry.title}
+                    </span>
+                    <span aria-hidden className="text-muted-ink">{current ? 'Here' : '→'}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ol>
+        </nav>
+      )}
+
+      <aside className="mx-auto max-w-2xl px-6 pb-16 md:px-10 md:pb-24" aria-label="Continue with Healing Tides">
+        <div className="rounded-lg bg-charcoal px-6 py-8 text-sand md:px-9 md:py-10">
+          <p className="meta text-sand/65">Continue at your pace</p>
+          <h2 className="font-display mt-4 text-[clamp(26px,3vw,36px)] leading-tight">
+            Learn who is behind the writing, or take a practical next step.
+          </h2>
+          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3">
+            <Link href="/about" className="meta text-sand underline decoration-sand/35 underline-offset-4 hover:decoration-sand">
+              Meet Nora →
+            </Link>
+            {isTherapyCostRelevant(slug) && (
+              <Link href="/resources/therapy-cost-minnesota" className="meta text-sand underline decoration-sand/35 underline-offset-4 hover:decoration-sand">
+                Understand therapy costs →
+              </Link>
+            )}
+            <Link href="/get-matched" className="meta rounded-full bg-sand px-4 py-2 text-charcoal transition-colors hover:bg-white">
+              Get Matched →
+            </Link>
+          </div>
+        </div>
+      </aside>
 
       {(post.citations?.length ?? 0) > 0 && (
         <section className="mx-auto max-w-2xl px-6 pb-16 md:px-10">
-          <p className="meta text-ink-muted">Sources</p>
+          <p className="meta text-muted-ink">Sources</p>
           <ul className="mt-3 space-y-1.5">
             {(post.citations ?? [])
               .filter((c) => c?.label && c?.url)
@@ -214,20 +344,20 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
 
       <footer className="border-t border-rule">
         <div className="mx-auto max-w-2xl px-6 py-16 md:px-10 md:py-24">
-          {post.author?.name && post.author.bio && (
+          {authorName && author?.bio && (
             <div className="mb-16">
-              <p className="meta text-teal">About the author</p>
+              <p className="meta text-teal-ink">About the author</p>
               <div className="mt-6 flex items-start gap-5">
-                {post.author.image?.asset && (
+                {author.image?.asset && (
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-sand-deep">
                     <Image
-                      src={urlFor(post.author.image)
+                      src={urlFor(author.image)
                         .width(160)
                         .height(160)
                         .fit('crop')
                         .auto('format')
                         .url()}
-                      alt={post.author.image.alt ?? post.author.name ?? ''}
+                      alt={author.image.alt ?? authorName}
                       fill
                       sizes="64px"
                       className="object-cover"
@@ -235,12 +365,18 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
                   </div>
                 )}
                 <div>
-                  <p className="font-display text-xl text-charcoal">{post.author.name}</p>
-                  {post.author.role && (
-                    <p className="meta mt-1 text-ink-muted">{post.author.role}</p>
+                  {noraAuthor ? (
+                    <Link href="/about" className="font-display text-xl text-charcoal underline decoration-charcoal/20 underline-offset-4 hover:decoration-charcoal">
+                      {authorDisplayName}
+                    </Link>
+                  ) : (
+                    <p className="font-display text-xl text-charcoal">{authorDisplayName}</p>
+                  )}
+                  {authorDisplayRole && (
+                    <p className="meta mt-1 text-muted-ink">{authorDisplayRole}</p>
                   )}
                   <div className="mt-4 text-[16px] leading-[1.7] text-ink-soft">
-                    <PortableTextRenderer value={post.author.bio} />
+                    <PortableTextRenderer value={author.bio} />
                   </div>
                 </div>
               </div>
@@ -260,7 +396,7 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
             <p className="font-display text-base text-charcoal">
               Healing Tides Collective
             </p>
-            <p className="meta text-ink-muted">© 2026 / Care, matched. By a person.</p>
+            <p className="meta text-muted-ink">© 2026 / Care, matched. By a person.</p>
           </div>
         </div>
       </footer>

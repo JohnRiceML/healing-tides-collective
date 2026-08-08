@@ -8,6 +8,7 @@ import { clerkEnabled } from "@/lib/clerk-enabled";
 export const metadata: Metadata = {
   title: "Sign in — Healing Tides Collective",
   description: "Sign in to Healing Tides Collective.",
+  robots: { index: false, follow: true },
 };
 
 export default function SignInPage() {

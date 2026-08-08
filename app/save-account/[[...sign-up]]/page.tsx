@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Save your list — Healing Tides Collective",
   description:
     "Create a free account to keep your saved practitioners in one calm place you can return to anytime.",
+  robots: { index: false, follow: true },
 };
 
 const Check = ({ className = "" }: { className?: string }) => (

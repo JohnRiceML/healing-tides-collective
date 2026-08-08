@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: SITE_URL,
     siteName: "Healing Tides Collective",
-    images: [{ url: `${SITE_URL}/og.jpg`, width: 1200, height: 630, alt: "Healing Tides Collective" }],
+    images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: "Healing Tides Collective" }],
     type: "website",
     locale: "en_US",
   },
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Healing Tides Collective — Minnesota care, matched by a person",
     description: DESCRIPTION,
-    images: [`${SITE_URL}/og.jpg`],
+    images: [`${SITE_URL}/opengraph-image`],
   },
   // Site-ownership verification. Renders as a <meta> tag in <head> on every page, which is what
   // these engines want — they re-check periodically, so removing it later un-verifies the property.
@@ -77,7 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "@type": "Organization",
               name: "Healing Tides Collective",
               url: SITE_URL,
-              logo: `${SITE_URL}/og.jpg`,
+              logo: `${SITE_URL}/healing-tides-logo.png`,
               email: CONTACT_EMAIL,
               description: DESCRIPTION,
               areaServed: { "@type": "State", name: "Minnesota" },

@@ -14,10 +14,22 @@ describe("buildStructuredData — journal JSON-LD", () => {
     expect(out.mainEntityOfPage).toBe("https://x/y");
   });
 
-  it("emits a plain Article when there's no clinical review", () => {
-    const out = JSON.parse(buildStructuredData({ ...base, author: { name: "Nora Hollenkamp" } })!);
+  it("uses a visible editorial update date when one is supplied", () => {
+    const out = JSON.parse(
+      buildStructuredData({...base, dateModified: "2026-08-08", canonicalUrl: "https://x/y"})!,
+    );
+    expect(out.dateModified).toBe("2026-08-08");
+  });
+
+  it("emits a plain Article and connects an author to the visible author page", () => {
+    const out = JSON.parse(buildStructuredData({
+      ...base,
+      author: { name: " Nora Hollenkamp ", role: " Founder ", url: "https://www.healingtides.co/about" },
+    })!);
     expect(out["@type"]).toBe("Article");
     expect(out.author.name).toBe("Nora Hollenkamp");
+    expect(out.author.jobTitle).toBe("Founder");
+    expect(out.author.url).toBe("https://www.healingtides.co/about");
     expect(out.reviewedBy).toBeUndefined();
   });
 
@@ -36,16 +48,15 @@ describe("buildStructuredData — journal JSON-LD", () => {
     expect(out.dateModified).toBe("2026-07-15");
   });
 
-  it("appends FAQPage when the body carries a faqSection", () => {
+  it("does not claim FAQ rich-result markup merely because visible FAQs exist", () => {
     const out = JSON.parse(
       buildStructuredData({
         ...base,
         body: [{ _type: "faqSection", faqs: [{ question: "Is therapy covered?", answer: "Often, yes." }] }],
       })!,
     )!;
-    expect(Array.isArray(out)).toBe(true);
-    expect(out[1]["@type"]).toBe("FAQPage");
-    expect(out[1].mainEntity[0].name).toBe("Is therapy covered?");
+    expect(Array.isArray(out)).toBe(false);
+    expect(out["@type"]).toBe("Article");
   });
 
   it("a hand-authored structuredData override wins; invalid JSON yields null", () => {
@@ -136,6 +147,19 @@ describe("robots.txt directives", () => {
       for (const path of disallow) expect(url.startsWith(path)).toBe(false);
     }
     for (const path of disallow) expect("/journal".startsWith(path)).toBe(false);
+  });
+
+  it("lets crawlers read noindex on the public account doors", async () => {
+    const { default: robots } = await import("@/app/robots");
+    const rules = robots().rules;
+    const rule = Array.isArray(rules) ? rules[0] : rules;
+    const disallow = (Array.isArray(rule.disallow) ? rule.disallow : [rule.disallow]).filter(
+      Boolean,
+    ) as string[];
+
+    for (const route of ["/join", "/sign-in", "/save-account"]) {
+      for (const path of disallow) expect(route.startsWith(path)).toBe(false);
+    }
   });
 
   it("points at the canonical sitemap", async () => {
