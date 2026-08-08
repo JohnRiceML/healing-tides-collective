@@ -210,4 +210,5 @@ No independent reviewer reported a critical finding.
 
 - A temporary removal request was submitted August 8 for the fabricated, already-404 `/journal/awareness-was-never-the-problem` URL so the only stale indexed result does not continue surfacing while Google recrawls it.
 - The stored 12-URL noindex report is not treated as current truth: the August 8 live test for `/about` said it was available to Google and indexable.
-- After production deployment is verified, start validation on the historical noindex issue and request indexing only for the priority set: `/about`, `/journal`, Somatic Part 1 and the Minnesota therapy-cost guide. Indexing requests are discovery prompts, not ranking guarantees.
+- After production verification, Search Console validation was started for the historical 12-URL “Excluded by ‘noindex’ tag” issue on August 8.
+- Search Console accepted indexing requests for the deliberately small priority set: `/about`, `/journal`, `/journal/somatic-series-part-1`, and `/resources/therapy-cost-minnesota`. Each was added to Google's priority crawl queue. These are discovery prompts, not indexing or ranking guarantees.
