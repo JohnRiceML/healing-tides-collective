@@ -26,6 +26,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/about` | **Canonical Nora L. Hollenkamp entity/author page** — verified credentials, practice details, Person JSON-LD, and the genuine Nora-authored article index. The old `/practitioners/nora-l-hollenkamp` URL permanently redirects here. | 🟢 Live (prod)¹ |
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal — one-H1 article structure, descriptive presentation titles for the Somatic Series, Nora bylines linked to `/about`, Article JSON-LD, editorial context and reader-journey navigation. Retired fabricated posts remain 404 and are excluded from listing/sitemap. | 🟢 Live (prod)¹ |
 | `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟢 Live (prod)¹ |
+| `/resources/first-therapist-call-worksheet` | **Private first-call decision aid** — a no-score, no-account worksheet that builds a short question list in memory, supports copy and native print/PDF, and sends no selections to Healing Tides. | Built; pending review/deploy |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |

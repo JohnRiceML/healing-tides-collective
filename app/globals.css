@@ -192,3 +192,35 @@ body:has(> #sanity[data-ui="NextStudioLayout"]) > #sanity[data-ui="NextStudioLay
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The first-call worksheet is designed to become a calm two-page paper/PDF aid. The interactive
+   state stays in memory only; printing is the explicit, user-controlled way to keep a copy. */
+@media print {
+  @page {
+    margin: 0.65in;
+  }
+
+  body > header,
+  body > footer,
+  button[aria-label="Share feedback"],
+  [role="dialog"][aria-label="Share feedback"],
+  .worksheet-print-hide {
+    display: none !important;
+  }
+
+  .worksheet-page {
+    min-height: auto !important;
+    background: white !important;
+  }
+
+  .worksheet-print-root {
+    max-width: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .worksheet-print-group {
+    break-inside: avoid;
+  }
+}

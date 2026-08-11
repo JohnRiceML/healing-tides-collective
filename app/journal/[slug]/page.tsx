@@ -7,6 +7,7 @@ import {client} from '@/sanity/lib/client'
 import {urlFor} from '@/sanity/lib/image'
 import {POST_BY_SLUG_QUERY, POST_SLUGS_QUERY} from '@/sanity/lib/queries'
 import {PortableTextRenderer} from '../_components/PortableTextRenderer'
+import {JournalCompanion} from '../_components/JournalCompanion'
 import {buildStructuredData} from '@/lib/journal-seo'
 import {isRetiredPost} from '@/lib/retired-posts'
 import {SITE_URL} from '@/lib/site'
@@ -271,6 +272,8 @@ export default async function PostPage({params}: {params: Promise<{slug: string}
       <article className="mx-auto max-w-2xl px-6 py-16 md:px-10 md:py-24">
         {bodyForDisplay.length > 0 && <PortableTextRenderer value={bodyForDisplay} />}
       </article>
+
+      <JournalCompanion slug={slug} />
 
       {presentation.seriesPosition && (
         <nav className="mx-auto max-w-2xl px-6 pb-16 md:px-10" aria-label="Somatic Series">

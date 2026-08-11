@@ -3,6 +3,7 @@ import {
   SOMATIC_SERIES,
   cleanPerson,
   isNoraAuthor,
+  isFirstCallWorksheetRelevant,
   isTherapyCostRelevant,
   journalBodyForDisplay,
   journalPresentation,
@@ -32,6 +33,16 @@ describe('journal presentation', () => {
         'finding-reflection-in-the-season-what-cancer-season-is-teaching-me-about-slowing-down',
       ),
     ).toBe(false)
+  })
+
+  it('shows the first-call worksheet only where the reader has reached that decision point', () => {
+    expect(
+      isFirstCallWorksheetRelevant(
+        'finding-a-therapist-in-minneapolis-and-st-paul-why-is-it-so-difficult',
+      ),
+    ).toBe(true)
+    expect(isFirstCallWorksheetRelevant('somatic-series-part-1')).toBe(false)
+    expect(isFirstCallWorksheetRelevant('the-human-behind-the-therapist-support')).toBe(false)
   })
 
   it('trims CMS titles and person fields at the display boundary', () => {

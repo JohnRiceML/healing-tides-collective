@@ -85,6 +85,14 @@ export function isTherapyCostRelevant(slug: string) {
   return THERAPY_COST_RELEVANT_SLUGS.has(slug)
 }
 
+const FIRST_CALL_WORKSHEET_RELEVANT_SLUGS = new Set([
+  'finding-a-therapist-in-minneapolis-and-st-paul-why-is-it-so-difficult',
+])
+
+export function isFirstCallWorksheetRelevant(slug: string) {
+  return FIRST_CALL_WORKSHEET_RELEVANT_SLUGS.has(slug)
+}
+
 type PortableTextLikeBlock = {
   _type?: string
   style?: string

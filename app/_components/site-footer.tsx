@@ -21,6 +21,7 @@ const EXPLORE = [
   { href: "/practitioners", label: "Find care" },
   { href: "/journal", label: "Journal" },
   { href: "/resources/therapy-cost-minnesota", label: "Therapy costs in Minnesota" },
+  { href: "/resources/first-therapist-call-worksheet", label: "First therapist call worksheet" },
   { href: "/about", label: "About" },
   { href: "/crisis", label: "If you're in crisis" },
 ];

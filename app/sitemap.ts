@@ -41,6 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
       lastModified: new Date("2026-08-08"),
     },
+    {
+      url: `${SITE_URL}/resources/first-therapist-call-worksheet`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified: new Date("2026-08-11"),
+    },
   ];
 
   const profileRoutes: MetadataRoute.Sitemap = slugs.map(
