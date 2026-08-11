@@ -1,7 +1,21 @@
 # Nora content review packet — consultation, somatic comparison, and first-call worksheet
 
 **Prepared:** August 11, 2026
-**Status:** Worksheet implemented for independent review; two article drafts await Nora’s interview and approval before Sanity publication.
+**Status:** Worksheet live; two article drafts await Nora’s interview and approval before Sanity publication.
+
+**Search evidence:** [August 11 search-demand brief](2026-08-11-search-demand-content-brief.md)
+
+## Why these two articles are first
+
+- **Somatic comparison first:** Nora's Somatic Series is the only reportable non-homepage editorial
+  GSC signal, United States Google Trends shows a strong five-year rise in relative interest, and
+  current result pages often flatten the topic into a false binary.
+- **Consultation guide second:** relative search interest has also risen sharply, the topic fits
+  Nora's firsthand judgment, and the live first-call worksheet gives the article a useful next step.
+- **No extra question-list article:** the worksheet already owns that task; another list would divide
+  one reader need across two URLs.
+- **No Minnesota somatic landing page yet:** local results are provider/service-led and the current
+  verified inventory is not sufficient for a genuinely useful location page.
 
 ## The content pathway
 

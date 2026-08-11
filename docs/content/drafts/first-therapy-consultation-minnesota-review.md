@@ -7,6 +7,18 @@
 **SEO title:** First Therapy Consultation: What to Expect
 **Description:** Learn what a therapy consultation may include, what you can ask, and how to decide on a next step—without treating the call like a test.
 
+## Search and reader brief — not public copy
+
+- **Primary intent:** understand what may happen during a preliminary therapy conversation
+- **Questions to answer:** how consultation differs from intake/first session, what may happen in
+  sequence, what each person may ask, and what reasonable next steps look like
+- **Why now:** in the United States five-year Google Trends comparison, normalized relative interest
+  for `therapy consultation` increased from an 11.8 first-year mean to 55.7 in the latest year
+- **SERP gap:** many results blend a consultation, intake, and first paid session or repeat long
+  question lists; this page should explain the process while the live worksheet owns question choice
+- **Boundary:** no universal length, fee, format, confidentiality rule, or claim that one call can
+  establish fit
+
 ## Editorial method
 
 This clean rewrite does not reuse the quarantined statute-heavy first-call draft. The general preparation guidance is grounded in current NIMH and APA material. Nora’s practice, judgment, words, and authorship remain blank until she supplies and approves them.
@@ -28,6 +40,46 @@ Practices use *consultation*, *intake*, and *first session* differently. Before 
 - Will I need to complete paperwork first?
 
 A consultation is not universally free, a fixed length, confidential under one universal rule, or separate from clinical care. Ask the practice directly. The answer matters more than the label.
+
+## A possible shape of the conversation
+
+There is no required script, but thinking in stages can make the unknown feel more manageable.
+
+### Before
+
+You may receive scheduling details, a link, forms, or a request to confirm how the appointment will
+happen. This is a useful time to ask whether the conversation has a fee and whether it is an
+informational call, an intake, or a first clinical session.
+
+### Opening
+
+The practitioner may explain the purpose of the conversation and ask what led you to reach out. You
+can give a short answer. You can also ask what kind of detail would be useful before deciding how
+much you want to share.
+
+### Middle
+
+The conversation may cover what you want help with, the practitioner's experience and approach,
+availability, format, fees, insurance, access needs, and what early sessions could look like. It is
+reasonable to bring notes or say that you need a moment to think.
+
+### Closing
+
+Before the conversation ends, clarify the possible next step: scheduling, taking time to decide,
+receiving a referral, or following up with one unanswered question. You do not have to manufacture
+certainty because the appointment is ending.
+
+### After
+
+Write down anything that remains unclear. Notice whether you had room to ask questions and whether
+the explanation made sense. A calm or uneasy feeling can be information, but one short conversation
+does not produce a reliable score or prediction of the whole relationship.
+
+### Nora's real sequence — input required
+
+Nora: mark which of these stages resemble your own process, remove what does not, and add the one or
+two moments that matter most in your actual consultations. Confirm what changes when a practice does
+not offer a separate preliminary call.
 
 ## What the conversation can help clarify
 
@@ -101,6 +153,14 @@ A preliminary conversation can end in several reasonable ways:
 - You decide not to continue.
 
 None of these means the conversation failed. Its job was to make the next decision clearer.
+
+## If a practice does not offer a separate call
+
+Some practices move directly to an intake or first session. That does not make your questions less
+valid; it changes when and where you ask them. Before booking, clarify the fee, format, cancellation
+policy, and what kind of appointment you are scheduling. At the beginning of the appointment, ask
+how the practitioner works and how the two of you will discuss pace, goals, questions, and changes
+to the plan.
 
 ## Final CTA
 

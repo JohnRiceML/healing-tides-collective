@@ -1,6 +1,6 @@
 # Healing Tides Collective — System Map
 
-**Last updated:** 2026-08-08
+**Last updated:** 2026-08-11
 
 > **This is a living document** — the canonical "where things live + current status" map. When the code moves, **update this in the same change.** When a doc and the code disagree, **the code wins — and this file gets fixed.** It lists load-bearing *entry points* and subsystems, **not every file** (exact paths drift and mislead — search the code for them). The rules that keep this alive are in [AGENTS.md](../AGENTS.md#the-living-doc-protocol--keep-docs-alive).
 
@@ -26,7 +26,7 @@ A guided "Get Matched" platform for finding clinical + holistic care — therapy
 | `/about` | **Canonical Nora L. Hollenkamp entity/author page** — verified credentials, practice details, Person JSON-LD, and the genuine Nora-authored article index. The old `/practitioners/nora-l-hollenkamp` URL permanently redirects here. | 🟢 Live (prod)¹ |
 | `/journal`, `/journal/[slug]` | Sanity-backed editorial journal — one-H1 article structure, descriptive presentation titles for the Somatic Series, Nora bylines linked to `/about`, Article JSON-LD, editorial context and reader-journey navigation. Retired fabricated posts remain 404 and are excluded from listing/sitemap. | 🟢 Live (prod)¹ |
 | `/resources/therapy-cost-minnesota` | **Minnesota therapy-cost routing guide** — a source-backed utility page that helps seekers verify plan networks, Medical Assistance directories, self-pay questions, and the correct official route without restating volatile insurance law. | 🟢 Live (prod)¹ |
-| `/resources/first-therapist-call-worksheet` | **Private first-call decision aid** — a no-score, no-account worksheet that builds a short question list in memory, supports copy and native print/PDF, and sends no selections to Healing Tides. | Built; pending review/deploy |
+| `/resources/first-therapist-call-worksheet` | **Private first-call decision aid** — a no-score, no-account worksheet that builds a short question list in memory, supports copy and native print/PDF, and sends no selections to Healing Tides. | 🟢 Live (prod)¹ |
 | `/studio` | Embedded Sanity Studio | Live |
 | `/join` | Practitioner sign-up (Clerk + Google) — **the practitioner door** | 🟢 Live (prod)¹ |
 | `/sign-in` | Returning-practitioner sign-in (Clerk) | 🟢 Live (prod)¹ |

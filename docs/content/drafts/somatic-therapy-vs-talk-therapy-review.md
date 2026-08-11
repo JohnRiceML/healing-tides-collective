@@ -7,6 +7,19 @@
 **SEO title:** Somatic Therapy vs. Talk Therapy: A Clear Comparison
 **Description:** Compare talk-centered and body-attuned therapy, where they overlap, and what to ask a practitioner before deciding what feels acceptable to you.
 
+## Search and reader brief — not public copy
+
+- **Primary intent:** understand the difference without being pushed toward one approach
+- **Questions to answer:** whether the approaches overlap, whether touch is inherent, what a session
+  may include, what training to ask about, and what the evidence can actually support
+- **Why now:** `/journal/somatic-series-part-1` is the only reportable non-homepage editorial GSC
+  signal; United States Google Trends relative interest for `somatic therapy` increased from a 21.2
+  first-year mean to 67.5 in the latest year of the five-year comparison
+- **SERP gap:** current explanations often create a body-versus-mind contest; this page should make
+  concrete differences visible while treating overlap, consent, and uncertainty as central
+- **Boundary:** do not optimize this explainer as a Minnesota practitioner/service page; local
+  `somatic therapy Minnesota` results primarily serve people looking for an actual provider
+
 ## Opening
 
 If talking has helped you understand a pattern but has not always changed how the experience feels, the phrase *somatic therapy* may catch your attention.
@@ -72,6 +85,35 @@ Not always. Some practitioners integrate body awareness into otherwise talk-cent
 ### Nora on integration — input required
 
 Nora: explain when integration is useful in your actual work, when you would stay primarily verbal, and when another practitioner or coordinated care may be more appropriate.
+
+## What to ask before the label decides for you
+
+Two practitioners can both use the word *somatic* and offer very different experiences. Two
+practitioners who describe their work as talk therapy may also use attention to breath, tension,
+movement, imagery, or present-moment sensation. Ask about the session, not only the category.
+
+- What do you mean when you use the word *somatic*?
+- What might you invite me to notice or do during a typical session?
+- Is touch ever part of your work? If so, how is consent requested each time?
+- What happens if I do not want to focus on sensation, breath, or movement?
+- What training do you have in the specific methods you use?
+- How will we discuss whether the work is helping or needs to change?
+
+Clear answers should make the process less mysterious. They should not require you to agree to an
+exercise before you understand it.
+
+## If body-focused attention does not feel useful
+
+Discomfort with a prompt does not automatically reveal a diagnosis, a hidden truth, or the “right”
+therapy for you. It may simply mean you want a different pace, a clearer explanation, more choice,
+or a different kind of care. You can ask to pause, stay with conversation, or understand the purpose
+of an invitation before deciding.
+
+### Nora on choice and repair — input required
+
+Nora: describe how you respond when an invitation does not land well. Include the words you actually
+use to restore choice, how you decide whether to adapt or stop, and what you want a person to know
+about saying no. Do not substitute generic consent language for Nora's real process.
 
 ## A reflection, not a recommendation
 
