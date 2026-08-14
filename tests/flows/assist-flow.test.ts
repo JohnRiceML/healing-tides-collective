@@ -10,7 +10,8 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({ getPractitioner: h.getPractitioner }));
 vi.mock("ai", () => ({ generateObject: h.generateObject }));
 
-import { polishFieldText, NARRATIVE_FIELD_IDS } from "@/app/practitioner/assist-actions";
+import { NARRATIVE_FIELD_IDS } from "@/app/_lib/profile-assist";
+import { polishFieldText } from "@/app/practitioner/assist-actions";
 import { PROFILE_SECTIONS } from "@/app/_lib/profile-fields";
 
 // A real, faithful-length draft (≥ 40 chars) to rephrase.

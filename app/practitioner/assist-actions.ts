@@ -19,29 +19,15 @@ import { z } from "zod";
 
 import { getPractitioner } from "@/lib/auth";
 import { PROFILE_SECTIONS, fieldLabel } from "@/app/_lib/profile-fields";
+import {
+  COLUMN_NARRATIVE_FIELDS,
+  NARRATIVE_FIELD_IDS,
+} from "@/app/_lib/profile-assist";
 import { createRateLimiter } from "@/lib/onboarding/voice/rate-limit";
 
 // Vercel AI Gateway model id (plain "provider/model" string — no provider SDK).
 // On Vercel it auths via OIDC; locally set AI_GATEWAY_API_KEY. Same model as extract-actions.
 const MODEL = "anthropic/claude-haiku-4.5";
-
-/**
- * The eligible fields — DERIVED from the profile-fields config so the allowlist can't
- * drift from the form. Only `textarea` fields (the free-writing narrative ones) are
- * eligible; `text` / `tags` / `chips` are structured facts we must never rephrase.
- * Exported so a unit test can assert the derivation holds.
- */
-export const NARRATIVE_FIELD_IDS: readonly string[] = PROFILE_SECTIONS.flatMap((s) =>
-  s.fields.filter((f) => f.type === "textarea").map((f) => f.id),
-);
-
-/** The two column-backed narrative fields (not in profile-fields.ts — they're real Prisma
- *  columns) that also deserve the assist: the short bio and "what healing means to me".
- *  Label/hint mirror the editor's Field copy so the model gets the same context. */
-export const COLUMN_NARRATIVE_FIELDS: Record<string, { label: string; hint?: string }> = {
-  values: { label: "What healing means to me", hint: "The heart of your profile. Plain, warm, in your own voice." },
-  bio: { label: "Short bio", hint: "A couple of sentences about you and your practice." },
-};
 
 const NARRATIVE_FIELD_SET = new Set([...NARRATIVE_FIELD_IDS, ...Object.keys(COLUMN_NARRATIVE_FIELDS)]);
 
