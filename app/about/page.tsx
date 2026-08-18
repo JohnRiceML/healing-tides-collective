@@ -9,14 +9,14 @@ import { journalPresentation } from "@/lib/journal-presentation";
 import { escapeJsonLd } from "@/lib/journal-seo";
 
 export const metadata: Metadata = {
-  title: "Nora L. Hollenkamp, MSW, LICSW | Healing Tides",
+  title: "Meet Nora, Founder of Healing Tides Collective",
   description:
-    "Nora L. Hollenkamp, MSW, LICSW — therapist and founder of Healing Tides Collective, with experience across hospitals, schools, hospice, and community settings. Saint Paul, MN, and telehealth across Minnesota.",
+    "Meet Nora L. Hollenkamp, founder of Healing Tides Collective, and read why she created a warmer, more personal way to find care.",
   alternates: { canonical: `${SITE_URL}/about` },
   openGraph: {
-    title: "Nora L. Hollenkamp, MSW, LICSW | Healing Tides",
+    title: "Meet Nora, Founder of Healing Tides Collective",
     description:
-      "Meet Nora L. Hollenkamp, MSW, LICSW: a Saint Paul therapist, Healing Tides founder, and writer on care and the mind-body connection.",
+      "Nora L. Hollenkamp shares why she created Healing Tides Collective: a warmer, more personal way to find care.",
     type: "profile",
     url: `${SITE_URL}/about`,
     images: [{ url: `${SITE_URL}/nora-portrait.jpg`, width: 1024, height: 1536 }],
@@ -40,64 +40,6 @@ function formatArticleDate(value: string | null) {
   });
 }
 
-const approaches = [
-  "Mindfulness-Based CBT",
-  "Sensorimotor / Somatic",
-  "Dance / Movement",
-  "Strength-Based",
-];
-
-const expertise = [
-  "Body image",
-  "Codependency",
-  "Coping skills",
-  "Depression",
-  "Divorce",
-  "LGBTQ+",
-  "Perfectionism",
-  "Stress",
-  "Women's issues",
-];
-
-const atAGlance: Array<{ label: string; lines: string[]; link?: { label: string; href: string } }> = [
-  {
-    label: "Sessions",
-    lines: ["$160 per session", "Sliding scale by application"],
-  },
-  {
-    label: "Insurance",
-    lines: ["Out of network", "Superbills provided for reimbursement"],
-  },
-  {
-    label: "Format",
-    lines: ["In-person — Saint Paul, MN", "Telehealth across Minnesota"],
-  },
-  {
-    label: "Working with",
-    lines: ["Teens, adults, elders", "Individual therapy"],
-  },
-  {
-    label: "Credentials",
-    lines: ["LICSW · Minnesota #25149", "MSW, University of Minnesota, 2016"],
-    // Verifiability is a trust signal: the license number above can be checked at the source.
-    link: {
-      label: "Verify with the MN Board of Social Work ↗",
-      href: "https://mn.gov/boards/social-work/public/verifyalicense.jsp",
-    },
-  },
-  {
-    label: "Experience",
-    lines: ["Hospitals · schools · hospice · community settings"],
-  },
-  {
-    label: "Payment",
-    lines: [
-      "AmEx · Visa · Mastercard · Discover",
-      "Cash · Check · Venmo",
-    ],
-  },
-];
-
 export default async function MeetNoraPage() {
   const { data: noraPostData } = await sanityFetch({ query: NORA_POSTS_QUERY });
   const noraPosts = (noraPostData as NoraPost[])
@@ -118,16 +60,21 @@ export default async function MeetNoraPage() {
       name: "Healing Tides Collective",
       url: SITE_URL,
     },
-    alumniOf: {
-      "@type": "CollegeOrUniversity",
-      name: "University of Minnesota",
-    },
+    alumniOf: [
+      {
+        "@type": "CollegeOrUniversity",
+        name: "University of Minnesota–Twin Cities",
+      },
+      {
+        "@type": "CollegeOrUniversity",
+        name: "St. Catherine University",
+      },
+    ],
     identifier: {
       "@type": "PropertyValue",
       propertyID: "Minnesota Board of Social Work license",
       value: "25149",
     },
-    knowsAbout: approaches,
   }));
 
   return (
@@ -162,135 +109,143 @@ export default async function MeetNoraPage() {
           </div>
 
           <div>
-            <span className="meta text-teal-ink">Meet</span>
+            <span className="meta text-teal-ink">Founder story</span>
             <h1 className="font-display mt-6 text-[clamp(52px,9vw,128px)] leading-[0.92] tracking-[-0.035em]">
-              Nora
-              <span className="italic text-teal"> Hollenkamp.</span>
+              Hi there,
+              <span className="italic text-teal"> I&rsquo;m Nora.</span>
             </h1>
             <p className="font-display mt-7 text-xl text-ink-soft md:text-2xl">
-              MSW, LICSW · she / her
+              Founder of Healing Tides Collective
             </p>
-            <p className="mt-3 text-base text-muted-ink">
-              Licensed clinical therapist — Saint Paul, MN, and telehealth
-              across Minnesota.
-            </p>
-
-            <p className="meta mt-10 text-charcoal">
-              Now accepting new clients in Minnesota
+            <p className="mt-6 max-w-xl text-[17px] leading-[1.75] text-ink-soft md:text-lg">
+              I&rsquo;m a Licensed Independent Clinical Social Worker with more
+              than 20 years of experience working with children, adolescents,
+              adults, and families&mdash;but I&rsquo;m also a human being trying
+              to figure out life right alongside everyone else.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ───── Bio ───── */}
+      {/* ───── Nora's background ───── */}
       <section className="px-6 md:px-16">
         <div className="mx-auto max-w-[820px] border-t border-rule pt-16 md:pt-20">
-          <span className="meta text-teal-ink">In practice</span>
+          <span className="meta text-teal-ink">How I got here</span>
           <h2 className="font-display mt-6 text-[clamp(34px,5vw,60px)] leading-[1.02] tracking-[-0.025em]">
-            Sometimes life quietly drifts
-            <span className="italic text-teal"> off course.</span>
+            People, systems, and the complicated lives
+            <span className="italic text-teal"> we navigate.</span>
           </h2>
           <div className="mt-10 space-y-6 text-[17px] leading-[1.75] text-ink-soft md:text-lg">
             <p>
-              Many people come to therapy during times of change — in career,
-              in relationships, or after a loss. Others arrive carrying
-              emotional or psychological weight that makes it hard to live
-              fully. I work with people who feel caught in negative thinking
-              patterns, self-criticism, or the pressure to meet others&rsquo;
-              expectations.
-            </p>
-            <p>
-              The work is a supportive space to explore your experience and
-              reconnect with yourself. I integrate mindfulness, breath,
-              meditation, and gentle movement to cultivate greater calm,
-              awareness, and ease.
-            </p>
-            <p>
-              As a dancer and devoted yogi, I&rsquo;ve experienced firsthand
-              the healing power of movement — and the way it gently releases
-              the thought patterns that weigh on us each day.
+              Professionally, my background has taken me through schools,
+              hospitals, hospice care, community-based programs, and private
+              therapy practice. I started my career studying Early Childhood
+              Development and Child Psychology and later earned my Master of
+              Social Work with a concentration in Clinical Mental Health, both
+              from the University of Minnesota&ndash;Twin Cities. More recently,
+              I completed my MBA at St. Catherine University, which gave me a
+              new lens for thinking about people, systems, leadership, and the
+              complicated lives so many of us are trying to navigate.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ───── Approach + Specialties ───── */}
+      {/* ───── What Nora carries from the work ───── */}
       <section className="mt-20 px-6 md:mt-28 md:px-16">
-        <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-16 border-t border-rule pt-16 md:grid-cols-[5fr_6fr] md:gap-20 md:pt-20">
+        <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-12 border-t border-rule pt-16 md:grid-cols-[4fr_7fr] md:gap-20 md:pt-20">
           <div>
-            <span className="meta text-teal-ink">Approach</span>
-            <h2 className="font-display mt-6 text-3xl leading-[1.1] tracking-[-0.02em] md:text-[40px]">
-              Mind, body, and the systems we live in.
+            <span className="meta text-teal-ink">What stays with me</span>
+            <h2 className="font-display mt-6 text-[clamp(32px,4vw,48px)] leading-[1.06] tracking-[-0.025em]">
+              Thank you for
+              <span className="italic text-teal"> trusting me.</span>
             </h2>
-            <p className="mt-6 text-[16px] leading-[1.7] text-ink-soft md:text-lg">
-              Treatment is highly individualized. I integrate mindfulness-based
-              CBT and sensorimotor methods that honor the connection between
-              mind, body, and spirit — helping clients regulate their nervous
-              systems and gently release pain carried in both.
-            </p>
-            <ul className="mt-8 flex flex-wrap gap-2">
-              {approaches.map((a) => (
-                <li
-                  key={a}
-                  className="rounded-full border border-charcoal/20 px-4 py-2 text-sm text-charcoal"
-                >
-                  {a}
-                </li>
-              ))}
-            </ul>
           </div>
-          <div>
-            <span className="meta text-teal-ink">Specialties</span>
-            <h2 className="font-display mt-6 text-3xl leading-[1.1] tracking-[-0.02em] md:text-[40px]">
-              Anxiety. Life transitions. Relationships.
-            </h2>
-            <p className="mt-6 text-[16px] leading-[1.7] text-ink-soft md:text-lg">
-              I work especially with people navigating anxiety, perfectionism,
-              self-criticism, or feeling stuck — and those who feel constant
-              pressure to perform or meet others&rsquo; expectations.
+          <div className="space-y-6 text-[17px] leading-[1.75] text-ink-soft md:text-lg">
+            <p>
+              I care deeply about the people I work with and the partnerships
+              we create throughout their healing journeys. Whenever my work
+              with a therapy client comes to an end, one of the most important
+              things I want to say to them is simply, <strong>thank you.</strong>{" "}
+              Thank you for trusting me with your story. Thank you for showing
+              up, even when it was hard. Thank you for finding strength and
+              courage in moments when you weren&rsquo;t sure you had either.
             </p>
-            <ul className="mt-8 flex flex-wrap gap-2">
-              {expertise.map((e) => (
-                <li
-                  key={e}
-                  className="rounded-full bg-charcoal/[0.05] px-4 py-2 text-sm text-ink-soft"
-                >
-                  {e}
-                </li>
-              ))}
-            </ul>
+            <p>
+              Being vulnerable can be scary. We live in a world where there is
+              plenty of judgment, scrutiny, comparison, and negativity, and I
+              know I can&rsquo;t change all of that. But what I <em>can</em> do
+              is try to make finding support feel a little more human. I can
+              help you find someone&mdash;or something&mdash;that feels right
+              for where you are in your life right now. Something that reminds
+              you that whatever you&rsquo;re going through won&rsquo;t last forever
+              (for better or for worse), and that there are people who can walk
+              alongside you through the harder seasons.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ───── At a glance ───── */}
+      {/* ───── Why Healing Tides exists ───── */}
       <section className="mt-20 px-6 md:mt-28 md:px-16">
-        <div className="mx-auto max-w-[1200px] border-t border-rule pt-16 md:pt-20">
-          <span className="meta text-teal-ink">At a glance</span>
-          <div className="mt-12 grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2 md:grid-cols-3">
-            {atAGlance.map((b) => (
-              <div key={b.label}>
-                <p className="meta text-muted-ink">{b.label}</p>
-                <div className="mt-4 space-y-1.5 text-[15px] leading-[1.65] text-charcoal">
-                  {b.lines.map((l) => (
-                    <p key={l}>{l}</p>
-                  ))}
-                  {b.link && (
-                    <p className="pt-1 text-[13px]">
-                      <a
-                        href={b.link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="link-underline text-ink-soft"
-                      >
-                        {b.link.label}
-                      </a>
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+        <div className="mx-auto max-w-[820px] border-t border-rule pt-16 md:pt-20">
+          <span className="meta text-teal-ink">Why I started the Collective</span>
+          <h2 className="font-display mt-6 text-[clamp(34px,5vw,60px)] leading-[1.02] tracking-[-0.025em]">
+            Healing Tides is about
+            <span className="italic text-teal"> connection.</span>
+          </h2>
+          <div className="mt-10 space-y-6 text-[17px] leading-[1.75] text-ink-soft md:text-lg">
+            <p>
+              That belief is a big part of why I created Healing Tides
+              Collective. I didn&rsquo;t want to build just another directory
+              with a long list of names and profiles for you to sort through.
+              You absolutely can browse our practitioners whenever you&rsquo;d
+              like, but if you don&rsquo;t know where to begin, you don&rsquo;t have
+              to figure it out alone.
+            </p>
+            <p>
+              Healing Tides is about <strong>connection</strong>. Tell us a
+              little about yourself, what you&rsquo;re going through, and what
+              you&rsquo;re looking for&mdash;even if you&rsquo;re not entirely sure
+              yet. From there, we can help connect you directly with a
+              practitioner through a warm handoff between trusted partners.
+              You&rsquo;ll receive a personal introduction to someone who may
+              be a good fit, along with suggestions for other practitioners or
+              types of care you may not have considered before.
+            </p>
+            <p>
+              Maybe that&rsquo;s a therapist. Maybe it&rsquo;s acupuncture, Reiki,
+              massage, yoga, nutrition, meditation, or another form of support.
+              Maybe it&rsquo;s a combination. Healing doesn&rsquo;t have to look the
+              same for everyone, and what you need today may be completely
+              different from what you need a year from now.
+            </p>
+            <p>
+              And this service is free to you, the client. All we ask for is a
+              little bit of trust. Trust us with a small piece of your story,
+              and we&rsquo;ll help you explore what support might look like from
+              here.
+            </p>
+            <p>
+              You don&rsquo;t need to know exactly what kind of practitioner you
+              need. You don&rsquo;t need to know the right modality, have the
+              perfect words, or even be able to explain exactly what feels off.
+              Maybe you already know what you&rsquo;re looking for, or maybe you
+              just know that something needs to feel different. Either way, you
+              can start there.
+            </p>
+            <p>
+              Healing Tides was created to make that next step feel a little
+              warmer, a little more personal, and a lot less overwhelming.
+              We&rsquo;ll help connect you with people and possibilities that
+              make sense for where you are right now&mdash;and hopefully remind
+              you that you don&rsquo;t have to navigate every season on your own.
+            </p>
           </div>
+          <p className="font-display mt-14 border-l border-teal pl-6 text-[clamp(28px,4vw,44px)] leading-[1.12] tracking-[-0.02em] text-charcoal md:pl-8">
+            Come as you are. We&rsquo;ll help you figure out
+            <span className="italic text-teal"> where to go from here.</span>
+          </p>
         </div>
       </section>
 
@@ -382,10 +337,10 @@ export default async function MeetNoraPage() {
           </p>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
             <a
-              href="tel:+16513215835"
+              href="tel:+16513863520"
               className="group inline-flex items-center gap-3 rounded-full bg-charcoal px-6 py-3.5 text-sand shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 focus-visible:ring-offset-sand"
             >
-              <span className="meta">(651) 321-5835</span>
+              <span className="meta">(651) 386 3520</span>
               <span
                 aria-hidden
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-sand/15 text-[11px] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5"

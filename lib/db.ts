@@ -16,13 +16,41 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+const CURRENT_VERIFY_FULL_ALIASES = new Set(["prefer", "require", "verify-ca"]);
+
+/**
+ * Keep node-postgres' current certificate + hostname verification when its SSL
+ * mode semantics change in the next major release. Only the sslmode parameter
+ * is changed; credentials and every other connection option stay byte-for-byte
+ * as supplied. An explicit libpq-compatibility opt-in is respected.
+ */
+export function normalizeDatabaseConnectionString(connectionString: string): string {
+  let parameters: URLSearchParams;
+  try {
+    parameters = new URL(connectionString).searchParams;
+  } catch {
+    return connectionString;
+  }
+
+  if (parameters.getAll("uselibpqcompat").at(-1) === "true") return connectionString;
+
+  const sslMode = parameters.getAll("sslmode").at(-1);
+  if (!sslMode || !CURRENT_VERIFY_FULL_ALIASES.has(sslMode)) return connectionString;
+
+  return connectionString.replace(
+    /([?&]sslmode=)(?:prefer|require|verify-ca)(?=&|#|$)/g,
+    "$1verify-full",
+  );
+}
+
 function createClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
     throw new Error(
       "DATABASE_URL is not set — run `vercel env pull .env.local` (see docs/architecture/PHASE-2-SYSTEMS.md).",
     );
   }
+  const connectionString = normalizeDatabaseConnectionString(databaseUrl);
   const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({
     adapter,

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { upload } from "@vercel/blob/client";
 
 import { Button, ChoiceChip, Field, LinkButton, TextArea, TextInput } from "@/app/_components/ui";
+import { profilePhotoUploadPathname, validateProfilePhotoFile } from "@/app/_lib/profile-photo";
 import type { Modality, ProfileVisibility } from "@/lib/generated/prisma/client";
 import type { PractitionerEditorView } from "@/app/_lib/practitioner-view";
 
@@ -15,7 +17,7 @@ import { extractProfileFromSources } from "./extract-actions";
 import { polishFieldText } from "./assist-actions";
 import { ImportStatusBar, type ImportView } from "./ImportStatusBar";
 import { describeSource, type ImportData } from "./_extract/types";
-import { adoptImportedPhoto, removeProfilePhoto, uploadProfilePhoto } from "./photo-actions";
+import { adoptImportedPhoto, finalizeProfilePhoto, removeProfilePhoto } from "./photo-actions";
 import { publishProfile, unpublishProfile } from "./publish-actions";
 import { Stepper, WIZARD_STEPS } from "./_components/Stepper";
 import { LivePreview } from "./_components/LivePreview";
@@ -285,12 +287,29 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
     e.target.value = "";
     if (!file) return;
     setPhotoError(null);
+    const validation = validateProfilePhotoFile(file);
+    if (!validation.ok) {
+      setPhotoError(validation.error);
+      return;
+    }
+    const pathname = profilePhotoUploadPathname(practitioner.id, file.type);
+    if (!pathname) {
+      setPhotoError("Use a JPG, PNG, WebP, AVIF, or GIF image.");
+      return;
+    }
     startPhoto(async () => {
-      const fd = new FormData();
-      fd.append("photo", file);
-      const res = await uploadProfilePhoto(fd);
-      if (res.ok) { setPhotoUrl(res.photoUrl); setImportedPhotoUrl(null); }
-      else setPhotoError(res.error);
+      try {
+        const blob = await upload(pathname, file, {
+          access: "public",
+          handleUploadUrl: "/api/profile-photo/upload",
+          contentType: file.type,
+        });
+        const res = await finalizeProfilePhoto(blob.url);
+        if (res.ok) { setPhotoUrl(res.photoUrl); setImportedPhotoUrl(null); }
+        else setPhotoError(res.error);
+      } catch {
+        setPhotoError("Couldn't upload that just now — please try again.");
+      }
     });
   }
   function onAdoptPhoto() {
@@ -461,7 +480,7 @@ export function ProfileEditor({ practitioner }: { practitioner: PractitionerEdit
                     {photoError ? (
                       <p role="alert" className="text-[13px] leading-[1.5] text-ocean">{photoError}</p>
                     ) : (
-                      <p className="text-[12px] leading-[1.5] text-ink-muted">A friendly headshot — JPG, PNG, or WebP, up to 6 MB. Saved as soon as you pick it.</p>
+                      <p className="text-[12px] leading-[1.5] text-ink-muted">A friendly headshot — JPG, PNG, WebP, AVIF, or GIF, up to 6 MB. Saved as soon as you pick it.</p>
                     )}
                   </div>
                 </div>

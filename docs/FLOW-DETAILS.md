@@ -246,11 +246,11 @@ Every flow traced from the **actual code** — its trigger, ordered steps, the d
 18. Actor: Navigates wizard steps using 'Continue' button → auto-saves before advancing
 19. Actor: At step 3 (Review), sees live preview of public profile (name, bio, specialties, region, photo, cover design, etc.)
 20. Actor: Can edit cover design (CoverThemePicker component) — design + color stored in fieldValues.cover_design / cover_color
-21. Actor: Can upload photo: `uploadProfilePhoto()` → uploads to Vercel Blob → stores photoUrl
+21. Actor: Can upload a device photo directly to Vercel Blob: `/api/profile-photo/upload` authenticates the practitioner and issues a short-lived token constrained to their avatar path, allowed image types, and 6 MB; `finalizeProfilePhoto()` then re-reads Blob metadata, verifies path ownership/type/size, and stores `photoUrl`. Imported-photo adoption and removal remain authenticated server actions.
 22. Actor: Can click 'Publish' button → runs `publishProfile()` server action
 
 **Touches:** Practitioner table (update: all profile fields, completeness, fieldValues) · Vercel Blob (photo upload) · Next.js revalidateCache (clear `/practitioner` for ISR) · Reserved fieldValues.__verified* keys (admin-granted badges, never overwritten by practitioner save)
-**Files:** `/app/practitioner/edit/page.tsx` · `/app/practitioner/ProfileEditor.tsx` · `/app/practitioner/actions.ts` · `/app/practitioner/photo-actions.ts` · `/app/practitioner/_components/Stepper.tsx` · `/app/practitioner/_components/LivePreview.tsx` · `/app/practitioner/_components/CoverThemePicker.tsx` · `/lib/completeness.ts` · `/app/_lib/verification.ts` · `/app/_lib/profile-fields.ts`
+**Files:** `/app/practitioner/edit/page.tsx` · `/app/practitioner/ProfileEditor.tsx` · `/app/practitioner/actions.ts` · `/app/practitioner/photo-actions.ts` · `/app/api/profile-photo/upload/route.ts` · `/app/_lib/profile-photo.ts` · `/app/practitioner/_components/Stepper.tsx` · `/app/practitioner/_components/LivePreview.tsx` · `/app/practitioner/_components/CoverThemePicker.tsx` · `/lib/completeness.ts` · `/app/_lib/verification.ts` · `/app/_lib/profile-fields.ts`
 
 **Edge cases / guards:**
 - Not signed in → redirects to `/join`
