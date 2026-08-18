@@ -62,7 +62,7 @@ The live sitemap contains 15 public URLs. Public sitemap URLs returned `200`, wi
 - Journal Article JSON-LD does not currently connect Nora to `/about`.
 - `/about` and `/journal` lack explicit self-canonicals.
 - The old Nora practitioner URL has a true one-to-one replacement and should redirect permanently.
-- The apex HTTPS host redirects to `www` with a temporary response, and plain HTTP takes two hops. This is hosting configuration, not an in-repository content change; it remains a deployment-level follow-up.
+- **Resolved 2026-08-18:** the apex HTTPS host now redirects to canonical `www` with a permanent `308`. Plain HTTP still upgrades to HTTPS before the host redirect, but both hops are permanent and the final `www` URL returns `200` with a self-canonical.
 
 ## Nora evidence boundary
 

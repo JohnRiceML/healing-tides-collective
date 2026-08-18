@@ -86,7 +86,7 @@ Every account, integration, and config required to stand up Phase 1. Check off a
 - [ ] Verify via Cloudflare TXT record
 - [ ] Submit sitemap (`/sitemap.xml`) once site is live
 - [ ] Link GA4 property to GSC
-- [ ] Set preferred domain (apex vs www — recommend apex with www → apex redirect)
+- [x] Set preferred domain: `www.healingtides.co` is canonical and the apex permanently redirects to it with `308` (verified 2026-08-18)
 
 ---
 
